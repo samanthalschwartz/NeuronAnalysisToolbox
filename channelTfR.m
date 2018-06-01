@@ -1,0 +1,4 @@
+classdef channelTfR < channelBase
+    
+    
+end

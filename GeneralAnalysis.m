@@ -1,0 +1,421 @@
+classdef GeneralAnalysis < handle
+properties
+    test = [];
+end
+
+methods (Static)
+    function img_out = cropimage(img_in,cutoff)
+        % creates an output image that is a subset of the input image
+        % inputs:
+        %   img_in - dipimage or matrix image (converts to type dipimage)
+        %   cutoff - structure array with fields
+        %    cutoff.xrange - can be single number represented number of outer edge pixels to remove or the vector of pixels to include in dimension 1
+        %    cutoff.yrange - can be single number represented number of outer edge pixels to remove or the vector of pixels to include in dimension 2
+        %    cutoff.trange - can be single number represented number of outer edge pixels to remove or the vector of pixels to include in dimension 3. Use
+        %               dipimage numbering so first frame is index 0!
+        %   range values must match the dimensionality of the image
+        %       example1: to crop 15 pixels from the edges of an image but
+        %       keep all frames
+        %           xrange = 15:size(img_in,1)-15;
+        %           cutoff.yrange = 15:size(img_in,1)-15;
+        %           cutoff.trange = 0:size(img_in,3)-15;
+        %       example2: to crop 15 pixels from the edges along the x-axis
+        %       and only include the first half of the frames
+        %           xrange = 15
+        %           yrange = [];
+        %           trange = 0:(floor(size(img_in,3)/2)-1))
+        % output:
+        %   img_out - cropped dipimage object. use single(dipimage) to convert to matlab matrix.
+        if ~isa(img_in,'dip_image')
+            try
+                img_in = dip_image(img_in);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+        if isempty(cutoff)
+            img_out = img_in;
+            return;
+        end
+        if isfield(cutoff,'xrange') && ~isempty(cutoff.xrange)
+            if numel(cutoff.xrange)==1
+                img_out = img_in(cutoff.xrange:(size(img_in,1)-cutoff.xrange-1),:,:);
+            else
+            img_out = img_in(cutoff.xrange,:,:);
+            end
+        end
+        if isfield(cutoff,'yrange') && ~isempty(cutoff.yrange)
+            if numel(cutoff.yrange)==1
+                img_out = img_out(:,cutoff.yrange:(size(img_out,2)-cutoff.yrange-1),:);
+            else
+            img_out = img_out(:,cutoff.yrange,:);
+            end
+        end
+        if isfield(cutoff,'trange') && ~isempty(cutoff.trange)
+            if numel(cutoff.trange)==1
+                img_out = img_in(:,:,cutoff.trange:size(img_in,3)-cutoff.trange-1,:,:);
+            else
+            img_out = img_in(:,:,cutoff.trange);
+            end
+        end
+    end
+    function img = old_loadtiff(filepath) %to delete
+        % this function loads a tiff file into matlab and generates a dipimage
+        % must have the bioformats function bfopen: download at https://docs.openmicroscopy.org/bio-formats/5.7.0/developers/matlab-dev.html
+        imgbefore = bfopen(filepath);
+        img = dip_image(zeros([size(imgbefore{1,1}{1}),size(imgbefore{1,1},1)]));
+        for ii = 1:size(img,3)
+            img(:,:,ii-1) = imgbefore{1,1}{ii};
+        end
+    end 
+    function im_array = loadtiff_3ch(filepath)
+        % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
+        oimg = loadtiff(filepath);
+        frames3 = size(oimg,3);
+        ch1 = oimg(:,:,1:3:frames3);
+        ch2 = oimg(:,:,2:3:frames3);
+        ch3 = oimg(:,:,3:3:frames3);
+        im_array = cat(4,ch1,ch2,ch3);
+    end
+    function ch = loadtiff_1ch(filepath)
+        % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
+        ch = dip_image(loadtiff(filepath));
+    end
+    function im_array = splitANDsavetiff_3ch(filepath)
+       im_array = loadtiff_3ch(filepath);
+       for i =1:3
+          image = dip_image(im_array(:,:,:,i));
+          [fpath,name,~] = fileparts(filepath);
+          save(fullfile(fpath,[name '_ch' num2str(i)]),'image');
+       end
+    end
+    function img_gauss = imgGauss(img_in,gsig)
+        img_gauss = gaussf(img_in,gsig);        
+    end
+    function img_lapl = imgLaplace(img_in,lsig,gsig)
+        % gaussian filters image and then calculates laplacian
+        % inputs: 
+            % img_in - dipimage or matrix image (converts to type dipimage)
+            % lsig - kernal for laplacian. must be
+            %           same dimension as img_in. example: [1 1 0] is  
+            %           transfrom in x and y but not time.
+            % gsigma - optional input to set the gaussian kernal. must be
+            %           same dimension as img_in. example: [1 1 0] is gaussian 
+            %           smoothing in x and y but not time.
+        % outputs:
+            % img_lapl - filtered dipimage. to convert to matlab array use
+            %           single(img_out).
+        if nargin<3
+            gsig = ones(1,numel(size(img_in)));
+            if nargin<2
+                lsig = ones(1,numel(size(img_in)));
+            end
+        end
+        img_g = gaussf(img_in,gsig);
+        img_lapl = dxx(img_g,lsig)+dyy(img_g,lsig);
+    end
+    function img_laplcutoff = imgLaplaceCutoff(img_in,lsig,gsig)
+        if nargin<3
+            gsig = ones(1,numel(size(img_in)));
+            if nargin<2
+                lsig = ones(1,numel(size(img_in)));
+            end
+        end
+        img_lapl = GeneralAnalysis.imgLaplace(img_in,lsig,gsig);
+        img_laplcutoff = -img_lapl;
+        img_laplcutoff(img_laplcutoff<0) = 0;
+    end
+    function img_dcc = imgDcc(img_in,gsig)
+        if nargin<2
+            gsig = 1;
+        end
+        img_dcc = dcc(img_in,gsig);
+    end
+    function img_dcccutoff = imgDccCutoff(img_in,gsig) %good for edge detection!
+        if nargin<2
+            gsig = 1;
+        end
+        img_dcc = GeneralAnalysis.imgDcc(img_in,gsig);
+        img_dcccutoff = -img_dcc;
+        img_dcccutoff(img_dcccutoff<0) = 0;
+    end
+        
+    function mask = imgThreshold(img_in)
+        threshval = multithresh(single(img_in),2);
+        mask = img_in>=threshval(1);
+    end
+    function [mask,threshval] = imgThreshold_fixedUserInput(img_in)
+        uiwait(msgbox('Select a representative background region','Title','modal'));
+        h = dipshow(img_in,'log');
+        diptruesize(h,150);
+        [a,b] = dipcrop(h);
+        threshval = max(a);
+        mask = threshold(img_in,'fixed',threshval);
+        close(h);
+    end
+    function [labeledim] = labelmask_byframe(mask_in,conn,minSize,maxSize)
+        % this function labels a binary image/mask and assigns the label
+        % value as the frame number
+        % inputs:
+        %   mask_in - 3D dipimage
+        %   conn - connectivity for dipimage label function (type help label
+        %               to get more info)
+        % outputs:
+        %   labeledim - label dipimage object
+        if nargin<4
+            maxSize = 0; %default no cutoff
+            if nargin<3
+                minSize = 0; %default no min
+                if nargin<2
+                    conn = 1;
+                end
+            end
+        end
+        labeledim = dip_image(zeros(size(mask_in)));
+        if numel(size(mask_in))<3
+            disp('This method is not useful for 2D images, because it will just return the mask. Try with a 3D image series.')
+            return;
+        end
+        for ii = 1:size(mask_in,3)
+            temp = obj.labelmask(mask_in(:,:,ii-1),conn,minSize,maxSize);
+            temp(temp>0) = ii;
+            labeledim(:,:,ii-1) = temp;
+        end
+    end
+    function [labeledim] = labelmask(mask_in,conn,minSize,maxSize)
+        % labels a binary image/mask and assigns the label
+        % value as the frame number
+        % inputs:
+        %   mask_in - 3D dipimage
+        %   conn - connectivity for dipimage label function (type help label
+        %               to get more info)
+        % outputs:
+        %   labeledim - label dipimage object
+        if nargin<4
+            maxSize = 0; %default no cutoff
+            if nargin<3
+                minSize = 0; %default no min
+                if nargin<2
+                    conn = 1;
+                end
+            end
+        end
+        labeledim = label(mask_in,conn,minSize,maxSize);
+    end
+    function [labeledim] = labelmask_unique(mask_in,conn,minSize,maxSize)
+        % this function labels a binary image/mask without connecting
+        % labeled objects between fraame
+        % inputs:
+        %   mask_in - 3D dipimage
+        %   conn - connectivity for dipimage label function (type help label
+        %               to get more info)
+        % outputs:
+        %   labeledim - label dipimage object
+        if nargin<4
+            maxSize = 0; %default no cutoff
+            if nargin<3
+                minSize = 0; %default no min
+                if nargin<2
+                    conn = 1;
+                end
+            end
+        end
+        if numel(size(mask_in))<3 %image is just 2D
+            [labeledim] = GeneralAnalysis.labelmask(mask_in,conn,minSize,maxSize);
+            return;
+        end
+        labeledim = mask_in*0;
+        for ii = 0:(size(mask_in,3)-1)
+            labeledim(:,:,ii) = GeneralAnalysis.labelmask(mask_in(:,:,ii),conn,minSize,maxSize);
+        end
+    end
+    function mask_out = bwmorph_timeseries(mask_in,fun_string,n_repeats)
+        % applies Matlab bwmorph function to a each frame of a time series
+        % type help bwmorph for all the great options!
+        % examples include:
+        %   'fill','bridge','close','branchpoints','endpoints','skel','thicken'
+        if nargin<3
+            n_repeats = Inf;
+        end
+        mask_out = dip_image(zeros(size(mask_in,2),size(mask_in,1),size(mask_in,3)));
+        for ii = 1:size(mask_in,3)
+            bwmframe = bwmorph(single(mask_in(:,:,ii-1)),fun_string,n_repeats);
+            mask_out(:,:,ii-1) = bwmframe;
+        end
+    end
+    function wshed = watershed_timeseries(image_in,conn)
+        wshed = dip_image(zeros(size(image_in,2),size(image_in,1),size(image_in,3)));
+        for ii = 1:size(image_in,3)
+            wshedframe = watershed(single(image_in(:,:,ii-1)),conn);
+            wshed(:,:,ii-1) = wshedframe;
+        end  
+    end
+    
+    function mask_thick = thicken(mask_in,numpix)
+        sumproj_out = GeneralAnalysis.sumproj_masktimeseries(mask_in);
+        sumproj_out_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out,'thicken',numpix);
+        mask_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out_thick,'bridge');
+    end
+    function sumproj_out = sumproj_masktimeseries(mask_in)
+       sm = sum(mask_in,[],3);
+       sm(sm>0) = 1;
+       sumproj_out = repmat(sm,[1 1 size(mask_in,3)]);
+    end
+    function lbl_out = findLabelsInMask(lbl_in,mask)
+        % Excludes labels in a labeled image that are exclusively out of the bounds of an input mask.
+        % or Includes labels in a labeled image if any part of the label is within the bounds of an input mask.
+        % inputs:
+        %   lbl_in - labeled 3D dipimage (integer label values are pixel value for all labeled objects in the image) 
+        %   mask_in - 3D dipimage
+        % outputs:
+        %   lbl_out - label dipimage object. label numbering is preserved
+        if numel(size(lbl_in))<3
+            tsize = 1;
+        else
+            tsize= size(lbl_in,3);
+        end
+        lbl_out = lbl_in*0;
+        for tt = 0:(tsize-1)
+            lblframe = lbl_in(:,:,tt);
+            maskframe = mask(:,:,tt);
+            test = lblframe*maskframe;
+            lbid = unique(single(test));
+            ids2remove = find(~ismember(1:max(lblframe),lbid));
+            lbl_outframe = lblframe;
+            for ii = ids2remove
+                lbl_outframe(lblframe == ii)=0;
+            end
+            lbl_out(:,:,tt) = lbl_outframe;
+        end
+    end
+    function distMat = geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,plotsavedir,saveflag)
+        if nargin<6
+            saveflag = 0;
+        end
+        if nargin<5
+            plotsavedir = pwd;
+        elseif nargin<4
+            plotflag = 0;
+            plotsavedir = [];
+        end
+        assert(isequal(size(sink_mask),size(seed_mask)) & isequal(size(sink_mask),size(geom_mask)));
+        if numel(size(sink_mask))<3
+            tsize = 1;
+        else
+            tsize= size(sink_mask,3);
+        end
+        wb = waitbar(0,'Analyzing Distances (this may take a while...)');
+        if plotflag
+            pathfig = figure();
+            pathax = gca;
+        end
+         % make a guess at distance matrix by using # of objects at a
+         % random frame * # of frames
+         temp = seed_mask(:,:,floor(tsize-4));
+         temp_labeled = label(temp,1);
+         numrows = max(temp_labeled)*tsize;
+         distMat = nan(numrows,2); %this is matrix of all distances matched to frame
+         dm_id = 1;
+%          distMap = zeros(size(single(sink_mask))); %this is a movie of all the distance images to check how good it did. only creates if plotFlag = 1
+        for tt = 0:tsize-1
+            geoframe = geom_mask(:,:,tt);
+            sinkframe = sink_mask(:,:,tt);
+            seedframe = seed_mask(:,:,tt);
+            % calc dist map for geom_mask in frame tt
+            sinkDist = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');
+%             dipshow(sinkDist,'labels')
+            % now label seeds from seed_mask
+            seedlbl = label(seedframe,1);
+            if ~any(seedlbl)
+                continue;
+            end
+            labeledmat = zeros(max(seedlbl),2);
+            labeledmat(:,1) = tt;
+            if plotflag
+                P = false(size(logical(seedlbl)));
+                P = imoverlay(P, ~logical(geoframe), [1 1 1]);
+                P = imoverlay(P, logical(sinkframe), [0 0 1]);
+            end
+            for ll = 1:max(seedlbl)
+                seedlbl_ll = squeeze((seedlbl == ll));
+                seedmsr = measure(seedlbl_ll,0*seedlbl_ll,'Center');
+                seeds = floor(seedmsr.Center);
+                rows = seeds(1,:);
+                cols = seeds(2,:);
+                seedDist = bwdistgeodesic(logical(geoframe),rows,cols, 'quasi-euclidean');
+%                 dipshow(seedDist,'labels')
+                D = sinkDist+seedDist;
+                D = round(D * 8) / 8;
+                D(isnan(D)) = inf;
+                paths = imregionalmin(D);
+                paths_thinned_many = bwmorph(paths, 'thin', inf);
+                if plotflag
+                    %                      P = imoverlay(P, paths, [.5 .5 .5]);
+                    P = imoverlay(P, paths_thinned_many, [0 1 0]);
+                    P = imoverlay(P, logical(seedlbl_ll), [1 0 0]);
+                end
+                dist = size(find(paths_thinned_many),1);
+                labeledmat(ll,2) = dist;
+            end
+            if (dm_id + size(labeledmat,1) -1) > size(distMat,1)  % need to make more space
+                addons = nan(numrows,2);
+                distMat = [distMat;addons];
+            end
+            distMat(dm_id:(dm_id+size(labeledmat,1)-1),:) = labeledmat;
+            dm_id = dm_id+size(labeledmat,1);
+            if plotflag
+                imshow(P,'InitialMagnification', 'fit','Parent',pathax);
+                savefig(pathfig,fullfile(plotsavedir,['MinPath_frame#' num2str(tt) '.fig']));
+                saveas(pathfig,fullfile(plotsavedir,['MinPath_frame#' num2str(tt) '.tif']));
+            end
+            waitbar(tt/(size(seed_mask,3)-1),wb);
+        end
+        close(wb);
+        close(pathfig);
+        if saveflag
+        distMovie = readtimeseries(fullfile(plotsavedir,['MinPath_frame#'  '*.tif']),'',[],1,0);
+        save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat','sink_mask','seed_mask','geom_mask');
+        end
+    end
+ 
+     function [img_out,sv_arr] = timedriftCorrect(img_in)
+        img_out = 0*img_in;
+        imref = squeeze(img_in(:,:,0));
+        img_out(:,:,0) = imref;
+        sv_arr = nan(2,size(img_in,3)-1);
+        for ii = 1:(size(img_in,3)-1)
+            imcurr= squeeze(img_in(:,:,ii));
+            sv1 = findshift(imref,imcurr,'iter',0);
+            shiftim = shift(imcurr,sv1,1);
+            img_out(:,:,ii) = shiftim;
+            sv_arr(:,ii) = sv1;
+        end
+     end
+     function img_out = applydriftCorrect(img_in,sv_arr)
+         img_out = 0*img_in;
+        for ii = 0:size(img_in,3)-1
+            currframe = squeeze(img_in(:,:,ii));
+            shiftcurrframe = shift(currframe,sv_arr(:,ii+1));
+            img_out(:,:,ii) = shiftcurrframe;            
+        end
+     end
+     function [h,overlayim] = overlay(grey_im,bin_im,cm,mskcol)
+         % this function overloads the dipimage overlay method but with a
+         % better colormapping
+         if nargin<4
+             mskcol = [1 0 0]; %make mask perim red
+         end
+         if nargin<3
+             cm = bone(256);
+         end
+         cm(1,:) = mskcol;
+         overlayim = grey_im;
+         overlayim(bin_im) = 0;
+         h = dipshow(overlayim,cm);
+         dipmapping(h,'global');
+         dipmapping(h,'lin');
+         diptruesize(h,200);
+     end
+end
+end
