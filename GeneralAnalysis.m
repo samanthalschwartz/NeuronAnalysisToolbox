@@ -148,7 +148,7 @@ methods (Static)
     function [mask,threshval] = imgThreshold_fixedUserInput(img_in)
         uiwait(msgbox('Select a representative background region','Title','modal'));
         h = dipshow(img_in,'log');
-        diptruesize(h,150);
+        diptruesize(h,125);
         [a,b] = dipcrop(h);
         threshval = max(a);
         mask = threshold(img_in,'fixed',threshval);
@@ -310,21 +310,21 @@ methods (Static)
             pathfig = figure();
             pathax = gca;
         end
-         % make a guess at distance matrix by using # of objects at a
-         % random frame * # of frames
-         temp = seed_mask(:,:,floor(tsize-4));
-         temp_labeled = label(temp,1);
-         numrows = max(temp_labeled)*tsize;
-         distMat = nan(numrows,2); %this is matrix of all distances matched to frame
-         dm_id = 1;
-%          distMap = zeros(size(single(sink_mask))); %this is a movie of all the distance images to check how good it did. only creates if plotFlag = 1
+        % make a guess at distance matrix by using # of objects at a
+        % random frame * # of frames
+        temp = seed_mask(:,:,end);
+        temp_labeled = label(temp,1);
+        numrows = max(temp_labeled)*tsize;
+        distMat = nan(numrows,2); %this is matrix of all distances matched to frame
+        dm_id = 1;
+        %          distMap = zeros(size(single(sink_mask))); %this is a movie of all the distance images to check how good it did. only creates if plotFlag = 1
         for tt = 0:tsize-1
-            geoframe = geom_mask(:,:,tt);
+            geoframe = bclosing(logical(squeeze(geom_mask(:,:,tt))));
             sinkframe = sink_mask(:,:,tt);
             seedframe = seed_mask(:,:,tt);
             % calc dist map for geom_mask in frame tt
             sinkDist = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');
-%             dipshow(sinkDist,'labels')
+            %             dipshow(sinkDist,'labels')
             % now label seeds from seed_mask
             seedlbl = label(seedframe,1);
             if ~any(seedlbl)
@@ -341,22 +341,37 @@ methods (Static)
                 seedlbl_ll = squeeze((seedlbl == ll));
                 seedmsr = measure(seedlbl_ll,0*seedlbl_ll,'Center');
                 seeds = floor(seedmsr.Center);
-                rows = seeds(1,:);
-                cols = seeds(2,:);
+                rows = seeds(1,:)+1;
+                cols = seeds(2,:)+1;
                 seedDist = bwdistgeodesic(logical(geoframe),rows,cols, 'quasi-euclidean');
-%                 dipshow(seedDist,'labels')
+%                 seedDist = bwdistgeodesic(logical(geoframe),logical(seedlbl_ll), 'quasi-euclidean');
                 D = sinkDist+seedDist;
-                D = round(D * 8) / 8;
+                % actual distance value should be minimum. save this value
+                distval = min(D(:));
                 D(isnan(D)) = inf;
-                paths = imregionalmin(D);
-                paths_thinned_many = bwmorph(paths, 'thin', inf);
+                D = round(D * 32) / 32;  % to correct for roundoff errors in bwdistgeodesic, see comment on next line
+                %                 mindistmask = D <= (distval + sqrt(eps));   % interestingly this doesn't work, so issue in bwdistgeodesic is really bad (terrible implementation - should just keep track of sqrt(2) indices to fix problem)
+                mindistmask = D==min(D(:));
+                if distval> prod(size(geoframe)) %sanity check for distance size - prod*size because dipimage doesn't support numel function
+                    display(['No connectivity for label # ' num2str(ll) ' in frame ' num2str(tt)]);
+                    continue;
+                end
+                %                 This is code from https://blogs.mathworks.com/steve/2011/12/13/exploring-shortest-paths-part-5/
+                %                 However, more straightforward to do as above (don't need
+                %                 imregional min because ALL correct paths are minimum.
+                %                 paths = imregionalmin(D);
+                %                 paths_thinned_many = bwmorph(paths, 'thin', inf); -- thin
+                %                 does not do what 'Steve' thinks here. See how to do in
+                %                 plotting function
+                closedmask = bwmorph(mindistmask,'fill',inf);
+                paths_thinned_many = bwmorph(closedmask, 'thin', inf);
                 if plotflag
                     %                      P = imoverlay(P, paths, [.5 .5 .5]);
                     P = imoverlay(P, paths_thinned_many, [0 1 0]);
                     P = imoverlay(P, logical(seedlbl_ll), [1 0 0]);
                 end
-                dist = size(find(paths_thinned_many),1);
-                labeledmat(ll,2) = dist;
+                %                 dist = size(find(paths_thinned_many),1);
+                labeledmat(ll,2) = distval;
             end
             if (dm_id + size(labeledmat,1) -1) > size(distMat,1)  % need to make more space
                 addons = nan(numrows,2);
@@ -374,11 +389,11 @@ methods (Static)
         close(wb);
         close(pathfig);
         if saveflag
-        distMovie = readtimeseries(fullfile(plotsavedir,['MinPath_frame#'  '*.tif']),'',[],1,0);
-        save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat','sink_mask','seed_mask','geom_mask');
+            distMovie = readtimeseries(fullfile(plotsavedir,['MinPath_frame#'  '*.tif']),'',[],1,0);
+            save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat','sink_mask','seed_mask','geom_mask');
         end
     end
- 
+    
      function [img_out,sv_arr] = timedriftCorrect(img_in)
         img_out = 0*img_in;
         imref = squeeze(img_in(:,:,0));

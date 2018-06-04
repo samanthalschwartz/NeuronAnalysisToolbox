@@ -3,6 +3,8 @@ classdef channelCellFill < channelBase
         mask_thick
         lsig = [1 1 0];
         gsig = [1 1 0];
+        soma_mask = [];
+        soma_vertices = [];
     end
     
     methods
@@ -46,6 +48,20 @@ classdef channelCellFill < channelBase
            sumproj_out = GeneralAnalysis.sumproj_masktimeseries(obj.mask);
            sumproj_out_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out,'thicken',2);
            obj.mask_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out_thick,'bridge');
+       end
+       function selectSoma(obj)
+           uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));
+           h = dipshow(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]),'log');
+           diptruesize(h,150);
+           [roi, v] = diproi(h);      
+           obj.soma_mask = repmat(roi,[1 1 size(obj.image,3)]);
+           obj.soma_vertices = v;
+           close(h);        
+       end
+       function [h,overlayim] = viewSoma(obj)
+           mskcol = [1 0 0];
+           cm = bone(256);
+           [h,overlayim] = GeneralAnalysis.overlay(obj.image,obj.soma_mask,cm,mskcol);
        end
        
    end

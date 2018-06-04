@@ -8,6 +8,8 @@ classdef AshleyAnalysis < handle
     cellFill = [];
     surfaceCargo = [];
     TfR = [];
+    inCellSurfaceCargo = [];
+    distancematrix = [];
    end
    
    methods
@@ -43,7 +45,9 @@ classdef AshleyAnalysis < handle
            obj.surfaceCargo.setfilepath(obj.path_channel_DHFR);
            obj.TfR.setfilepath(obj.path_channel_TfR);
        end
-       
+       function maskCargoInsideCell(obj)
+           obj.inCellSurfaceCargo = obj.surfaceCargo.mask.*obj.cellFill.mask;
+       end
        function maskImages(obj)
            obj.cellFill.mask_img();
            obj.surfaceCargo.mask_img();
