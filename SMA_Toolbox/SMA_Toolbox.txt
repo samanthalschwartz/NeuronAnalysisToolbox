@@ -1,0 +1,51 @@
+
+SMA_Toolbox
+
+Authors:
+Keith Lidke (klidke@unm.edu)
+Mark J. Olah (mjo@cs.unm.edu)
+Peter Relich (physx.grad@gmail.com)
+
+Summary:
+This is a repository for compiled C++ code building libraries and mex files for single molecule
+data and image analysis.
+
+Organization:
+ * projects/  -  This is the main project repository, each new unrelated project should have its own subdirectory
+ * projects/DEstimator - Diffusion coefficient estimator
+
+ * matlab/ - This is an svn:externals controlled directory which agglomerates the matlab code from each project into
+      a common place, which can be added to the matlab path with the "genpath" recursive command.  This directory should
+      contain only the matlab code from each project
+ * cmake/ - Common cmake scripts
+
+ * build - Build directory for out of source builds.  See: build/build.py
+  ** build/linux.debug - Build location Linux 64-bit (debug)
+  ** build/linux.release - Build location Linux 64-bit (release)
+  ** build/w64.debug - Build location Windows 64-bit (debug)
+  ** build/w64.release - Build location Windows 64-bit (release)
+
+ * mex - Install location for mex files.  (For Windows also libraries and binaries)
+  ** mex/mex.glnxa64/ - Install location for Mex modules for Linux 64-bit
+  ** mex/mex.glnxa64.debug/ - Install location for Mex modules for Linux 64-bit
+  ** mex/mex.w64/ - Install location for Mex code, libraries, and binaries for Windows 64-bit (release)
+  ** mex/mex.w64.debug/ - Install location for Mex code, libraries, and binaries for Windows 64-bit (debug)
+
+ * bin - Install location for Linux 64-bit binaries (release)
+ * bin.debug - Install location for Linux 64-bit binaries (debug)
+ * lib - Install location for Linux 64-bit libraries (release)
+ * lib.debug - Install location for Linux 64-bit libraries (debug)
+
+Dependencies:
+
+  * Armadillo
+  * Boost
+  * OpenMP
+  * BLAS
+  * LAPACK
+  * pthread
+ 
+Build instructions:
+
+cd build
+./build.py [-i] [-f] [-v] release
