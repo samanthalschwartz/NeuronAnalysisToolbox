@@ -1,0 +1,318 @@
+\documentclass{article}
+\usepackage{helvet,times}
+\usepackage{bm,textcomp}
+
+\usepackage{amsmath,amstext,amsxtra,amsfonts,amssymb}
+\usepackage{times}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{listings}
+\usepackage{courier}
+\usepackage{color,soul}
+
+
+\begin{document}
+
+\title{The Lidke Lab Diffusion Estimator User's Guide}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+\subsection{The DEstimator Package}
+The DEstimator package is an object oriented classes built to operate under the Matlab environment.  It is currently supported for Matlab versions 2014b through Matlab 2015b.  The purpose of the DEstimator class is to organize and execute a variety of algorithms that perform operations based upon returning the likelihood of a given diffusion constant, $D$, given a trajectory described by: localized positions, localization errors, and frame time of associated localizations.
+
+The DEstimator package is organized as a Matlab class, however, it is not necessary to use the package as a class--it can be used efficiently with the static functions, allowing the user full control over the likelihood call back functions.
+
+\subsection{DEstimator Algorithms}
+There are four main algorithms available for diffusion estimation in this package.
+
+The recursive, Laplace, and Markov methods are all described in [CITE US ArXiv] and are available for use.  The Laplace method can also decouple the maximum likelihood values of the positions from the localization variances.
+
+We also include a slightly modified form of the work performed by Michalet and Berglund [Cite Michalet 2012].
+
+\subsection{DEstimator Main Functions}
+If the DEstimator package is used as a class, with trajectories loaded into the object, the main class methods are:
+\begin{itemize}
+    \item \textbf{DEstimator} - The Constructor, creates an instance of the class.
+    \item \textbf{initializeTrack} - Initializes a DEstimator object with an n-Dimensional trajectory.
+    \item \textbf{LLH} - Evaluates the log likelihood at a sampled $D$.
+    \item \textbf{LLHdim} - Evaluates the log likelihood of a specified dimension at a sampled $D$.
+    \item \textbf{MLE} - Returns the $\hat{D}$, to numerical precision, which maximizes the likelihood.
+    \item \textbf{MLEpositions} - returns the positions of X that maximize the likelihood of a given $D$.  For the standard laplace method, this corresponds well with the motion averaged positions of the particle in simulations.
+\end{itemize}
+When individual functions of the DEstimator are called outside of the object environment, the static methods are:
+\begin{itemize}
+    \item \textbf{computeEnsembleLLH} - Computes the log likelihood of a cell array of trajectories for a given sampling of $D$.
+    \item \textbf{computeEnsembleMLE} - Returns the $\hat{D}$, to numerical precision, which maximizes the likelihood for a cell array of trajectories.
+    \item \textbf{computeMLE} - Returns the $\hat{D}$, to numerical precision, which maximizes the likelihood.
+    \item \textbf{computeLLH} - Evaluates the log likelihood at a sampled $D$.
+\end{itemize}
+
+\subsection{DEstimator Testing Functions}
+The DEstimator package also contains some plotting and simulation static methods for testing the quality of the estimation algorithms:
+\begin{itemize}
+    \item \textbf{simulate1D} - simulates a diffusing 1D particle with motion blur
+    \item \textbf{simulate1DDiffusion} - simulates a diffusing 1D particle in the absence of all experimental sources of uncertainty
+    \item \textbf{simulate1DObservationVar} - Adds experimental sources of uncertainty due to diffusion to a set of idealized coordinates.
+    \item \textbf{generateObsVariance} - generates a vector of localization variances due to one of three distributions: uniform, gamma, or a constant (delta distribution).
+    \item \textbf{compareLLHspeed} - compares the speed of the DST to the C++ implementations of the other three algorithms.
+    \item \textbf{plotLLHspeed} - generates a figure from the results of \textbf{compareLLHspeed}.
+    \item \textbf{compareLLHcomputations} - compares the likelihood curves of all available methods with the recursive method set as the benchmark.
+    \item \textbf{compareMLEerror} - compares the MLE values of the recursiveC and the DST methods and calculates the associated risk from the squared log loss [cite Brown 1968] function.
+    \item \textbf{plotMLEerror} - generates a figure from the results of \textbf{compareMLEerror}.
+\end{itemize}
+
+\section{Installation}
+To install the DEstimator package, unzip all the contents into a folder on your computer.  Open Matlab, access the folder in Matlab so you are in the proper directory, and run the file: startupDEstimator.  That will put all of the necessary DEstimator files in the Matlab path.
+
+\section{Working with the DEstimator Class}
+\label{sec:DEstClass}
+The simplest way to use the DEstimator package is to treat it as a class and to load a trajectory into an object.  The class based functionality was designed to minimize the required interface for analysis.
+
+\subsection{Creating a DEstimator object}
+To create an object, an instance of the DEstimator class, type:
+\begin{verbatim}
+    est = DEstimator();
+\end{verbatim}
+Where \textbf{est} can be any variable name that is acceptable by Matlab.
+
+Example:
+\begin{verbatim}
+    A = DEstimator();
+\end{verbatim}
+
+\subsection{Importing a Trajectory}
+\label{sec:ImpTraj}
+Given an existing SPT trajectory, the inputs need to be formatted appropriately so that the DEstimator class can process the information.  A trajectory consists of three matrices/vectors and a scalar exposure time.  Globally, the units are not important, as long as they are consistent.  So if position are in $\mu m$ and times are in $s$, then the resulting $D$ estimate will be in $\mu m^2 /s$ if all inputs are consistent.  Organize the trajectory so that its in the following format:
+
+\textbf{Obs} = Observations (N time points x number of dimensions)
+
+\textbf{SE} = Localization Standard Errors (N time points x number of dimensions).  Note: Inputs are standard deviations of Observations.
+
+\textbf{Tvec} = Times of each Observation set (N time points x 1)
+
+\textbf{exposureT} = Scalar quantity that represents the exposure time of the camera sensor during a single image frame.  If this input is not entered, the default value is the minimum time between observations, following the assumption that the minimum time spacing corresponds to a full frame integration.
+
+\textbf{algorithm} = Text in single quotes that determines which estimation algorithm is used.  If this input is not entered, the \textit{recursiveC} algorithm is set as the estimator when the \textbf{initializeTrack} routine is called.
+
+Once all the trajectory information is properly formatted, it can be loaded into the DEstimator class as:
+\begin{verbatim}
+    success = est.initializeTrack(Obs, Tvec, SE, exposureT);
+\end{verbatim}
+If success = 1, then the initialization process worked.  If not, then the trajectory information was not parsed correctly.
+
+\subsection{Selecting an Estimation Algorithm}
+The default algorithm for the DEstimator class is \textit{recursiveC}, however, there are a multitude of algorithms that can be used to compute the log likelihood.  The list of algorithms can be returned by typing
+\begin{verbatim}
+    DEstimator.Algorithms'
+\end{verbatim}
+The algorithm used for estimations on a trajectory can be set by typing
+\begin{verbatim}
+    est.algorithm = `[Algorithm Name]';
+\end{verbatim}
+
+Example:
+\begin{verbatim}
+    A.algorithm = `LaplaceDirect';
+\end{verbatim}
+
+\subsection{Returning the Likelihood Distribution}
+The likelihood distribution of a vector of $D$ values can be returned from a trajectory initialized DEstimator object as
+\begin{verbatim}
+    llh = est.LLH(Dvec);
+\end{verbatim}
+Where the output, \textbf{llh} is a vector of the same length as the input, \textbf{Dvec}, which is a vector of sampled $D$ values for the likelihood distribution.
+
+Also, for multi-dimensional trajectories, the log likelihood of a single dimension can also be returned with the following argument
+\begin{verbatim}
+    llh = est.LLHdim(Dvec, dim);
+\end{verbatim}
+where \textbf{dim} is a scalar specifying which dimension to evaluate.
+
+\subsection{Returning the Maximum Likelihood Estimate}
+The Maximum Likelihood Estimate (MLE) can be returned from a trajectory initialized DEstimator object as
+\begin{verbatim}
+    [MLE llhD] = est.MLE();
+\end{verbatim}
+Where the output \textbf{MLE} is the value of $\hat{D}$ that has the largest likelihood value for the input trajectory and \textbf{llhD} is the associated log likelihood value of the corresponding $\hat{D}$.
+
+\subsection{Positional Maximum Likelihoods}
+To get the MLE of the true particle positions given the free diffusion model, the argument is
+\begin{verbatim}
+    [posMLE, posSE, llh] = est.MLEPositions(Dvec);
+\end{verbatim}
+Where the input \textbf{Dvec} can be a vector or scalar of sampled $D$ values.  The corresponding outputs, \textbf{posMLE} and \textbf{posSE} are a tensors of positions and standard error, respectively, they have dimensions of observation length, trajectory dimension size, and Dvec size.  The log likelihood values \textbf{llh} corresponds to each $D$ value that is queried.  Note that in simulated tests \textbf{posMLE} corresponds well with the motion blurred positions at each frame in the absence of localization variances.
+
+\section{Working with the DEstimator Functions}
+There are plenty of options for mobility analysis that are difficult to account for in an object oriented environment without sacrificing simplicity. To allow for versatility in mobility analysis, all of the DEstimator functions are provided as static methods.
+
+\subsection{Generating a Simulated Trajectory}
+A simulated 1-Dimensional trajectory with noise considerations can be generated from the static function
+\begin{verbatim}
+    [Obs, Tvec, SE] = DEstimator.simulate1D
+        (Dsim, N, SEin, dT, exposureT, varmethod);
+\end{verbatim}
+with only scalar inputs. \textbf{Dsim} is the simulated Diffusion constant, \textbf{N} is the number of observations in the trajectory, \textbf{SEin} is the input of standard errors for the trajectory, \textbf{dT} is the time step between images, \textbf{exposureT} is the exposure time, and \textbf{varmethod} dictates the distribution the localization variances are chosen from.  The last two inputs are optional with the default \textbf{exposureT} = \textbf{dT} and the default \textbf{varmethod} = `gamma' from a set of three choices: `gamma', `constant', `uniform'.  The input \textbf{SEin} can be a scalar or vector, if its a scalar, a vector of \textbf{SE} are generated according to the distribution specified in \textbf{varmethod}, otherwise the vector \textbf{SEin} = \textbf{SE}.
+\textbf{Note:} The DEstimator trajectory functions do not generate intermittencies.
+
+There are a few methods called inside of \textbf{simulate1D} that can be called separately if the user wants additional information in a simulation, such as the true positions.  The following sub-subsections describe these methods with the same notation as used in this subsection.
+
+\subsubsection{Simulating Pure Diffusion}
+The true positions can be generated and simulated with
+\begin{verbatim}
+    X = DEstimator.simulate1DDiffusion(N, Dsim, dT);
+\end{verbatim}
+Where the output \textbf{X} are the true coordinates of a 1-D diffusive process.
+
+\subsubsection{Corrupting True Positions into Simulated Observations}
+A trajectory structure of \textbf{Obs}, \textbf{SE}, and \textbf{Tvec} can be generated from a set of true positions and scalar inputs with the command
+\begin{verbatim}
+    [Obs, Tvec, SE] = DEstimator.simulate1DObservationVar
+        (X, SEin, dT, exposureT, varmethod);
+\end{verbatim}
+Where as in the \textbf{simulate1D} function, \textbf{exposureT} defaults to \textbf{dT} and \textbf{varmethod} defaults to `gamma'.
+
+\subsubsection{Generating a Vector of Localization Variances}
+A specific vector of localization standard errors can be drawn from one of three distributions using the following command:
+\begin{verbatim}
+    SE = DEstimator.generateObsStandardError(SEin, N, varmethod);
+\end{verbatim}
+Where \textbf{varmethod} can either be `gamma', `constant', or `uniform'.  SEin must be a scalar in this instance.  The `gamma' method draws the localization standard errors from $$\mathrm{SE}=\sigma\sim \mathrm{Gamma}(4,\mathrm{SEin}/4).$$  The `uniform' method draws the localization variances from $$\mathrm{SE}=\sigma\sim \mathrm{Uniform}(\frac{1}{2} \mathrm{SEin}, \frac{3}{2} \mathrm{SEin}).$$  The 'constant' distribution is actually a dirac delta distribution and sets all \textbf{SE} = \textbf{SEin}.
+
+\subsection{Working with Trajectories}
+Similar to the object oriented functions, the DEstimator static functions can calculate log likelihoods, MLEs, and position estimates.
+
+A few of the inputs diverge from the object oriented approach described in Sec.~\ref{sec:DEstClass}.
+
+\textbf{Dvec} is still a vector of sampled $D$.
+
+\textbf{Obs} can only be a 1-dimensional vector of trajectory observations.
+
+\textbf{Tvec} is a 1-dimensional vector of trajectory times.
+
+\textbf{SE} can only be a 1-dimensional vector of localization standard errors.
+
+\textbf{exposureT} is a scalar that represents the camera exposure time, if no value is chosen, it defaults to the minimum spacing between times seen in \textbf{Tvec}.
+
+\textbf{algorithm} is the algorithm used as the estimator.  `recursiveC' is the default if no algorithm is chosen.
+
+A convenient feature of free diffusion computations is that the log likelihood of several dimensions is equivalent to the sum of the log likelihoods calculated from each dimension.
+
+\subsubsection{Returning the Log Likelihood}
+Given a 1-D trajectory in the proper format, the log likelihood can be returned with the static command
+\begin{verbatim}
+    llh = DEstimator.computeLLH(Dvec, Obs, Tvec, SE, exposureT, algorithm);
+\end{verbatim}
+
+\subsubsection{Returning the Diffusion MLE of a Trajectory}
+The $\hat{D}$ that maximizes the likelihood of a single 1-D trajectory can be returned with the command
+\begin{verbatim}
+    [MLE, llhD] = DEstimator.computeMLE(Obs, Tvec, SE, exposureT, algorithm);
+\end{verbatim}
+Where \textbf{MLE} = $\hat{D}$ and the associated log likelihood is \textbf{llhD}.
+
+\subsection{Working with Ensembles of Trajectories}
+In the static methods library, there are also a pair of functions designed specifically to handle ensembles of trajectories.  The data formatting for trajectory ensembles is handled a bit differently.  Rather than three vectors consisting of \textbf{Obs}, \textbf{Tvec}, and \textbf{SE}, a trajectory ensemble is put into a \textbf{Trajectories} cell array where each cell element is described as a matrix
+\begin{verbatim}
+    Trajectories{ii} = [Obs, Tvec, SE]
+\end{verbatim}
+where ii denotes the trajectory number.  This allows for ensemble estimates of the likelihood of trajectories, where a trajectory of multiple dimensions can be treated as multiple trajectories of a single dimension.
+
+\subsubsection{Computing the Log Likelihood of an Ensemble of Trajectories}
+The log likelihood of an ensemble of trajectories can be calculated with the command
+\begin{verbatim}
+    LLH = DEstimator.computeEnsembleLLH
+        (Dvec, Trajectories, exposureT, algorithm);
+\end{verbatim}
+
+\subsubsection{Returning the Diffusion MLE of an Ensemble of Trajectories}
+The single $\hat{D}$ value that best describes an ensemble of trajectories can be calculated with the command
+\begin{verbatim}
+    [MLE, llhD] = DEstimator.computeEnsembleMLE
+        (Trajectories, exposureT, algorithm);
+\end{verbatim}
+where \textbf{MLE} = $\hat{D}$ and the associated log likelihood is \textbf{llhD}.
+
+\section{Performance Testing of the DEstimator Algorithms}
+A few functions are imbedded in the DEstimator package to test the algorithms under a few metrics: speed, accuracy, and consistency.
+
+\subsection{Speed Testing the DEstimator Algorithms}
+The speed of each algorithm can be tested with the following command
+\begin{verbatim}
+    results = DEstimator.compareLLHspeed(Nsizes, maxsize, trials, NDvals);
+\end{verbatim}
+Where all of the inputs are scalars.  \textbf{Nsizes} is the number of data points (trajectory lengths) to perform the speed test on, \textbf{maxsize} sets the longest trajectory length to test, \textbf{trials} determines how many trials are performed for each trajectory length, and \textbf{NDvals} determines the number of diffusion constants to test over.  The speed test generates results for \textbf{Nsizes} number of trajectories logarithmal spaced from length 4 to the \textbf{maxsize}, sampled at various \textbf{NDvals} and repeated \textbf{ntrials}.
+
+The output, \textbf{results} is a structure which can be plotted with the command
+\begin{verbatim}
+    DEstimator.plotLLHspeed(results);
+\end{verbatim}
+
+\subsection{Accuracy Testing of the DEstimator Algorithms}
+The quality of each estimator can be tested with the following command
+\begin{verbatim}
+    results = DEstimator.compareMLEerror
+        (Nsizes, maxsize, Dsim, meanSE, dT, nTrials, varmethod);
+\end{verbatim}
+Where all of the inputs are scalars.  \textbf{Nsizes} is the number of data points (trajectory lengths) to perform the speed test on, \textbf{maxsize} sets the longest trajectory length to test, \textbf{Dsim} sets the simulated diffusion coefficient for all trajectories, \textbf{meanSE} is the mean value for the localization standard errors generated, \textbf{dT} is the time step (exposure time = \textbf{dT} for these simulations), \textbf{nTrials} is the number of trials at each trajectory length to estimate the risk from, and \textbf{varmethod} is the distribution to draw localization variances from.
+
+As in the trajectory simulation methods, \textbf{varmethod} can only be set to `gamma', `constant', or `uniform'.
+
+If \textbf{nTrials} is set sufficiently high (> 100), then the resulting average losses makes a reasonable estimate of the risk.  The risk for each estimator from the \textbf{results} structure can then be plotted with the command
+\begin{verbatim}
+    DEstimator.plotMLEerror(results);
+\end{verbatim}
+
+\subsubsection{Algorithm Consistency Testing}
+The consistency of all the DEstimator algorithms can be checked with the command
+\begin{verbatim}
+    DEstimator.compareLLHcomputations(ND, N, Dsim, meanSE, dT, exposureT);
+\end{verbatim}
+Where all of the inputs are scalars.  \textbf{ND} is the number of $D$ values to return likelihood distributions from, \textbf{N} is the length of the trajectory to perform the comparison on, \textbf{Dsim} is the simulated diffusion constant, \textbf{meanSE} is the mean localization standard error which is drawn from a gamma distribution, \textbf{dT} is the time step for the simulated particle, and \textbf{exposureT} is the exposure time of each observation.  If there is no input for \textbf{dT}, the default is 1 and if there is no input for \textbf{exposureT}, the default is \textbf{dT}.
+
+This function automatically plots the results, providing the user with a visual comparison of all the algorithms.
+
+\section{Demo Script for 2-D Trajectory Analysis}
+
+This section will show how to generate a 2-D trajectory, return log likelihood values and then return the MLE $\hat{D}$ estimate.  First, import or generate a trajectory.  A trajectory can be generated by defining input parameters and typing in the keystrokes:
+\begin{verbatim}
+Dsim = 1; % Simulated diffusion constant
+N = 100; % Number of observations in the trajectory
+SEin = 0.5; % Mean standard error
+dT = 1; % Time step per observation
+exposureT = dT; % Exposure time
+varmethod = `gamma'; % Distribution of standard errors
+
+% generate 2, 1D trajectories
+[Ox T Sx] = DEstimator.simulate1D(Dsim, N, SEin, dT, exposureT, varmethod);
+[Oy T Sy] = DEstimator.simulate1D(Dsim, N, SEin, dT, exposureT, varmethod);
+
+% combine 2 trajectories into 1 2D trajectories
+Obs = [Ox Oy];
+SE = [Sx Sy];
+\end{verbatim}
+
+A DEstimator object can then be created with the trajectory loaded in
+\begin{verbatim}
+A = DEstimator(Obs,T,SE,dT);
+\end{verbatim}
+
+The associated log likelihood of several D values can be returned if the vector of D is defined
+\begin{verbatim}
+D_vec = linspace(1e-4,2,100);
+LLH = A.LLH(D_vec);
+\end{verbatim}
+
+The MLE, $\hat{D}$ of the diffusion constant given the trajectory can be estimated with MLE method
+\begin{verbatim}
+[MLE_D MLE_LLH] = A.MLE();
+\end{verbatim}
+
+\section{In Depth Components}
+There are many other functions imbedded in the DEstimator class, particularly, the function calls for each algorithm.  However, the details are well documented inside the actual DEstimator class, so we omit their explicit description in this manual.
+
+\end{document} 
