@@ -1,0 +1,14 @@
+fp = FRAP();
+datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaA2\intrabody-gabaA2_2_FRAP488_20180601_122100 PM';
+str = '*w0001.tif';
+fp.load(datadir,str);
+fp.ROIs = {[110, 203],[186, 188],[382, 328],[261, 301]};
+fp.showROIs;
+fp.bleachframes = 5;
+fp.framerate = 0.4;
+fp.inc = 6;
+fp.getBackgroundROI;
+fp.getControlROI;
+[a,b] = fp.makeRecoveryCurve();
+fp.setROIs;
+fp.plotRecoveryCurves();
