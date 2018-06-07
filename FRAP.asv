@@ -136,7 +136,7 @@ classdef FRAP < handle
                x = obj.FRAP_ROI{rr}.RecoveryCurve.x;
                y = obj.FRAP_ROI{rr}.RecoveryCurve.y;
                plot(ah2,x,y,'Color',obj.colors(rr,:));  hold on;
-               plot(ah2,obj.FRAP_ROI{rr}.RecoveryCurve.fitx,obj.FRAP_ROI{rr}.RecoveryCurve.fity,'--','Color',obj.colors(rr,:)); 
+               plot(ah2,obj.FRAP_ROI{rr}.RecoveryCurve.fitx,obj.FRAP_ROI{rr}.RecoveryCurve.fity,'--','Color',obj.colors(rr,:)) 
            end
            xlabel('Time (seconds)');
            ylabel('Relative Fluorescence');   

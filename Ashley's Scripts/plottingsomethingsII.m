@@ -3,8 +3,8 @@
 %     'Z:\Ashley\For Sam\051318 GluA1 insertion',...
 %     'Z:\Ashley\For Sam\050118 NL1 insertion'};
 
-alldatadir = {'E:\Zapalog project\GluA1release_REs\060118\merges\slip1'};
-alldatadir = {'E:\Zapalog project\DHFR-GFP-GluA1\051718\merges\slip1'};
+% alldatadir = {'E:\Zapalog project\GluA1release_REs\060118\merges\slip1'};
+alldatadir = {'F:\Sam\Data\Ashley\GluA1release_REs\060118\merges\slip2'};
 for dd = 1:numel(alldatadir)
     datadir = alldatadir{dd};
     savedir = fullfile(datadir,'minFrameImages');

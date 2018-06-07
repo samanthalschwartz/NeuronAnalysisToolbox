@@ -17,10 +17,6 @@ classdef FRAP_ROI < handle
            normROI = corrROI./mean(squeeze(corrROI(:,:,0:(obj.bleachframes-1)))); %normalize intensity to pre-bleaching frame intensity
            obj.RecoveryCurve.x = single(squeeze(obj.time));
            obj.RecoveryCurve.y = single(squeeze(normROI));
-            obj.fitRecoveryCurve_1component;
-           x = obj.FitResults.timecorrect;
-           obj.RecoveryCurve.fity=[obj.FitResults.y0+obj.FitResults.A1*(1-exp(-x./obj.FitResults.tau1))];
-           obj.RecoveryCurve.fitx = x+obj.time(obj.bleachframes);
        end
        function f = plotRecoveryCurve(obj)
            obj.fitRecoveryCurve_1component;
@@ -28,7 +24,7 @@ classdef FRAP_ROI < handle
            plot(obj.RecoveryCurve.x,obj.RecoveryCurve.y); hold on;
            x = obj.FitResults.timecorrect;
            fity=[obj.FitResults.y0+obj.FitResults.A1*(1-exp(-x./obj.FitResults.tau1))];
-           plot(obj.FitResults.timecorrect+obj.time(obj.bleachframes),fity,'--k');
+           plot(obj.FitResults.timecorrect+obj.bleachframes*,fity,'-k')
 %            ylim([0 1]);
            xlabel('Time (seconds)');
            ylabel('Relative Fluorescence');
