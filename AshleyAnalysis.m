@@ -56,17 +56,22 @@ classdef AshleyAnalysis < handle
           obj.cellFill.viewMaskOverlayPerim();
           obj.surfaceCargo.viewMaskOverlayFill();
        end
-       function h = plot_DHFR_minFrame(obj)
-         [labeledim] = obj.labelmask_byframe(obj.mask_DHFR);
+       function h = plot_cargo_minFrame(obj)
+         [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.surfaceCargo.mask);
+         labeledim = lbl_out.*obj.cellFill.mask;
+%          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
          test = min(labeledim,labeledim>0,3);
          test(test>(size(labeledim,3)+1)) = 0;
+         dist = dt(obj.cellFill.mask(:,:,0));
+         test(dist==1) = max(test)+1;
          %-- make colormap for plotting
          blackjet = flip(jet(255));
-         blackjet(1,:) = [0 0 0]; blackjet(end,:) = [0 0 0];
+         blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
+         
          %-- now plot results
          h = dipshow(test,blackjet);
          dipmapping(h,[0 size(labeledim,3)]);
-         diptruesize(h,100);
+         diptruesize(h,100);         
          % get colorbar tick info
          colorunit = size(labeledim,3)/255;
          numofcolbarval = 4;
@@ -77,7 +82,7 @@ classdef AshleyAnalysis < handle
          c.Ticks = colbarplace;
          c.TickLabels = colbarval;
          c.FontSize = 16;
-         c.Label.String = 'First Frame with DHFR Insertion';
+         c.Label.String = 'First Frame with Cargo Insertion';
          c.Label.FontSize = 16;
          h.OuterPosition = h.OuterPosition + [0 0 400 50];
        end

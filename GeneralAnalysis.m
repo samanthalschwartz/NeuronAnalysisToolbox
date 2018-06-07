@@ -178,7 +178,8 @@ methods (Static)
             return;
         end
         for ii = 1:size(mask_in,3)
-            temp = obj.labelmask(mask_in(:,:,ii-1),conn,minSize,maxSize);
+            mask = dip_image(mask_in);
+            temp = GeneralAnalysis.labelmask(mask(:,:,ii-1),conn,minSize,maxSize);
             temp(temp>0) = ii;
             labeledim(:,:,ii-1) = temp;
         end
