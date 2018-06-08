@@ -18,9 +18,7 @@ classdef FRAP_ROI < handle
            obj.RecoveryCurve.x = single(squeeze(obj.time));
            obj.RecoveryCurve.y = single(squeeze(normROI));
             obj.fitRecoveryCurve_1component;
-           x = obj.FitResults.timecorrect;
-           obj.RecoveryCurve.fity=[obj.FitResults.y0+obj.FitResults.A1*(1-exp(-x./obj.FitResults.tau1))];
-           obj.RecoveryCurve.fitx = x+obj.time(obj.bleachframes);
+           
        end
        function f = plotRecoveryCurve(obj)
            obj.fitRecoveryCurve_1component;
@@ -42,8 +40,8 @@ classdef FRAP_ROI < handle
            timeRm=obj.time(obj.bleachframes+1:end)-obj.time(obj.bleachframes+1);
            x=squeeze(double(timeRm));
            y=squeeze(double(blcorRm));
-           preint=mean(blcor(1:obj.bleachframes-1));
-           postint=blcor(obj.bleachframes);
+           preint=mean(blcor(1:obj.bleachframes));
+           postint=blcor(obj.bleachframes+1);
            opts = fitoptions('method','NonlinearLeastSquares','Lower',[0,0,-Inf]);
            
            %First plot and fit for single exponential
@@ -64,9 +62,9 @@ classdef FRAP_ROI < handle
            obj.FitResults.A1 = A1;
            obj.FitResults.IF = IF;
            obj.FitResults.tau1 = tau1;
-           obj.FitResults.I0 = I0;
-           
-
+           obj.FitResults.I0 = I0;        
+           obj.RecoveryCurve.fity=y0+A1*(1-exp(-x./tau1));
+           obj.RecoveryCurve.fitx = x+obj.time(obj.bleachframes);
            
        end
    end
