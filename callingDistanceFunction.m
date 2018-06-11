@@ -2,7 +2,7 @@
 % this will prompt to select multiple files to run. Currently need to only
 % select files from the same directory 
 addpath(genpath('C:\Users\sammy\Documents\Git'));
-addpath(genpath('Z:\Lab Resources\Analysis Resources\Matlab Resource\NeuronAnalysisToolBox'));
+% addpath(genpath('Z:\Lab Resources\Analysis Resources\Matlab Resource\NeuronAnalysisToolBox'));
 startdir = 'G:\Sam\Data\Ashley';
 % startdir = 'Z:\Ashley\For Sam';
 [filename, pathname] = uigetfile(fullfile(startdir,'*.mat'),...
@@ -31,7 +31,7 @@ for ii = 1:filesize
     sink_mask = dip_image(aa.cellFill.soma_mask);
     seed_mask = dip_image(aa.inCellSurfaceCargo);
     aa.cellFill.make_thickMask();
-    geom_mask = bclosing(logical(aa.cellFill.mask_thick));
+    geom_mask = bclosing(logical(aa.cellFill.mask_thick),1,2,-1);
     distMat = GeneralAnalysis.geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,plotsavedir,saveflag);
     aa.distancematrix = distMat;
     save(fullfile([plotsavedir,'.mat']),'aa');
