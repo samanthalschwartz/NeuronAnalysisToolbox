@@ -39,12 +39,18 @@ classdef channelSurfaceCargo < channelBase
            img_m = medif(obj.image,3);
            img_mg = gaussf(img_m,obj.gsig);
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_mg,obj.lsig,obj.gsig);
-           glim = gaussf(img_laplcutoff);
-%            obj.mask = GeneralAnalysis.imgThreshold(img_laplcutoff);
-            [maskpre,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
-%            maskpre = GeneralAnalysis.imgThreshold(glim.^1.2);
+           %            glim = gaussf(img_laplcutoff);
+           %            obj.mask = GeneralAnalysis.imgThreshold(img_laplcutoff);
+           [maskpre,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
+           %            maskpre = GeneralAnalysis.imgThreshold(glim.^1.2);
+                     
            mask = GeneralAnalysis.bwmorph_timeseries(maskpre,'thicken',1);
-           obj.mask = logical(mask);
+           ll = slice_op('watershed',-img_mg,2);
+           maskws = mask;
+           maskws(ll) = 0;
+           
+           obj.mask = logical(maskws);
+%            obj.mask = logical(mask);
            obj.backgroundvalue = threshval;
        end
    end

@@ -326,7 +326,7 @@ methods (Static)
             % calc dist map for geom_mask in frame tt
             sinkDist = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');
             %             dipshow(sinkDist,'labels')
-            % now label seeds from seed_mask
+            % now label seeds from seed_mask===__-----------------
             seedlbl = label(seedframe,1);
             if ~any(seedlbl)
                 continue;
@@ -364,11 +364,18 @@ methods (Static)
                 %                 paths_thinned_many = bwmorph(paths, 'thin', inf); -- thin
                 %                 does not do what 'Steve' thinks here. See how to do in
                 %                 plotting function
-                closedmask = bwmorph(mindistmask,'fill',inf);
-                paths_thinned_many = bwmorph(closedmask, 'thin', inf);
+                track = typicalShortestPath(sinkDist,[rows,cols],min(D(:)));
+%                 closedmask = bwmorph(mindistmask,'fill',inf);
+%                 paths_thinned_many = bwmorph(closedmask, 'thin', inf);
+                typicalpaths = dip_image(false(size(sinkDist)));
+                for ii = 1:size(track,1)
+                   typicalpaths(track(ii,1)-1,track(ii,2)-1) = true; 
+                end
+                
+                
                 if plotflag
                     %                      P = imoverlay(P, paths, [.5 .5 .5]);
-                    P = imoverlay(P, paths_thinned_many, [0 1 0]);
+                    P = imoverlay(P, logical(typicalpaths), [0 1 0]);
                     P = imoverlay(P, logical(seedlbl_ll), [1 0 0]);
                 end
                 %                 dist = size(find(paths_thinned_many),1);
