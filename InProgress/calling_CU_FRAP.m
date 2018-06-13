@@ -1,5 +1,5 @@
 %% Gephyrin
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaA2\intrabody-gabaA2_2_FRAP488_20180601_122100 PM';
 str = '*w0001.tif';
 % str = '*w0000.tif';
@@ -16,10 +16,11 @@ fp.getControlROI;
 % fp.setROIs()
 % [a,b] = fp.makeRecoveryCurve();
 fp.setROIs;
+fp.CU_FRAP_ROI{1}.makeRecoveryCurve;
 fp.plotRecoveryCurves();
 
 %% GABA
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaA2\intrabody-gabaA2_2_FRAP561_20180601_122036 PM';
 str = '*w0000.tif';
 fp.load(datadir,str);
@@ -37,7 +38,7 @@ fp.getControlROI;
 fp.setROIs;
 fp.plotRecoveryCurves();
 %% gamma 2 gephryn
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaG2\intrabody-gabaG2_2_FRAP488-longer_20180602_80535 PM';
 str = '*w0001.tif';
 fp.load(datadir,str);
@@ -56,7 +57,7 @@ fp.setROIs;
 fp.plotRecoveryCurves();
 %%
 %% gamma 2 gaba same cell - still blecahed by 488
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaG2\intrabody-gabaG2_2_FRAP488-longer_20180602_80535 PM';
 str = '*w0000.tif';
 fp.load(datadir,str);
@@ -74,7 +75,7 @@ fp.getControlROI;
 fp.setROIs;
 fp.plotRecoveryCurves();
 %%
-fp = FRAP(); %super zipping around Gaba but not intrabody
+fp = CU_FRAP(); %super zipping around Gaba but not intrabody
 
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaG2\intrabody-gabaG2_2_FRAP561-longer_20180602_70655 PM';
 str = '*w0000.tif';
@@ -94,7 +95,7 @@ fp.getControlROI;
 fp.setROIs;
 fp.plotRecoveryCurves();
 %% gaba g2 shorter
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\intrabody-gabaG2\intrabody-gabaG2_2_FRAP561-shorter_20180602_70818 PM';
 str = '*w0000.tif';
 fp.load(datadir,str);
@@ -112,7 +113,7 @@ fp.getControlROI;
 fp.setROIs;
 fp.plotRecoveryCurves();
 %% cry2 gaba
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\cy2gephryn-gabaA2\intrabody-gabaG2_2_bluelight_FRAP561_20180602_92322 PM';
 str = '*t00*.tif';
 fp.load(datadir,str);
@@ -131,7 +132,7 @@ fp.setROIs;
 fp.plotRecoveryCurves();
 %%
 %% cry2 gaba
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\cy2gephryn-gabaA2\intrabody-gabaG2_3_bluelight_FRAP561_20180602_101332 PM';
 str = '*w0000.tif';
 fp.load(datadir,str);
@@ -149,7 +150,7 @@ fp.getControlROI;
 fp.setROIs;
 fp.plotRecoveryCurves();
 %% cry2 gaba g2
-fp = FRAP();
+fp = CU_FRAP();
 datadir = 'G:\Sam\Data\180601 GABAR + Gephryn\cy2gephryn-gabaG2\cry2gephrin-gabaG2_1_bluelight_561FRAP_20180602_111114 PM';
 str = '*w0000.tif';
 fp.load(datadir,str);

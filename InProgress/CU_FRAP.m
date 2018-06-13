@@ -1,4 +1,4 @@
-classdef FRAP < handle
+classdef CU_FRAP < handle
     properties
         %         fp.ROIs = {[328, 186],[209, 241],[211, 302],[332, 335]};
         % fp.ROIs = {[305, 205],[49, 38],[330, 317],[407, 294]};
@@ -114,7 +114,7 @@ classdef FRAP < handle
         function h = setROIs(obj)
             for rr = 1:numel(obj.ROIs)
                 img_rr = obj.roi2image(obj.ROIs{rr}); 
-                obj.FRAP_ROI{rr} = FRAP_ROI();
+                obj.FRAP_ROI{rr} = CU_FRAP_ROI();
                 obj.FRAP_ROI{rr}.Intensity = img_rr;
                 obj.FRAP_ROI{rr}.bleachframes = [obj.bleachframes];
                 obj.FRAP_ROI{rr}.Background = obj.backgroundROI.image; %per pixel background
