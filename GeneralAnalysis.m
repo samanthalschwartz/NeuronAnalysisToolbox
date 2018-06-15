@@ -78,6 +78,14 @@ methods (Static)
         ch3 = oimg(:,:,3:3:frames3);
         im_array = cat(4,ch1,ch2,ch3);
     end
+    function im_array = loadtiff_2ch(filepath)
+        % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
+        oimg = loadtiff(filepath);
+        frames2 = size(oimg,3);
+        ch1 = oimg(:,:,1:2:frames2);
+        ch2 = oimg(:,:,2:2:frames2);
+        im_array = cat(4,ch1,ch2);
+    end
     function ch = loadtiff_1ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
         ch = dip_image(loadtiff(filepath));

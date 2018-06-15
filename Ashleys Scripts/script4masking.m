@@ -18,7 +18,6 @@ aa.TfR = channelTfR();
 im_array = GeneralAnalysis.loadtiff_3ch(datafilepath);
 aa.cellFill.setimage(im_array(:,:,:,2));
 aa.surfaceCargo.setimage(im_array(:,:,:,3));
-aa.TfR.setimage(im_array(:,:,:,1));
 % trim the image 
 aa.cellFill.ROI_trim = [];
 aa.cellFill.trim_rawimage()
