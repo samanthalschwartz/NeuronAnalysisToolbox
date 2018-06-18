@@ -25,7 +25,7 @@
 % mask_closing = imclose(single(mask),se);
 %%
 % load in vamp2 channel data and select rois to analyze
-datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\try2\GFP';
+datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\try2\10uL';
 % datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\180614FLtoxin_vamp2AB647_5uL-1';
 % datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\180614FLtoxin_vamp2AB647_10uL-1';
 % datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\180614FLtoxin_2ndOnly647_5uL-1';
@@ -81,14 +81,14 @@ end
 % plot scatter plot
 % or categorize based on min mean intensity 
 %%
-datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\try2\GFP';
+datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\try2\10uL';
 % datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\180614FLtoxin_2ndOnly647_5uL-1';
 % datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\180614FLtoxin_vamp2AB647_5uL-1';
 % datadir = 'G:\Sam\Data\180614 RBL vamp2Ab\180614FLtoxin_vamp2AB647_10uL-1';
 roifiles = dir(fullfile(datadir,'*ROIs.mat'));
 vamp_imfiles = dir(fullfile(datadir,'*w2640*.TIF'));
-% FLtox_imfiles = dir(fullfile(datadir,'*w1561*.TIF'));
-FLtox_imfiles = dir(fullfile(datadir,'*488LOW*.TIF'));
+FLtox_imfiles = dir(fullfile(datadir,'*w1561*.TIF'));
+% FLtox_imfiles = dir(fullfile(datadir,'*488LOW*.TIF'));
 
 FLtoxPos_vampvals = [];
 FLtoxNeg_vampvals = [];
@@ -113,16 +113,14 @@ for ii = 1:numel(roifiles)
         FLtox_msr = measure(labeledim,FLtox_im,{'mean','mass','size'});
         vampvals = cat(1,vampvals,vamp_msr.mean);
         FLtoxvals = cat(1,FLtoxvals,FLtox_msr.mean);
-        if FLtox_msr.mean>8000
+        if FLtox_msr.mean>5000
             out = drawpolygon(FLtox_im,curroi.fileroicords{mm},max(FLtox_im)*2);
-            fh = dipshow(out,'log');
+            dipshow(out,'lin');
+            
             FLtoxPos_vampvals = cat(1,FLtoxPos_vampvals,vamp_msr.mean);
-            pause(1);
-            close(fh);
         else
             FLtoxNeg_vampvals = cat(1,FLtoxNeg_vampvals,vamp_msr.mean);
         end
-        
     end
     plot(fa,vampvals,FLtoxvals,'.','MarkerSize',14,'Color',cols(ii,:)); hold on;
 end

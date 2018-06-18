@@ -1,7 +1,7 @@
 classdef AshleyAnalysis < handle
    properties
     path_channel_cellfill = []; %'F:\Sam\050118 NL1 insertion\cell4-C2.tif'
-    path_channel_DHFR = []; %'F:\Sam\050118 NL1 insertion\cell4-C3.tif';
+    path_channel_surfaceCargo = []; %'F:\Sam\050118 NL1 insertion\cell4-C3.tif';
     path_channel_TfR = []; %'F:\Sam\050118 NL1 insertion\cell4-C1.tif';
     path_3ch_datafile = [];
     ROI_trim =[];
@@ -25,9 +25,18 @@ classdef AshleyAnalysis < handle
                obj.surfaceCargo.setimage(im_array(:,:,:,2));
                obj.TfR.setimage(im_array(:,:,:,3));
            else
+               obj.cellFill.setfilepath(obj.path_channel_cellfill);
+               obj.surfaceCargo.setfilepath(obj.path_channel_surfaceCargo);
+               obj.TfR.setfilepath(obj.path_channel_TfR);
+               if ~isempty(obj.path_channel_cellfill)
                obj.cellFill.loadimage();
+               end
+               if ~isempty(obj.path_channel_surfaceCargo)
                obj.surfaceCargo.loadimage();
+               end
+               if ~isempty(obj.path_channel_TfR)
                obj.TfR.loadimage();
+               end
            end
        end
        function setCellFill(obj,image_in)
@@ -42,7 +51,7 @@ classdef AshleyAnalysis < handle
        end
        function setFilePaths(obj)
            obj.cellFill.setfilepath(obj.path_channel_cellfill);
-           obj.surfaceCargo.setfilepath(obj.path_channel_DHFR);
+           obj.surfaceCargo.setfilepath(obj.path_channel_surfaceCargo);
            obj.TfR.setfilepath(obj.path_channel_TfR);
        end
        function maskCargoInsideCell(obj)
@@ -64,14 +73,17 @@ classdef AshleyAnalysis < handle
            newsfmask(:,:,end-3);
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) 
        end
-       function h = plot_cargo_minFrame(obj)
+       function h = plot_cargo_minFrame(obj,cellperim)
+%            cellperim is boolean for including cell perimeter in image
          [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.surfaceCargo.mask);
          labeledim = lbl_out.*obj.cellFill.mask;
 %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
          test = min(labeledim,labeledim>0,3);
          test(test>(size(labeledim,3)+1)) = 0;
+         if nargin==2
          dist = dt(obj.cellFill.mask(:,:,0));
          test(dist==1) = max(test)+1;
+         end
          %-- make colormap for plotting
          blackjet = flip(jet(255));
          blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];

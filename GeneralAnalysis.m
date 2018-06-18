@@ -372,18 +372,18 @@ methods (Static)
                 %                 paths_thinned_many = bwmorph(paths, 'thin', inf); -- thin
                 %                 does not do what 'Steve' thinks here. See how to do in
                 %                 plotting function
-                track = typicalShortestPath(sinkDist,[rows,cols],min(D(:)));
-%                 closedmask = bwmorph(mindistmask,'fill',inf);
-%                 paths_thinned_many = bwmorph(closedmask, 'thin', inf);
-                typicalpaths = dip_image(false(size(sinkDist)));
-                for ii = 1:size(track,1)
-                   typicalpaths(track(ii,1)-1,track(ii,2)-1) = true; 
-                end
+%                 track = typicalShortestPath(sinkDist,[rows,cols],min(D(:)));
+                closedmask = bwmorph(mindistmask,'fill',inf);
+                paths_thinned_many = bwmorph(closedmask, 'thin', inf);
+%                 typicalpaths = dip_image(false(size(sinkDist)));
+%                 for ii = 1:size(track,1)
+%                    typicalpaths(track(ii,1),track(ii,2)) = true; 
+%                 end
                 
                 
                 if plotflag
-                    %                      P = imoverlay(P, paths, [.5 .5 .5]);
-                    P = imoverlay(P, logical(typicalpaths), [0 1 0]);
+                    P = imoverlay(P, paths_thinned_many, [.5 .5 .5]);
+%                     P = imoverlay(P, logical(typicalpaths), [0 1 0]);
                     P = imoverlay(P, logical(seedlbl_ll), [1 0 0]);
                 end
                 %                 dist = size(find(paths_thinned_many),1);
@@ -425,9 +425,10 @@ methods (Static)
      end
      function img_out = applydriftCorrect(img_in,sv_arr)
          img_out = 0*img_in;
-        for ii = 0:size(img_in,3)-1
+         img_out(:,:,0) = img_in(:,:,0);
+        for ii = 1:(size(img_in,3)-1)
             currframe = squeeze(img_in(:,:,ii));
-            shiftcurrframe = shift(currframe,sv_arr(:,ii+1));
+            shiftcurrframe = shift(currframe,sv_arr(:,ii));
             img_out(:,:,ii) = shiftcurrframe;            
         end
      end

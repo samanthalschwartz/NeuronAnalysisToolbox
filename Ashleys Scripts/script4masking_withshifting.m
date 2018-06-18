@@ -2,27 +2,25 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %% add the correct path to your .tiff file data
-datafilepath = 'G:\Sam\Data\MJK_zapERtrap_for_sam\040318_globalrelease';
+datafilepath = 'G:\Sam\Data\MJK_zapERtrap_for_sam\050918_local_NL1';
 %%
 % to view image series 'N' to go to next time slice 'P' for previous time
 % slice. Use 'Mapping' tool bar at top to change the look up table.
 % 'I' to zoom in or 'O' to zoom out.
 addpath(genpath('Z:\Lab Resources\Analysis Resources\Matlab Resource\NeuronAnalysisToolBox'));
 aa = AshleyAnalysis();
-aa.path_channel_cellfill = fullfile(datafilepath,'cell1_r.tif');
-aa.path_channel_surfaceCargo = fullfile(datafilepath,'cell1_fr.tif');
-aa.path_channel_TfR = fullfile(datafilepath,'cell1_g.tif');
+savename = 'cell5';
+aa.path_channel_cellfill = fullfile(datafilepath,'cell5_r.tif');
+aa.path_channel_surfaceCargo = fullfile(datafilepath,'cell5_fr_soma.tif');
+aa.path_channel_TfR = fullfile(datafilepath,'cell5_g.tif');
 aa.loadImages;
-aa.path_3ch_datafile = datafilepath;
-aa.cellFill = channelCellFill();
-aa.surfaceCargo = channelSurfaceCargo();
-aa.TfR = channelTfR();
 
-% use last index to represent which stack to use
-im_array = GeneralAnalysis.loadtiff_1ch(datafilepath);
-aa.cellFill.setimage(im_array(:,:,:,1));
-aa.surfaceCargo.setimage(im_array(:,:,:,2));
-aa.TfR.setimage(im_array(:,:,:,3));
+[img_out_cf,sv_arr] = GeneralAnalysis.timedriftCorrect(aa.cellFill.image);
+aa.cellFill.setimage(img_out_cf);
+img_out_sc = GeneralAnalysis.applydriftCorrect(aa.surfaceCargo.image,sv_arr);
+aa.surfaceCargo.setimage(img_out_sc);
+img_out_tf = GeneralAnalysis.applydriftCorrect(aa.TfR.image,sv_arr);
+aa.TfR.setimage(img_out_tf);
 % trim the image 
 aa.cellFill.ROI_trim = [];
 aa.cellFill.trim_rawimage()
@@ -66,10 +64,10 @@ aa.surfaceCargo.viewMaskOverlayPerim;
 aa.cellFill.selectSoma();
 
 % now save the object
-save([datafilepath(1:end-4) '_AshleyFile.mat'], 'aa'); 
+save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
 
 % now make the min distance image
 h = aa.plot_cargo_minFrame();
-saveas(h,fullfile([datafilepath(1:end-4) '_timeHeatMap']),'fig');
-saveas(h,fullfile([datafilepath(1:end-4) '_timeHeatMap']),'png');
+saveas(h,fullfile(datafilepath,[savename '_timeHeatMap']),'fig');
+saveas(h,fullfile(datafilepath,[savename '_timeHeatMap']),'png');
 close(h);

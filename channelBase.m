@@ -42,7 +42,7 @@ classdef channelBase < handle
            if isempty(obj.ROI_trim) || size(obj.ROI_trim,1)==1
                h = dipshow(obj.rawimage);
                dipmapping(h,'log');
-               diptruesize(h,200);
+               diptruesize(h,100);
                answer = questdlg('Select the region to use as your image', ...
                    'Options', ...
                    'OK','Oops!','OK');
