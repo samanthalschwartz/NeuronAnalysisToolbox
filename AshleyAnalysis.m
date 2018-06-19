@@ -106,55 +106,69 @@ classdef AshleyAnalysis < handle
          c.Label.FontSize = 16;
          h.OuterPosition = h.OuterPosition + [0 0 400 50];
        end
-       function h = plot_cargo_minFrameMovie(obj,cellperim)
-%            cellperim is boolean for including cell perimeter in image
-         [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.surfaceCargo.mask);
-         labeledim = lbl_out.*obj.cellFill.mask;
-%          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
-         test = min(labeledim,labeledim>0,3);
-         test(test>(size(labeledim,3)+1)) = 0;
-         
-         blackjet = flip(jet(max(test)));
-         blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
-         videoout = labeledim*0;
-         
-         for ff = 0:(max(test)-1)
-         previous = sum(videoout(:,:,0:ff),[],3);
-         previous(previous~=0) = 10;
-         temp = (test == (ff+1));
-         temp(temp>0) = 100;
-         videoout(:,:,ff) = temp + previous;
-%          previous = (test == ff);
-         end
-         if nargin==2
-         dist = dt(obj.cellFill.mask(:,:,0));
-         test(dist==1) = max(test)+1;
-         end
-         %-- make colormap for plotting
-         blackjet = flip(jet(max(test)));
-         blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
-         
-         %-- now plot results
-         h = dipshow(test,blackjet);
-         dipmapping(h,[0 size(labeledim,3)]);
-         diptruesize(h,100);         
-         % get colorbar tick info
-         colorunit = size(labeledim,3)/255;
-         numofcolbarval = 4;
-         colbarplace =[0:numofcolbarval]*255/4;
-         colbarval = floor(colbarplace * colorunit);
-         c = colorbar;
-         c.Location = 'WestOutside';
-         c.Ticks = colbarplace;
-         c.TickLabels = colbarval;
-         c.FontSize = 16;
-         c.Label.String = 'First Frame with Cargo Insertion';
-         c.Label.FontSize = 16;
-         h.OuterPosition = h.OuterPosition + [0 0 400 50];
+       
+       function plotDensityperTime(obj)
+           % make the distance mask
+           distmask = obj.makeDistanceMask();
+           distancebins = {distmask<100, distmask>100 & distmask<200, distmask>200};
+           % now go through for each time point and calculate densities.
+           currmask = distmask<350;
+           sfmask = obj.surfaceCargo.image;
+           sum(sfmask,~obj.cellFill.mask,[1 2])
+           ~obj.cellFill.mask
+           newsfmask = repmat(currmask,1, 1, size(sfmask,3));
+           thisplot = squeeze(sum(sfmask,newsfmask,[1 2]));
+           dthisplot = diff(single(thisplot));
        end
-       
-       
-       
+       function distmask = makeDistanceMask(obj)
+           % make the distance mask
+           sums = GeneralAnalysis.thicken(obj.cellFill.mask,1);
+           geoframe = sum(sums,[],3);
+           sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
+           distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');           
+       end
+       function [h,lagim] = plot_cargo_minFrameMovie(obj,framelag,savename)
+           %            cellperim is boolean for including cell perimeter in image
+           if nargin<2
+               framelag = 4;
+           end
+           [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.surfaceCargo.mask);
+           labeledim = lbl_out.*obj.cellFill.mask;
+           %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
+           test = min(labeledim,labeledim>0,3);
+           test(test>(size(labeledim,3)+1)) = 0;
+           
+           blackjet = flip(jet(max(test)));
+           blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
+           videoout = labeledim*0;
+           % make video per frame
+           for ff = 0:(max(test)-1)
+               videoout(:,:,ff) = (test == (ff+1));
+           end
+           % now make arbitrary sliding windw
+           framelag = 4;
+           lagim = 0*videoout;
+           for ff = 1:size(videoout,3)
+               if ff<=framelag
+                   lagim(:,:,ff-1) = sum(videoout(:,:,0:ff-1),[],3);
+               else
+                   lagim(:,:,ff-1) = sum(videoout(:,:,ff-framelag-1:ff-1),[],3);
+               end
+           end
+           
+           lagim(lagim~=0) = 30;
+           tcm = jet(30);
+           tcm(30,:) = [0 1 1];
+           tcm(1,:) = [0 0 0];
+           h = dipshow(lagim,tcm);
+           diptruesize(h,100);
+           if nargin==3
+               %save the movie
+               options.framerate = 18; %default
+               writeDipImageMovie(h,savename,options)
+           end
+       end
+
        function viewCleanedSurfaceCargoMask(obj,cm,mskcol)
           if nargin<3
                mskcol = [1 1 1];
