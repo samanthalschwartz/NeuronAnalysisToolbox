@@ -2,7 +2,7 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %% add the correct path to your .tiff file data
-datafilepath = 'Z:\Sam\MJK_zapERtrap_for_sam\AMB_globalrelease\041718_DHFR-GFP-NL1_TfRmChSEP_antiHA\cell3_merge_post_NOTALIGNED.tif';
+datafilepath = 'Z:\Sam\MJK_zapERtrap_for_sam\AMB_previous\DHFR-GFP-GluA1\051718\merges\slip1\2_dendrites_merge.tif';
 %%
 % to view image series 'N' to go to next time slice 'P' for previous time
 % slice. Use 'Mapping' tool bar at top to change the look up table.
@@ -18,14 +18,14 @@ aa.TfR = channelTfR();
 im_array = GeneralAnalysis.loadtiff_2ch(datafilepath);
 aa.cellFill.setimage(im_array(:,:,:,1));
 aa.surfaceCargo.setimage(im_array(:,:,:,2));
-% aa.TfR.setimage(im_array(:,:,:,2));
+aa.TfR.setimage(im_array(:,:,:,2));
 
 [img_out_cf,sv_arr] = GeneralAnalysis.timedriftCorrect(aa.cellFill.image);
 aa.cellFill.setimage(img_out_cf);
 img_out_sc = GeneralAnalysis.applydriftCorrect(aa.surfaceCargo.image,sv_arr);
 aa.surfaceCargo.setimage(img_out_sc);
-% img_out_tf = GeneralAnalysis.applydriftCorrect(aa.TfR.image,sv_arr);
-% aa.TfR.setimage(img_out_tf);
+img_out_tf = GeneralAnalysis.applydriftCorrect(aa.TfR.image,sv_arr);
+aa.TfR.setimage(img_out_tf);
 
 % trim the image 
 aa.cellFill.ROI_trim = [];

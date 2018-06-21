@@ -254,20 +254,9 @@ methods (Static)
         end
     end
     function bgim_out = regionfill_timeseries(image_in,mask_in)
-       % image_in: image with holes (0 values) where values are
-       % interpolated from
-       % mask_in: mask over which the values need to be interpolated 
-       maxframe = size(image_in,3);
-       if size(mask_in,3)==1
-           mask_in = repmat(mask_in,1,1,maxframe);
-       end
-       im = zeros(size(single(image_in)));
-       for tt = 1:maxframe
-          I = single(image_in(:,:,tt-1));
-          w = single(mask_in(:,:,tt-1));
-          im(:,:,tt) = regionfill(I,w);
-       end
-        bgim_out = dip_image(im);
+       % image_in: image with holes (0 values) where values need to be interpolated
+       % mask_in: mask over which 
+        
     end
     function wshed = watershed_timeseries(image_in,conn)
         wshed = dip_image(zeros(size(image_in,2),size(image_in,1),size(image_in,3)));

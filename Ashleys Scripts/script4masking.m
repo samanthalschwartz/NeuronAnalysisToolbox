@@ -2,7 +2,7 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %% add the correct path to your .tiff file data
-datafilepath = 'Z:\Sam\MJK_zapERtrap_for_sam\AMB_previous\DHFR-GFP-GluA1\051718\merges\slip1\5_dendrites_merge.tif';
+datafilepath = 'Z:\Sam\MJK_zapERtrap_for_sam\AMB_previous\GluA1release_REs\060118\merges\slip2\2_dendrites_merge.tif';
 %%
 % to view image series 'N' to go to next time slice 'P' for previous time
 % slice. Use 'Mapping' tool bar at top to change the look up table.
