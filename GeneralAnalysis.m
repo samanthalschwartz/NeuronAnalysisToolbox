@@ -258,6 +258,7 @@ methods (Static)
        % interpolated from
        % mask_in: mask over which the values need to be interpolated 
        maxframe = size(image_in,3);
+       
        if size(mask_in,3)==1
            mask_in = repmat(mask_in,1,1,maxframe);
        end
