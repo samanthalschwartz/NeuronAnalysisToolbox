@@ -1,6 +1,6 @@
-listdir = 'E:\Sam\Data\MJK_zapERtrap_for_sam';
+listdir = 'G:\Sam\Data\MJK_zapERtrap_for_sam';
 % filelistname = 'all_NL1_global.mat';
-filelistname = 'Ashley062018_all_GluA1_Global.mat';
+filelistname = 'Ashley062018_all_TfR_Global.mat';
 zdrivepath = 'Z:\Sam\MJK_zapERtrap_for_sam';
 savedir = fullfile(listdir,'180626 Results and Info');
 
