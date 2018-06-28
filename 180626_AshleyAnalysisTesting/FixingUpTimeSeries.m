@@ -1,6 +1,11 @@
+disttitles = {'Mean Intensity <50 \mum from Soma','Mean Intensity 50-100 \mum from Soma',...
+    'Mean Intensity 100-200 \mum from Soma'};
+savestr = {'50','50-100','100-200'};
+listdir = 'E:\Sam\Data\MJK_zapERtrap_for_sam\180626 Results and Info';
+
 %% fixing up files
 % load the data and group together
-listdir = 'F:\Sam\Data\MJK_zapERtrap_for_sam\180626 Results and Info';
+savetypestr = 'GluA1';
 % filelistname = 'all_NL1_global.mat';
 filelistname = 'Ashley062018_all_GluA1_Global_allMs.mat';
 load(fullfile(listdir,filelistname));
@@ -43,17 +48,27 @@ xvalspost = [1:(size(newarray,2)-size(xvalspre,2))]*2;
 xvals = [xvalspre,xvalspost];
 GluA1means(dd).mean = nanmean(newarray,1);
 GluA1means(dd).ste = nanstd(newarray,1)./sqrt(size(newarray,1));
+% GluA1means(dd).ste = nanstd(newarray,1);
+
 GluA1means(dd).x = xvals;
-figure; plot(allintensities'); hold on;
-% figure; plot(xvals,newarray','Color',[0 0.7 0.7]); hold on;
+% figure; plot(allintensities'); hold on;
+f = figure; plot(xvals,newarray','Color',[0 0.7 0.7]); hold on;
 plot(xvals,GluA1means(dd).mean,'Color','k','LineWidth',2)
 xlim([-5 100]);
+set(gca,'FontSize',16)
+title(disttitles{dd},'FontSize',16)
+xlabel('Time (min)','FontSize',16);
+ylabel('Cargo Intensity Density (AU)','FontSize',16);
+saveas(f,fullfile(listdir,[savetypestr '-' savestr{dd}]),'fig');
+saveas(f,fullfile(listdir,[savetypestr '-' savestr{dd}]),'png');
+close(f)
 % ylim([0 100]);
 end
 
 %%
 % load the data and group together
-listdir = 'F:\Sam\Data\MJK_zapERtrap_for_sam\180626 Results and Info';
+savetypestr = 'NL1';
+
 filelistname = 'all_NL1_global_allMs.mat';
 NL1means = [];
 
@@ -116,16 +131,26 @@ xvalspost = [1:(size(newarray,2)-size(xvalspre,2))]*2;
 xvals = [xvalspre,xvalspost];
 NL1means(dd).mean = nanmean(newarray,1);
 NL1means(dd).ste = nanstd(newarray,1)./sqrt(size(newarray,1));
+% NL1means(dd).ste = nanstd(newarray,1);
+
 NL1means(dd).x = xvals;
 
 % figure; plot(allintensities'); hold on;
-figure; plot(xvals,newarray','Color',[0.7 0 0.7]); hold on;
+f = figure; plot(xvals,newarray','Color',[0.7 0 0.7]); hold on;
 plot(xvals,NL1means(dd).mean,'Color','k','LineWidth',2)
+title(disttitles{dd},'FontSize',16)
+set(gca,'FontSize',16);
+xlabel('Time (min)','FontSize',16);
+ylabel('Cargo Intensity Density (AU)','FontSize',16);
 xlim([-5 100]);
+saveas(f,fullfile(listdir,[savetypestr '-' savestr{dd}]),'fig');
+saveas(f,fullfile(listdir,[savetypestr '-' savestr{dd}]),'png');
+close(f)
 end
 %% tfr data
 % load the data and group together
-listdir = 'F:\Sam\Data\MJK_zapERtrap_for_sam\180626 Results and Info';
+savetypestr = 'TfR';
+
 filelistname = 'Ashley062018_all_TfR_Global_allMs.mat';
 TfRmeans = [];
 
@@ -160,16 +185,27 @@ xvalspost = [1:(size(newarray,2)-size(xvalspre,2))]*2;
 xvals = [xvalspre,xvalspost];
 TfRmeans(dd).mean = nanmean(newarray,1);
 TfRmeans(dd).ste = nanstd(newarray,1)./sqrt(size(newarray,1));
+% TfRmeans(dd).ste = nanstd(newarray,1);
+
 TfRmeans(dd).x = xvals;
 
 % figure; plot(allintensities'); hold on;
-figure; plot(xvals,newarray','Color',[0.7 0.7 0]); hold on;
+f = figure; plot(xvals,newarray','Color',[0.7 0.7 0]); hold on;
 plot(xvals,TfRmeans(dd).mean,'Color','k','LineWidth',2)
+title(disttitles{dd},'FontSize',16);
+set(gca,'FontSize',16);
+xlabel('Time (min)','FontSize',16);
+ylabel('Cargo Intensity Density (AU)','FontSize',16);
 xlim([-5 100]);
+saveas(f,fullfile(listdir,[savetypestr '-' savestr{dd}]),'fig');
+saveas(f,fullfile(listdir,[savetypestr '-' savestr{dd}]),'png');
+close(f)
+
 end
 
 %% 
 % plot means with stderr
+savetypestr = 'MeanVals';
 legstr = {'GluA1','NL1','TfR'};
 cols = lines();
 for mm = 1:3
@@ -177,15 +213,28 @@ for mm = 1:3
     % GluA1
     e1 = errorbar(GluA1means(mm).x,GluA1means(mm).mean,GluA1means(mm).ste,'Color',cols(1,:));
     e1.CapSize = 0;
-    plot(GluA1means(mm).x,GluA1means(mm).mean,'LineWidth',2,'Color',cols(1,:));
+    plot(GluA1means(mm).x,GluA1means(mm).mean,'LineWidth',2,'Color',cols(1,:),'DisplayName',legstr{1});
     % NL1
     e2 = errorbar(NL1means(mm).x,NL1means(mm).mean,NL1means(mm).ste,'Color',cols(2,:));
     e2.CapSize = 0;
-    plot(NL1means(mm).x,NL1means(mm).mean,'LineWidth',2,'Color',cols(2,:));
+    plot(NL1means(mm).x,NL1means(mm). mean,'LineWidth',2,'Color',cols(2,:),'DisplayName',legstr{2});
     
     e3 = errorbar(TfRmeans(mm).x,TfRmeans(mm).mean,TfRmeans(mm).ste,'Color',cols(3,:));
      e3.CapSize = 0;
-    plot(TfRmeans(mm).x,TfRmeans(mm).mean,TfRmeans(mm).ste,'LineWidth',2,'Color',cols(3,:));
-%     legend(legstr);    
+    plot(TfRmeans(mm).x,TfRmeans(mm).mean,'LineWidth',2,'Color',cols(3,:),'DisplayName',legstr{3});
+    set(gca,'FontSize',16)
+    set(gca,'xlim',[-5 100])
+    title(disttitles{dd},'FontSize',16)
+    xlabel('Time (min)','FontSize',16);
+    ylabel('Cargo Intensity Density (AU)','FontSize',16);
+    legend('show'); 
+    legend('Location','nw')
+    saveas(f,fullfile(listdir,[savetypestr '-' savestr{mm}]),'fig');
+    saveas(f,fullfile(listdir,[savetypestr '-' savestr{mm}]),'png');
+    
+    set(gca,'xlim',[-5 62])
+    saveas(f,fullfile(listdir,[savetypestr '-' savestr{mm} '-TfRscale']),'fig');
+    saveas(f,fullfile(listdir,[savetypestr '-' savestr{mm} '-TfRscale']),'png');
+    close(f)
 end
 
