@@ -1,6 +1,6 @@
 listdir = 'G:\Sam\Data\MJK_zapERtrap_for_sam';
 % filelistname = 'all_NL1_global.mat';
-filelistname = 'Ashley062018_all_TfR_Global.mat';
+filelistname = 'all_NL1_localDendrites.mat';
 zdrivepath = 'Z:\Sam\MJK_zapERtrap_for_sam';
 savedir = fullfile(listdir,'180626 Results and Info');
 
@@ -20,7 +20,7 @@ close(wb)
 save(fullfile(savedir,[filelistname(1:end-4) '_allMs']),'allMs');
 %% group the M.areanormintensity and plot
 
-distval = 3;
+distval = 1;
 allintensities = nan(numel(allMs),1);
 % range = 1:10;
 for m = 1:numel(allMs)

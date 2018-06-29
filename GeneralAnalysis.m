@@ -466,5 +466,16 @@ methods (Static)
          dipmapping(h,'lin');
          diptruesize(h,200);
      end
+     function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)
+         if nargin<4
+             mskcol = [1 1 1];
+         end
+         if nargin<3
+             cm = hot(256);
+         end
+         perim = dt(mask);
+         bin_im = (perim==1);
+         [h,overlayim] = GeneralAnalysis.overlay(image,bin_im,cm,mskcol);
+     end
 end
 end

@@ -12,6 +12,7 @@ classdef AshleyAnalysis < handle
     distancematrix = [];
     pxsize = 1/3.5;
     M = [];
+    cleanedcargomask = [];
    end
    
    methods
@@ -254,26 +255,27 @@ classdef AshleyAnalysis < handle
                writeDipImageMovie(h,savename,options)
            end
        end
-
-       function viewCleanedSurfaceCargoMask(obj,cm,mskcol)
-          if nargin<3
+       function cleanSurfaceCargoMask(obj)
+           img4wtsd = gaussf(obj.surfaceCargo.image);
+           wshed = GeneralAnalysis.watershed_timeseries(-img4wtsd,1);
+           newsfmask = obj.surfaceCargo.mask;
+           newsfmask(wshed==1) = 0;
+           cargomask = newsfmask*obj.cellFill.mask;
+           obj.cleanedcargomask = cargomask;
+       end
+       
+       function [h,overlayim] = viewCleanedSurfaceCargoMask(obj,cm,mskcol)
+           if nargin<3
                mskcol = [1 1 1];
            end
            if nargin<2
                cm = hot(256);
            end
            
-           % watershed
-           img4wtsd = gaussf(obj.surfaceCargo.image);
-           wshed = GeneralAnalysis.watershed_timeseries(-img4wtsd,1);
-           newsfmask = obj.surfaceCargo.mask;
-           newsfmask(wshed==1) = 0;
-%            perim = dt(obj.cellFill.mask);
-%            bin_im = (perim==1);
-%            bin_im = bin_im*obj.cellFill.mask;
-           cargomask = newsfmask*obj.cellFill.mask;
-%            cargomask(bin_im) = 1
-           [h,overlayim] = channelBase.viewMaskOverlayPerimStatic(cargomask,obj.surfaceCargo.image);
+           if isempty(obj.cleanedcargomask)
+               obj.cleanSurfaceCargoMask;
+           end
+           [h,overlayim] = channelBase.viewMaskOverlayPerimStatic(obj.cleanedcargomask,obj.surfaceCargo.image);
        end
        
        

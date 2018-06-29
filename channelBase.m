@@ -75,6 +75,17 @@ classdef channelBase < handle
            bin_im = (perim==1);
            [h,overlayim] = GeneralAnalysis.overlay(obj.image,bin_im,cm,mskcol);
        end
+       function [h,overlayim] = viewMaskOverlayPerimstatic(image,mask,cm,mskcol)
+           if nargin<3
+               mskcol = [1 1 1];
+           end
+           if nargin<2
+               cm = hot(256);
+           end
+           perim = dt(mask);
+           bin_im = (perim==1);
+           [h,overlayim] = GeneralAnalysis.overlay(image,bin_im,cm,mskcol);
+       end
        function [h,overlayim] = viewMaskOverlayFill(obj,cm,mskcol)
            if nargin<3
                mskcol = [1 0 0];
@@ -87,16 +98,6 @@ classdef channelBase < handle
        end
    end
    methods (Static)
-       function [h,overlayim] = viewMaskOverlayPerimStatic(mask,image,cm,mskcol)
-           if nargin<4
-               mskcol = [1 1 1];
-           end
-           if nargin<3
-               cm = hot(256);
-           end
-           perim = dt(mask);
-           bin_im = (perim==1);
-           [h,overlayim] = GeneralAnalysis.overlay(image,bin_im,cm,mskcol);
-       end
+       
    end
 end
