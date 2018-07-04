@@ -162,6 +162,44 @@ methods (Static)
         mask = threshold(img_in,'fixed',threshval);
         close(h);
     end
+    function newmask = cleanUpMask_manual(underimgin,mask_in)
+        %        lb = label(mask_in);
+        ov = overlay(underimgin,mask_in);
+        h = dipshow(ov,'log');
+        dipmapping(h,'global')
+        %       h = dipshow(lb,'labels');
+%         while(ishandle(h))
+%             [a b] = dipcrop(h);
+%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
+%             close(h);
+%             ov = overlay(underimgin,mask_in);
+%             h = dipshow(ov,'log');
+%             dipmapping(h,'global');
+%         end
+        lb = label(mask_in);
+        dipfig lb;
+        g = dipshow(lb,'labels');
+        while(ishandle(g))
+        v = dipgetcoords(g,1);
+        val = single(lb(v(1),v(2),v(3)));
+        lb(lb == val) = 0;
+        g = dipshow(lb,'labels');
+        end
+        
+%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
+%             close(h);
+%             ov = overlay(underimgin,mask_in);
+%             h = dipshow(ov,'log');
+%             dipmapping(h,'global');
+        
+        
+        
+        
+    end
+    function perim = maskperim(mask_in)
+         perim = dt(mask_in);
+         perim = (perim==1);     
+    end
     function [labeledim] = labelmask_byframe(mask_in,conn,minSize,maxSize)
         % this function labels a binary image/mask and assigns the label
         % value as the frame number
