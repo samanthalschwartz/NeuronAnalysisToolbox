@@ -1,15 +1,23 @@
-load('C:\Users\schwsama\Documents\Data\zapERtrap\cell3_AshleyFile.mat');
+% load('C:\Users\schwsama\Documents\Data\zapERtrap\cell3_AshleyFile.mat');
+load('E:\zapERtrap\050118 NL1 insertion\cell3_AshleyFile.mat');
 body = uint16(squeeze(sum(aa.cellFill.image(:,:,1),[],3)));
-load('C:\Users\schwsama\Documents\Data\zapERtrap\cell3dendrites_AshleyFile.mat');
+% load('C:\Users\schwsama\Documents\Data\zapERtrap\cell3dendrites_AshleyFile.mat');
+load('E:\zapERtrap\050118 NL1 insertion\cell3dendrites_AshleyFile.mat');
 dends = uint16(squeeze(sum(aa.cellFill.image(:,:,1),[],3)));
+
 cc = normxcorr2(dends,body);
 [xpeak, ypeak] = find(cc==max(cc(:)));
 dipshow(cc)
 
-diffx = size(dends,1) - xpeak;
-diffy = size(dends,2) - ypeak;
+xadd = size(dends,1) - xpeak;
+yadd = size(dends,2) - ypeak;
 
+im=zeros(xadd+size(body,1),yadd+size(body,2));
 
+im(1:xadd+xpeak,1:yadd+ypeak) = dends;
+im(xadd+1:end,yadd+1:end) = body;
+
+%%
 diffx = size(dends,2)-xpeak;
 diffy = size(dends,1)-ypeak;
 
