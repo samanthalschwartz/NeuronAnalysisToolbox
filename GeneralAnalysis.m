@@ -504,6 +504,26 @@ methods (Static)
          dipmapping(h,'lin');
          diptruesize(h,200);
      end
+     
+     function stitchimage = stitch2images(im1,im2)
+         if numel(im1)>numel(im2)
+             image = im1;
+             template = im2;
+         else
+             template = im1;
+             image = im2;
+         end
+         cc = normxcorr2(template,image);
+         [xpeak, ypeak] = find(cc==max(cc(:)));
+         
+         xadd = size(template,1) - xpeak;
+         yadd = size(template,2) - ypeak;
+         
+         stitchimage=zeros(xadd+size(image,1),yadd+size(image,2));
+         stitchimage(1:xadd+xpeak,1:yadd+ypeak) = template;
+         stitchimage(xadd+1:end,yadd+1:end) = image;
+     end
+     
      function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)
          if nargin<4
              mskcol = [1 1 1];
