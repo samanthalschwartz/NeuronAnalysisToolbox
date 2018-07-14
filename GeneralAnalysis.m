@@ -506,6 +506,10 @@ methods (Static)
      end
      
      function stitchimage = stitch2images(im1,im2)
+         % this functions uses matlab's normxcorr2 function to combine
+         % images at the maximum cross correlation position. the larger of
+         % the two images serves as the base image and then the smaller
+         % image is added on around --> the base image is used in regions of overlap 
          if numel(im1)>numel(im2)
              image = im1;
              template = im2;
