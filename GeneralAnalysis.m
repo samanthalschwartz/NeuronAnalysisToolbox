@@ -164,9 +164,9 @@ methods (Static)
     end
     function newmask = cleanUpMask_manual(underimgin,mask_in)
         %        lb = label(mask_in);
-        ov = overlay(underimgin,mask_in);
-        h = dipshow(ov,'log');
-        dipmapping(h,'global')
+%         ov = overlay(underimgin,mask_in);
+%         h = dipshow(ov,'log');
+%         dipmapping(h,'global')
         %       h = dipshow(lb,'labels');
 %         while(ishandle(h))
 %             [a b] = dipcrop(h);
@@ -177,24 +177,24 @@ methods (Static)
 %             dipmapping(h,'global');
 %         end
         lb = label(mask_in);
-        dipfig lb;
-        g = dipshow(lb,'labels');
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        dipshow(ov,'log');
+        diptruesize(g,200);
         while(ishandle(g))
-        v = dipgetcoords(g,1);
-        val = single(lb(v(1),v(2),v(3)));
-        lb(lb == val) = 0;
-        g = dipshow(lb,'labels');
+            try
+                v = dipgetcoords(g,1);
+            catch
+                break;
+            end
+            val = single(lb(v(1),v(2),v(3)));
+            lb(lb == val) = 0; 
+            ov = underimgin;
+            ov(lb~=0) = 0
         end
-        
-%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
-%             close(h);
-%             ov = overlay(underimgin,mask_in);
-%             h = dipshow(ov,'log');
-%             dipmapping(h,'global');
-        
-        
-        
-        
+      dipfig -unlink
+      newmask = logical(lb);  
     end
     function perim = maskperim(mask_in)
          perim = dt(mask_in);
@@ -522,10 +522,31 @@ methods (Static)
          
          xadd = size(template,1) - xpeak;
          yadd = size(template,2) - ypeak;
-         
          stitchimage=zeros(xadd+size(image,1),yadd+size(image,2));
          stitchimage(1:xadd+xpeak,1:yadd+ypeak) = template;
          stitchimage(xadd+1:end,yadd+1:end) = image;
+     end
+     
+     function stitchmovie = stitch2movies(mov1,mov2)
+         % put this on the GPU
+         assert(size(mov1,3) == size(mov2,3));
+         stitchmovie = zeros(size(mov1,1)*2,size(mov1,2)*2,size(mov1,3));
+         wb = waitbar(0);
+         for ff = 1:size(mov1,3)
+             im1 = squeeze(mov1(:,:,ff));
+             im2 = squeeze(mov2(:,:,ff));
+             stitchimage = GeneralAnalysis.stitch2images(im1,im2);
+             stitchmovie(1:size(stitchimage,1),1:size(stitchimage,2),ff) = stitchimage;
+             waitbar(ff/size(mov1,3),wb)
+         end
+         close(wb);
+         % clean up the image
+         fulltest = sum(stitchmovie,3);
+         test1 = sum(fulltest,1);
+         ylast = find(test1>0,1,'last');
+         test2 = sum(fulltest,2);
+         xlast = find(test2>0,1,'last');
+         stitchmovie = stitchmovie(1:xlast,1:ylast,:);
      end
      
      function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)
