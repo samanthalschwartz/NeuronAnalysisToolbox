@@ -521,6 +521,7 @@ methods (Static)
          gpuimage = gpuArray(image);
          cc = normxcorr2(template,image);
          [xpeak, ypeak] = find(cc==max(cc(:)));
+         
          xadd = size(template,1) - xpeak;
          yadd = size(template,2) - ypeak;
          stitchimage=zeros(xadd+size(image,1),yadd+size(image,2));
@@ -528,31 +529,30 @@ methods (Static)
          stitchimage(xadd+1:end,yadd+1:end) = gather(gpuimage);
      end
      
-     function stitchmovie2 = stitch2movies(mov1,mov2)
+     function stitchmovie = stitch2movies(mov1,mov2)
          % put this on the GPU
          assert(size(mov1,3) == size(mov2,3));
-         stitchmovie = cell(1,size(mov1,3));
+         stitchmovie = cell{1,size(mov1,3)};
+%          stitchmovie = zeros(size(mov1,1)*2,size(mov1,2)*2,size(mov1,3));
+         wb = waitbar(0);
          lastframe = size(mov1,3);
          parfor ff = 1:lastframe
              im1 = squeeze(mov1(:,:,ff));
              im2 = squeeze(mov2(:,:,ff));
              stitchimage = GeneralAnalysis.stitch2images(im1,im2);
              stitchmovie{ff} = stitchimage;
+%              stitchmovie(1:size(stitchimage,1),1:size(stitchimage,2),ff) = stitchimage;
+             waitbar(ff/lastframe,wb)
          end
-         xsizes = cellfun(@(x) size(x,1),stitchmovie);
-         ysizes = cellfun(@(x) size(x,2),stitchmovie);
-         stitchmovie2 = zeros(max(xsizes),max(ysizes),lastframe);
-         for ff = 1:lastframe
-             currframe = stitchmovie{ff};
-             stitchmovie2(1:size(currframe,1),1:size(currframe,2),ff) = currframe;
-         end
+         cellfun(@(x) 
+         close(wb);
          % clean up the image
-         fulltest = sum(stitchmovie2,3);
+         fulltest = sum(stitchmovie,3);
          test1 = sum(fulltest,1);
          ylast = find(test1>0,1,'last');
          test2 = sum(fulltest,2);
          xlast = find(test2>0,1,'last');
-         stitchmovie2 = stitchmovie2(1:xlast,1:ylast,:);
+         stitchmovie = stitchmovie(1:xlast,1:ylast,:);
      end
      
      function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)

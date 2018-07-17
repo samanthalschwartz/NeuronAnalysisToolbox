@@ -1,4 +1,4 @@
-filedir = 'C:\Users\schwsama\Documents\Data\SR\coverslip4-1a-647sr';
+filedir = 'C:\Users\schwsama\Documents\Data\SR\coverslip4-1a-647sr-rawdata';
 filess = dir(fullfile(filedir,'*.tif'));
 
 totframes = numel(filess);
