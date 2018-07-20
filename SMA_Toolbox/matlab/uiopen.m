@@ -32,9 +32,9 @@ switch ext
 %     case '.mat'
 %         obj=SPData(filename);
 %         name=getObjName('spd');
-%     case '.tif'
-%         obj=SPData(filename);
-%         name=getObjName('spd');
+    case '.tif'
+        obj = loadtiff(filename);
+        name = 'image';
     case '.reganalysis'
         obj = RegistrationAnalysis(filename);
         name = getObjName('reg');
@@ -55,7 +55,12 @@ switch ext
         return
 end
 assignin('base',name, obj);
+if strcmp(ext,'.tif')
+    ov = GeneralAnalysis.displaytiff(obj);
+    dipshow(ov,'lin'); 
+else
 evalin('base',sprintf('disp(%s)',name));
+end
 fprintf('Auto Loaded File:"%s"\nFile contained %s object.\nSaved as workspace variable: "%s"\n',...
         filename, class(obj), name);
 if ismethod(obj,'gui') %If there is an obj.gui method, then run it
