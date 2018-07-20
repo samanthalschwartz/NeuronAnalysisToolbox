@@ -69,6 +69,20 @@ methods (Static)
             img(:,:,ii-1) = imgbefore{1,1}{ii};
         end
     end 
+    function ov = displaytiff(image)
+        if ndims(image) > 3
+            switch size(image,4)
+                case 1
+                    ov = joinchannels('rgb',image(:,:,:,1));
+                case 2
+                    ov = joinchannels('rgb',image(:,:,:,1),image(:,:,:,2));
+                case 3
+                    ov = joinchannels('rgb',image(:,:,:,1)+image(:,:,:,3),image(:,:,:,2)+image(:,:,:,3),image(:,:,:,3));
+            end
+        else
+            ov = joinchannels('rgb',image);
+        end
+    end
     function im_array = loadtiff_3ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
         oimg = loadtiff(filepath);
