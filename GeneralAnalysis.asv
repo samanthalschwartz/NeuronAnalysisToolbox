@@ -89,11 +89,11 @@ methods (Static)
         %       option is an action to take on the files as they come in.
         %           option = 'z-project';
         %           option = '';
-        if nargin == 0 || isempty(filepath)
+        if nargin == 0 || isempty(varargin{1})
             filepath = pwd;
         end
-        if nargin > 0 && isempty(filestr) 
-            [files, filepath] = uigetfile(filepath,'*.*','Multiselect','on');
+        if nargin > 0 && isempty(varargin{2}) 
+            [files, filepath] = uigetfile(filepath,'Multiselect','on');
         elseif nargin == 2
             filestr = 'gephOlig-488lighagain_w1488_s*'
             filestruc = dir(fullfile(filepath,filestr));
@@ -116,7 +116,6 @@ methods (Static)
         img_nd = ndims(im_array);
         otherdims = repmat({':'},1,img_nd-1);
         im_array(otherdims{:}, 1) = img;
-        wb = waitbar(0,'Loading Files...');
         for ff = 2:numel(files)
             path = fullfile(filepath,files{ff});
             oimg = loadtiff(path);
@@ -124,9 +123,7 @@ methods (Static)
                 img = img_operation(oimg);
             end
             im_array(otherdims{:}, ff) = img;
-            waitbar(ff/numel(files),wb);
         end
-        close(wb);
     end
     
     function im_array = loadtiff_3ch(filepath)

@@ -116,7 +116,7 @@ if tcl == 1 % simple image (no cell)
     % frames are the same size (to preallocate for speed). then assumes
     % tiff is saved as [ch1-frame1,ch2-frame1,ch3-frame1,ch1-frame2,ch2-frame2 ....]
     % so extracts channels and frames accordingly. makes an image: [x, y, frames, channel]
-    if contains(extrainfo,slicestr)
+    if contains(extrainfo,slicestr) && contains(extrainfo,colorstr)
         infoidx = strfind(extrainfo,slicestr);
         numslices = sscanf(extrainfo(infoidx+length(slicestr):end),'%g',1);
         ws = arrayfun(@(x) x.w,iinfo);

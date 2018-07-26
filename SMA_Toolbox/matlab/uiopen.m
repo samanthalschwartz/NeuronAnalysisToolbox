@@ -55,12 +55,14 @@ switch ext
         return
 end
 assignin('base',name, obj);
-if strcmp(ext,'.tif')
-    ov = GeneralAnalysis.displaytiff(obj);
-    dipshow(ov,'lin'); 
-else
-evalin('base',sprintf('disp(%s)',name));
+if ~strcmp(ext,'.tif')
+    evalin('base',sprintf('disp(%s)',name));
 end
+% if strcmp(ext,'.tif')
+%     GeneralAnalysis.displaytiff(obj);
+% else
+% evalin('base',sprintf('disp(%s)',name));
+% end
 fprintf('Auto Loaded File:"%s"\nFile contained %s object.\nSaved as workspace variable: "%s"\n',...
         filename, class(obj), name);
 if ismethod(obj,'gui') %If there is an obj.gui method, then run it
