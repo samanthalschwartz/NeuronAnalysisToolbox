@@ -535,7 +535,15 @@ methods (Static)
     end
     
      function [img_out,sv_arr] = timedriftCorrect(img_in)
-          wb = waitbar(0,'Calculating Drift...');
+         if ~isa(img_in,'dip_image')
+            try
+                img_in = dip_image(img_in);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+        wb = waitbar(0,'Calculating Drift...');
         img_out = 0*img_in;
         imref = squeeze(img_in(:,:,0));
         img_out(:,:,0) = imref;
