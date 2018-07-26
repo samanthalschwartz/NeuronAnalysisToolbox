@@ -1,8 +1,8 @@
 %% Script to Identify CellFill and Recruitment Objects to make an 'AshleyFile' Object
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
-%% add the correct path to your .tiff file data
-datafilepath = 'Z:\Sam\MJK_zapERtrap_for_sam\AMB_previous\GluA1release_REs\060118\merges\slip2\2_dendrites_merge.tif';
+%% add the correct path to your .tif file data
+datafilepath = 'E:\Zapalog project\AIS expts\071618\GluA1\071618_DHFR-GFP-GluA1_AnkG-mCherry_antiGFP640_global_5.tif';
 %%
 % to view image series 'N' to go to next time slice 'P' for previous time
 % slice. Use 'Mapping' tool bar at top to change the look up table.
@@ -11,28 +11,28 @@ addpath(genpath('Z:\Lab Resources\Analysis Resources\Matlab Resource\NeuronAnaly
 aa = AshleyAnalysis();
 % aa.path_channel_cellfill = fullfile(datafilepath,'cell1_r.tif');
 % aa.path_channel_surfaceCargo = fullfile(datafilepath,'cell1_fr.tif');
-% aa.path_channel_TfR = fullfile(datafilepath,'cell1_g.tif');
+% aa.path_channel_miscChannel = fullfile(datafilepath,'cell1_g.tif');
 aa.loadImages;
 aa.path_3ch_datafile = datafilepath;
 aa.cellFill = channelCellFill();
 aa.surfaceCargo = channelSurfaceCargo();
-aa.TfR = channelTfR();
+aa.miscChannel = channelmiscChannel();
 
 % use last index to represent which stack to use
 im_array = GeneralAnalysis.loadtiff_3ch(datafilepath);
-aa.cellFill.setimage(im_array(:,:,:,1));
+aa.cellFill.setimage(im_array(:,:,:,2));
 aa.surfaceCargo.setimage(im_array(:,:,:,3));
-aa.TfR.setimage(im_array(:,:,:,2));
+aa.miscChannel.setimage(im_array(:,:,:,1));
 % trim the image 
 aa.cellFill.ROI_trim = [];
 aa.cellFill.trim_rawimage()
 aa.surfaceCargo.ROI_trim = aa.cellFill.ROI_trim;
 aa.surfaceCargo.trim_rawimage;
-aa.TfR.ROI_trim = aa.cellFill.ROI_trim;
-aa.TfR.trim_rawimage;
+aa.miscChannel.ROI_trim = aa.cellFill.ROI_trim;
+aa.miscChannel.trim_rawimage;
 
-% % to see transferin channel
-% h = dipshow(aa.TfR.image);
+% % to see misc channel
+% h = dipshow(aa.miscChannel.image);
 % dipmapping(h,'lin')
 % 
 % % to see cellFill channel
