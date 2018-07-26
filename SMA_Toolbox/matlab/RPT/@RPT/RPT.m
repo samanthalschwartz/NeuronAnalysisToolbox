@@ -1198,7 +1198,7 @@ classdef RPT < BaseRPT
             obj.updateWaitbar(0.1,'Generating Super Res Image');
             imSizePx = 8192;
             im = obj.makeEmitterSuperResGauss(obj.getEmitters(),imSizePx);
-            im(:) = min(im(:), prctile(im(:),99.9));
+%             im(:) = min(im(:), prctile(im(:),99.99999));
             obj.srimage = im;
             obj.updateWaitbar(1);
         end

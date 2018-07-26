@@ -263,6 +263,13 @@ classdef AshleyAnalysis < handle
            cargomask = newsfmask*obj.cellFill.mask;
            obj.cleanedcargomask = cargomask;
        end
+       function cleanSurfaceCargoMask_Manual(obj)
+           [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
+           close(h);
+           overlayim(overlayim==0) = max(overlayim)*2;
+           cargomask = GeneralAnalysis.cleanUpMask_manual(overlayim,obj.surfaceCargo.mask);
+           obj.cleanedcargomask = cargomask;
+       end
        
        function [h,overlayim] = viewCleanedSurfaceCargoMask(obj,cm,mskcol)
            if nargin<3

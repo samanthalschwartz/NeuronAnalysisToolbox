@@ -69,6 +69,66 @@ methods (Static)
             img(:,:,ii-1) = imgbefore{1,1}{ii};
         end
     end 
+    function ov = displaytiff(image)
+        if ndims(image) > 3
+            switch size(image,4)
+                case 1
+                    ov = joinchannels('rgb',image(:,:,:,1));
+                case 2
+                    ov = joinchannels('rgb',image(:,:,:,1),image(:,:,:,2));
+                case 3
+                    ov = joinchannels('rgb',image(:,:,:,1)+image(:,:,:,3),image(:,:,:,2)+image(:,:,:,3),image(:,:,:,3));
+            end
+        else
+            ov = image;
+        end
+    end
+    function im_array = loadtiffseries(filepath,filestr,option)
+        % this function loads in a tiff series to make a movie
+        % inputs:
+        %       option is an action to take on the files as they come in.
+        %           option = 'z-project';
+        %           option = '';
+        if nargin == 0 || isempty(filepath)
+            filepath = pwd;
+        end
+        if nargin > 0 && isempty(filestr) 
+            [files, filepath] = uigetfile(filepath,'*.*','Multiselect','on');
+        elseif nargin == 2
+            filestr = 'gephOlig-488lighagain_w1488_s*'
+            filestruc = dir(fullfile(filepath,filestr));
+            files = arrayfun(@(x) x.name,filestruc,'UniformOutput',false)';
+        end
+        if nargin>2
+            switch option
+                case 'maxproj'
+                    maxproj = @(x)(max(x,[],3));
+                    img_operation = maxproj;
+            end
+        end
+        % first determine image size
+        path = fullfile(filepath,files{1});
+        oimg = loadtiff(path);
+        if nargin>2
+        img = img_operation(oimg);
+        end
+        im_array = zeros([size(img),numel(files)]);
+        img_nd = ndims(im_array);
+        otherdims = repmat({':'},1,img_nd-1);
+        im_array(otherdims{:}, 1) = img;
+        wb = waitbar(0,'Loading Files...');
+        for ff = 2:numel(files)
+            path = fullfile(filepath,files{ff});
+            oimg = loadtiff(path);
+            if nargin>2
+                img = img_operation(oimg);
+            end
+            im_array(otherdims{:}, ff) = img;
+            waitbar(ff/numel(files),wb);
+        end
+        close(wb);
+    end
+    
     function im_array = loadtiff_3ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
         oimg = loadtiff(filepath);
@@ -153,20 +213,28 @@ methods (Static)
         threshval = multithresh(single(img_in),2);
         mask = img_in>=threshval(1);
     end
-    function [mask,threshval] = imgThreshold_fixedUserInput(img_in)
+    function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
         uiwait(msgbox('Select a representative background region','Title','modal'));
-        h = dipshow(img_in,'log');
+        if nargin<2
+            image4selection = img_in;
+        end
+        h = dipshow(image4selection,'log');
         diptruesize(h,125);
-        [a,b] = dipcrop(h);
-        threshval = max(a);
+        [~,C] = dipcrop(h);
+        if ndims(img_in)==3
+        reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
+        elseif ismatrix(img_in)
+            reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
+        end
+        threshval = max(reg);
         mask = threshold(img_in,'fixed',threshval);
         close(h);
     end
     function newmask = cleanUpMask_manual(underimgin,mask_in)
         %        lb = label(mask_in);
-        ov = overlay(underimgin,mask_in);
-        h = dipshow(ov,'log');
-        dipmapping(h,'global')
+%         ov = overlay(underimgin,mask_in);
+%         h = dipshow(ov,'log');
+%         dipmapping(h,'global')
         %       h = dipshow(lb,'labels');
 %         while(ishandle(h))
 %             [a b] = dipcrop(h);
@@ -177,24 +245,25 @@ methods (Static)
 %             dipmapping(h,'global');
 %         end
         lb = label(mask_in);
-        dipfig lb;
-        g = dipshow(lb,'labels');
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        dipshow(ov,'log');
+        diptruesize(g,200);
         while(ishandle(g))
-        v = dipgetcoords(g,1);
-        val = single(lb(v(1),v(2),v(3)));
-        lb(lb == val) = 0;
-        g = dipshow(lb,'labels');
+            try
+                v = dipgetcoords(g,1);
+            catch
+                break;
+            end
+            val = single(lb(v(1),v(2),v(3)));
+            lb(lb == val) = 0; 
+            ov = underimgin;
+            ov(lb~=0) = 0
+            diptruesize(gcf,200);
         end
-        
-%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
-%             close(h);
-%             ov = overlay(underimgin,mask_in);
-%             h = dipshow(ov,'log');
-%             dipmapping(h,'global');
-        
-        
-        
-        
+      dipfig -unlink
+      newmask = logical(lb);  
     end
     function perim = maskperim(mask_in)
          perim = dt(mask_in);
@@ -466,6 +535,7 @@ methods (Static)
     end
     
      function [img_out,sv_arr] = timedriftCorrect(img_in)
+          wb = waitbar(0,'Calculating Drift...');
         img_out = 0*img_in;
         imref = squeeze(img_in(:,:,0));
         img_out(:,:,0) = imref;
@@ -476,7 +546,9 @@ methods (Static)
             shiftim = shift(imcurr,sv1,1);
             img_out(:,:,ii) = shiftim;
             sv_arr(:,ii) = sv1;
+            waitbar(ii/(size(img_in,3)-1),wb);
         end
+        close(wb);
      end
      function img_out = applydriftCorrect(img_in,sv_arr)
          img_out = 0*img_in;
@@ -504,6 +576,86 @@ methods (Static)
          dipmapping(h,'lin');
          diptruesize(h,200);
      end
+     
+     function [stitchimage, ccpeak] = stitch2images(im1,im2,ccpeak)
+         % this functions uses matlab's normxcorr2 function to combine
+         % images at the maximum cross correlation position. the larger of
+         % the two images serves as the base 'image' and then the smaller
+         % image is 'template'd around --> the base image is used in regions of overlap 
+         
+         % this can also take in a shift input ccpeak. this is a cell array
+         % with an xpeak and ypeak. this is assumed to represent the peak
+         % values of the crosscorrelation (normxcorr2) as calculated when
+         % the larger of im1,im2 is used as image and the smaller as the
+         % template.
+         
+         if numel(im1)>numel(im2)
+             image = im1;
+             template = im2;
+         else
+             template = im1;
+             image = im2;
+         end
+         if nargin<3
+             cc = normxcorr2(template,image);
+             [xpeak, ypeak] = find(cc==max(cc(:)));
+             ccpeak = {xpeak,ypeak};
+         end
+         xpeak = ccpeak{1};
+         ypeak = ccpeak{2};
+         % make template image that's image with template sized perimeter (template size -1)
+         newimage = zeros((size(template,1)-1)+size(image,1),(size(template,2)-1)*2+size(image,2));
+         % switch the order of these 2 lines to put the template in the
+         % region of overlap instead of the image
+         newimage(xpeak+1:xpeak+size(template,1),ypeak+1:ypeak+size(template,2)) = template;
+         newimage(size(template,1)+1:size(template,1)+size(image,1),size(template,2)+1:size(template,2)+size(image,2)) = image;
+         
+         % clean up the image
+         test1 = sum(newimage,1);
+         yfirst = find(test1>0,1,'first');
+         ylast = find(test1>0,1,'last');
+         test2 = sum(newimage,2);  
+         xfirst = find(test2>0,1,'first');
+         xlast = find(test2>0,1,'last');
+         stitchimage = newimage(xfirst:xlast,yfirst:ylast,:);  
+     end
+     
+     function [stitchmovie,ccpeak_out] = stitch2movies(mov1,mov2,ccpeak_in)
+         % put this on the GPU
+         assert(size(mov1,3) == size(mov2,3));
+         if nargin>2
+         % make sure that there is a ccpeak for each frame
+             assert(size(ccpeak_in,1) == size(mov1,3));
+         end
+         ccpeak_out = cell(size(mov1,3),1);
+         lastframe = size(mov1,3);
+         stitchmovie = zeros(size(mov1,1)*2,size(mov2,2)*2,lastframe);   
+         if nargin>2
+             wb = waitbar(0,'Stitching based on input...');
+         else
+         wb = waitbar(0,'Computing stitching...');
+         end
+         for ff = 1:lastframe
+             im1 = squeeze(mov1(:,:,ff));
+             im2 = squeeze(mov2(:,:,ff));
+             if nargin>2
+             [stitchimage,ccpeak_out{ff}] = GeneralAnalysis.stitch2images(im1,im2,ccpeak_in{ff});
+             else
+             [stitchimage,ccpeak_out{ff}] = GeneralAnalysis.stitch2images(im1,im2);
+             end
+             stitchmovie(1:size(stitchimage,1),1:size(stitchimage,2),ff) = stitchimage;
+             waitbar(ff/lastframe,wb);
+         end
+         close(wb);
+         % clean up the image
+         fulltest = sum(stitchmovie,3);
+         test1 = sum(fulltest,1);
+         ylast = find(test1>0,1,'last');
+         test2 = sum(fulltest,2);
+         xlast = find(test2>0,1,'last');
+         stitchmovie = stitchmovie(1:xlast,1:ylast,:);
+     end
+     
      function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)
          if nargin<4
              mskcol = [1 1 1];
@@ -513,6 +665,7 @@ methods (Static)
          end
          perim = dt(mask);
          bin_im = (perim==1);
+         
          [h,overlayim] = GeneralAnalysis.overlay(image,bin_im,cm,mskcol);
      end
 end
