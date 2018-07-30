@@ -94,8 +94,7 @@ methods (Static)
         end
         if nargin > 0 && isempty(filestr) 
             [files, filepath] = uigetfile(filepath,'*.*','Multiselect','on');
-        elseif nargin == 2
-            filestr = 'gephOlig-488lighagain_w1488_s*'
+        elseif nargin >= 2
             filestruc = dir(fullfile(filepath,filestr));
             files = arrayfun(@(x) x.name,filestruc,'UniformOutput',false)';
         end
@@ -106,6 +105,8 @@ methods (Static)
                     img_operation = maxproj;
             end
         end
+        % make sure file names are in the correct order
+        files = natsortfiles(files);
         % first determine image size
         path = fullfile(filepath,files{1});
         oimg = loadtiff(path);
