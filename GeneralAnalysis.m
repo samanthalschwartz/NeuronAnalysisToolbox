@@ -111,20 +111,20 @@ methods (Static)
         path = fullfile(filepath,files{1});
         oimg = loadtiff(path);
         if nargin>2
-        img = img_operation(oimg);
+        oimg = img_operation(oimg);
         end
-        im_array = zeros([size(img),numel(files)]);
+        im_array = zeros([size(oimg),numel(files)]);
         img_nd = ndims(im_array);
         otherdims = repmat({':'},1,img_nd-1);
-        im_array(otherdims{:}, 1) = img;
+        im_array(otherdims{:}, 1) = oimg;
         wb = waitbar(0,'Loading Files...');
         for ff = 2:numel(files)
             path = fullfile(filepath,files{ff});
             oimg = loadtiff(path);
             if nargin>2
-                img = img_operation(oimg);
+                oimg = img_operation(oimg);
             end
-            im_array(otherdims{:}, ff) = img;
+            im_array(otherdims{:}, ff) = oimg;
             waitbar(ff/numel(files),wb);
         end
         close(wb);
