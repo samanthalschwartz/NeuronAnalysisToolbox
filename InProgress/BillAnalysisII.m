@@ -32,7 +32,7 @@ lbl_pre = label(logical(gephclean2),2);
 lbl = GeneralAnalysis.findLabelsInMask(lbl_pre,dip_image(cellfillmask));
 goodid = [];
 wb = waitbar(0,'Labeling...');
-goodlbl = lbl_out;
+goodlbl = lbl;
 for ii = 1:max(lbl)
     % check that label is in every frame
     out = find(lbl==ii);

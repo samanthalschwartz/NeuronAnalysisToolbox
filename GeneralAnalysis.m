@@ -103,6 +103,9 @@ methods (Static)
                 case 'maxproj'
                     maxproj = @(x)(max(x,[],3));
                     img_operation = maxproj;
+                case 'sumproj'
+                    maxproj = @(x)(sum(x,[],3));
+                    img_operation = maxproj;
             end
         end
         % make sure file names are in the correct order
@@ -111,12 +114,16 @@ methods (Static)
         path = fullfile(filepath,files{1});
         oimg = loadtiff(path);
         if nargin>2
-        oimg = img_operation(oimg);
+            oimg = img_operation(oimg);
         end
         im_array = zeros([size(oimg),numel(files)]);
-        img_nd = ndims(im_array);
-        otherdims = repmat({':'},1,img_nd-1);
-        im_array(otherdims{:}, 1) = oimg;
+        if numel(files)>1
+            img_nd = ndims(im_array);
+            otherdims = repmat({':'},1,img_nd-1);
+            im_array(otherdims{:}, 1) = oimg;
+        else
+            im_array = oimg;
+        end
         wb = waitbar(0,'Loading Files...');
         for ff = 2:numel(files)
             path = fullfile(filepath,files{ff});
@@ -583,6 +590,7 @@ methods (Static)
          h = dipshow(overlayim,cm);
          dipmapping(h,'global');
          dipmapping(h,'lin');
+         dipmapping(h,[0 3500]);
          diptruesize(h,200);
      end
      
