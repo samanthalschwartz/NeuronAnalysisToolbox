@@ -109,6 +109,9 @@ methods (Static)
             end
         end
         % make sure file names are in the correct order
+        % remove files with string 'thumb'
+        outids  = cell2mat( cellfun(@(x) contains(x,'thumb'),files,'UniformOutput',false) );
+        files(outids) = []; 
         files = natsortfiles(files);
         % first determine image size
         path = fullfile(filepath,files{1});
@@ -152,7 +155,8 @@ methods (Static)
         frames2 = size(oimg,3);
         ch1 = oimg(:,:,1:2:frames2);
         ch2 = oimg(:,:,2:2:frames2);
-        im_array = cat(4,ch1,ch2);
+        lastfr = min(size(ch1,3),size(ch2,3));
+        im_array = cat(4,ch1(:,:,1:lastfr),ch2(:,:,1:lastfr));
     end
     function ch = loadtiff_1ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
@@ -264,7 +268,11 @@ methods (Static)
             catch
                 break;
             end
+            if size(v,2)==2
+                val = single(lb(v(1),v(2),0));
+            elseif size(v,2)==3
             val = single(lb(v(1),v(2),v(3)));
+            end
             lb(lb == val) = 0; 
             ov = underimgin;
             ov(lb~=0) = 0
@@ -560,6 +568,18 @@ methods (Static)
             imcurr= squeeze(img_in(:,:,ii));
             sv1 = findshift(imref,imcurr,'iter',0);
             shiftim = shift(imcurr,sv1,1);
+            if size(sv1,1) == 2
+               if sv1(1)>0
+                   shiftim(0:ceil(sv1(1)),:) = 0;
+               else
+                   shiftim(end+ceil(sv1(1)):end,:) = 0;
+               end
+               if sv1(2)>0
+                   shiftim(:,0:ceil(sv1(2))) = 0;
+               else
+                   shiftim(:,end+ceil(sv1(2)):end) = 0;
+               end
+            end
             img_out(:,:,ii) = shiftim;
             sv_arr(:,ii) = sv1;
             waitbar(ii/(size(img_in,3)-1),wb);

@@ -13,7 +13,7 @@ mask = sadiff>0;
 lbl = label(mask,1,20,);
 
 %%
-msr = measure(lb,adiff,'size');
+msr = measure(lb,adiff,'P2A');
 szs = msr.size;
 bins 
 h = histogram(szs,300)
@@ -53,7 +53,7 @@ for ii = 1:size(ord_trace,1)
         %             FaceColor = 'w';
         %         end
         p = patch([times(jj),times(jj)+1,times(jj)+1,times(jj)],[ii-1, ii-1, ii, ii],ord_trace(ii,jj));
-        set(p,'FaceColor','flat','EdgeColor','none');
+        set(p,'FaceColor','flat','EdgeColor','none','CData',);
         %
         %         cnt = cnt+1;
     end
