@@ -1,8 +1,7 @@
 %% for automatically finding calcium transients and determining the extent of calcium
 
-% uiopen('E:\GephIntrabody Project\Bill rGecko\Composite.tif',1);
-% uiopen('Z:\Bill\2018\8.6.18_ibOLIG_QCTs_well1\baseline_movie.tif',1);
-uiopen('F:\GephIntrabody Project\Bill rGecko\180806\cell1\postZ_movie.tif',1);
+% image = GeneralAnalysis.loadtiff_2ch('F:\GephIntrabody Project\Bill rGecko\180806\cell2\postZ_movie.tif');
+image = GeneralAnalysis.loadtiff_2ch('F:\GephIntrabody Project\Bill rGecko\180806\cell2\baseline_movie.tif');
 
 ca = dip_image(image(:,:,1:end-1,1));
 
@@ -60,7 +59,7 @@ sumval = sum(ca,mask2use,[1 2]);
 % trace(ll,:) = sumval./tracemed;
 trace_raw(ll,:) = sumval;
 % toc
-waitbar(ll/max(lbl),wb);
+waitbar(ll/max(sumlbl),wb);
 end
 close(wb)
 
@@ -89,14 +88,10 @@ for ii = 1:size(ord_trace_norm,1)
 end
 title('rGecko Intensity (AU)','FontSize',16)
 xlabel('Frame','FontSize',16);
+yticks(1:size(ord_trace,1));
 yticklabels(num2str(round(spanval(ordx),2)'))
 ylabel('Span Value (pixels)','FontSize',16)
 xlim([0 size(ord_trace,2)]);
 ylim([0 size(ord_trace,1)]);
 c = colorbar;
 close(h);
-
-
-%%
-h = dipshow(sum(ca,[],3));
-[roi, v] = diproi(h)
