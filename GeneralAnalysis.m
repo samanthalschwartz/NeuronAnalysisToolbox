@@ -94,8 +94,7 @@ methods (Static)
         end
         if nargin > 0 && isempty(filestr) 
             [files, filepath] = uigetfile(filepath,'*.*','Multiselect','on');
-        elseif nargin == 2
-            filestr = 'gephOlig-488lighagain_w1488_s*'
+        elseif nargin >= 2
             filestruc = dir(fullfile(filepath,filestr));
             files = arrayfun(@(x) x.name,filestruc,'UniformOutput',false)';
         end
@@ -104,26 +103,38 @@ methods (Static)
                 case 'maxproj'
                     maxproj = @(x)(max(x,[],3));
                     img_operation = maxproj;
+                case 'sumproj'
+                    maxproj = @(x)(sum(x,[],3));
+                    img_operation = maxproj;
             end
         end
+        % make sure file names are in the correct order
+        % remove files with string 'thumb'
+        outids  = cell2mat( cellfun(@(x) contains(x,'thumb'),files,'UniformOutput',false) );
+        files(outids) = []; 
+        files = natsortfiles(files);
         % first determine image size
         path = fullfile(filepath,files{1});
         oimg = loadtiff(path);
         if nargin>2
-        img = img_operation(oimg);
+            oimg = img_operation(oimg);
         end
-        im_array = zeros([size(img),numel(files)]);
-        img_nd = ndims(im_array);
-        otherdims = repmat({':'},1,img_nd-1);
-        im_array(otherdims{:}, 1) = img;
+        im_array = zeros([size(oimg),numel(files)]);
+        if numel(files)>1
+            img_nd = ndims(im_array);
+            otherdims = repmat({':'},1,img_nd-1);
+            im_array(otherdims{:}, 1) = oimg;
+        else
+            im_array = oimg;
+        end
         wb = waitbar(0,'Loading Files...');
         for ff = 2:numel(files)
             path = fullfile(filepath,files{ff});
             oimg = loadtiff(path);
             if nargin>2
-                img = img_operation(oimg);
+                oimg = img_operation(oimg);
             end
-            im_array(otherdims{:}, ff) = img;
+            im_array(otherdims{:}, ff) = oimg;
             waitbar(ff/numel(files),wb);
         end
         close(wb);
@@ -144,7 +155,8 @@ methods (Static)
         frames2 = size(oimg,3);
         ch1 = oimg(:,:,1:2:frames2);
         ch2 = oimg(:,:,2:2:frames2);
-        im_array = cat(4,ch1,ch2);
+        lastfr = min(size(ch1,3),size(ch2,3));
+        im_array = cat(4,ch1(:,:,1:lastfr),ch2(:,:,1:lastfr));
     end
     function ch = loadtiff_1ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
@@ -256,7 +268,11 @@ methods (Static)
             catch
                 break;
             end
+            if size(v,2)==2
+                val = single(lb(v(1),v(2),0));
+            elseif size(v,2)==3
             val = single(lb(v(1),v(2),v(3)));
+            end
             lb(lb == val) = 0; 
             ov = underimgin;
             ov(lb~=0) = 0
@@ -535,7 +551,15 @@ methods (Static)
     end
     
      function [img_out,sv_arr] = timedriftCorrect(img_in)
-          wb = waitbar(0,'Calculating Drift...');
+         if ~isa(img_in,'dip_image')
+            try
+                img_in = dip_image(img_in);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+        wb = waitbar(0,'Calculating Drift...');
         img_out = 0*img_in;
         imref = squeeze(img_in(:,:,0));
         img_out(:,:,0) = imref;
@@ -544,6 +568,18 @@ methods (Static)
             imcurr= squeeze(img_in(:,:,ii));
             sv1 = findshift(imref,imcurr,'iter',0);
             shiftim = shift(imcurr,sv1,1);
+            if size(sv1,1) == 2
+               if sv1(1)>0
+                   shiftim(0:ceil(sv1(1)),:) = 0;
+               else
+                   shiftim(end+ceil(sv1(1)):end,:) = 0;
+               end
+               if sv1(2)>0
+                   shiftim(:,0:ceil(sv1(2))) = 0;
+               else
+                   shiftim(:,end+ceil(sv1(2)):end) = 0;
+               end
+            end
             img_out(:,:,ii) = shiftim;
             sv_arr(:,ii) = sv1;
             waitbar(ii/(size(img_in,3)-1),wb);
@@ -574,6 +610,7 @@ methods (Static)
          h = dipshow(overlayim,cm);
          dipmapping(h,'global');
          dipmapping(h,'lin');
+         dipmapping(h,[0 3500]);
          diptruesize(h,200);
      end
      

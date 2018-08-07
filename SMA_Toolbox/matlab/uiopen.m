@@ -35,6 +35,16 @@ switch ext
     case '.tif'
         obj = loadtiff(filename);
         name = 'image';
+        if ndims(obj) == 4
+            cmap = {red,green,blue};
+            % then it is a color image
+            for ii = 1:size(obj,4)
+                if ~isempty(find(obj(:,:,:,ii),1))
+                    dipshow(obj(:,:,:,ii),'lin');
+                    dipmapping(gcf,'Colormap',cmap{ii});
+                end
+            end
+        end
     case '.reganalysis'
         obj = RegistrationAnalysis(filename);
         name = getObjName('reg');

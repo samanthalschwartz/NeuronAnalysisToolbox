@@ -80,11 +80,15 @@ while true
     % loading later....
     colorstr = 'channels=';
     slicestr = 'slices=';
-    extrainfo = tiff.getTag('ImageDescription');
-    if contains(extrainfo,colorstr)
-        infoidx = strfind(extrainfo,colorstr);
-        numchannels = str2num(extrainfo(infoidx+length(colorstr)));
-        iinfo(tfl).color = numchannels;
+    try
+        extrainfo = tiff.getTag('ImageDescription');
+        if contains(extrainfo,colorstr)
+            infoidx = strfind(extrainfo,colorstr);
+            numchannels = str2num(extrainfo(infoidx+length(colorstr)));
+            iinfo(tfl).color = numchannels;
+        end
+    catch
+        extrainfo = '';
     end
     % -- -----------------------------------------------------
     if tfl > 1
