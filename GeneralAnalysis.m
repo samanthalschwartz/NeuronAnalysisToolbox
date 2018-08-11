@@ -242,7 +242,7 @@ methods (Static)
         mask = threshold(img_in,'fixed',threshval);
         close(h);
     end
-    function newmask = cleanUpMask_manual(underimgin,mask_in)
+    function newmask = cleanUpMask_manual_click(underimgin,mask_in)
         %        lb = label(mask_in);
 %         ov = overlay(underimgin,mask_in);
 %         h = dipshow(ov,'log');
@@ -274,6 +274,54 @@ methods (Static)
             val = single(lb(v(1),v(2),v(3)));
             end
             lb(lb == val) = 0; 
+            ov = underimgin;
+            ov(lb~=0) = 0
+            diptruesize(gcf,200);
+        end
+      dipfig -unlink
+      newmask = logical(lb);  
+    end
+    function newmask = cleanUpMask_manual_square(underimgin,mask_in)
+        %        lb = label(mask_in);
+%         ov = overlay(underimgin,mask_in);
+%         h = dipshow(ov,'log');
+%         dipmapping(h,'global')
+        %       h = dipshow(lb,'labels');
+%         while(ishandle(h))
+%             [a b] = dipcrop(h);
+%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
+%             close(h);
+%             ov = overlay(underimgin,mask_in);
+%             h = dipshow(ov,'log');
+%             dipmapping(h,'global');
+%         end
+        lb = label(mask_in);
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        dipshow(ov,'log');
+        diptruesize(g,200);
+        while(ishandle(g))
+            try
+                [B,C] = dipcrop(g);
+%                 v = dipgetcoords(g,1);
+            catch
+                break;
+            end
+            gcfinfo = get(g,'UserData');
+            if ndims(B)==3
+                
+                currtime = gcfinfo.curslice;
+                 img2remove = lb(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),currtime);
+                 lbs2remove = unique(single(img2remove));
+                 
+            elseif ismatrix(B)
+                 img2remove = lb(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
+                 lbs2remove = unique(single(img2remove));
+            end
+            for ii = lbs2remove(lbs2remove~=0)'
+            lb(lb == ii) = 0; 
+            end
             ov = underimgin;
             ov(lb~=0) = 0
             diptruesize(gcf,200);
@@ -513,8 +561,7 @@ methods (Static)
                 %                 does not do what 'Steve' thinks here. See how to do in
                 %                 plotting function
 %                 track = typicalShortestPath(sinkDist,[rows,cols],min(D(:)));
-                closedmask = bwmorph(mindistmask,'fill',inf);
-                paths_thinned_many = bwmorph(closedmask, 'thin', inf);
+               
 %                 typicalpaths = dip_image(false(size(sinkDist)));
 %                 for ii = 1:size(track,1)
 %                    typicalpaths(track(ii,1),track(ii,2)) = true; 
@@ -522,6 +569,8 @@ methods (Static)
                 
                 
                 if plotflag
+                     closedmask = bwmorph(mindistmask,'fill',inf);
+                paths_thinned_many = bwmorph(closedmask, 'thin', inf);
                     P = imoverlay(P, paths_thinned_many, [.5 .5 .5]);
 %                     P = imoverlay(P, logical(typicalpaths), [0 1 0]);
                     P = imoverlay(P, logical(seedlbl_ll), [1 0 0]);

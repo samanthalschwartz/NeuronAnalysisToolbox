@@ -15,7 +15,7 @@ else
     filesize = numel(filename);
 end
 
-plotflag = 1; % use 1 to keep .tif file of plots each frame, 0 to not
+plotflag = 0; % use 1 to keep .tif file of plots each frame, 0 to not
 saveflag = 1; % use 1 to create movie of plots, 0 to not
 for ii = 1:filesize
     plotsavename = filename{ii}(1:end-4);
