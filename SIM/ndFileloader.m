@@ -3,16 +3,16 @@ if nargin<1
     [name, path] = uigetfile('*.nd2');
     filename = fullfile(path,name);
 end
-out = bfopen(filename);
+hannah = bfopen(filename);
 % use first input to determine #channels, #z-planes
-imsize = size(out{1,1}{1,1});
-infostr = out{1,1}{1,2};
+imsize = size(hannah{1,1}{1,1}); %size of single image frame
+infostr = hannah{1,1}{1,2};
 info = parseNDtext(infostr);
 image = zeros([imsize,info.totalZ,info.totalCol]);
-for ii = 1:size(out{1,1},1)
-    infostr = out{1,1}{ii,2};
+for ii = 1:size(hannah{1,1},1)
+    infostr = hannah{1,1}{ii,2};
     info = parseNDtext(infostr);
-    image(:,:,info.currZ,info.currCol) = out{1,1}{ii,1};
+    image(:,:,info.currZ,info.currCol) = hannah{1,1}{ii,1};
 end
 end
 function info = parseNDtext(infostr)
