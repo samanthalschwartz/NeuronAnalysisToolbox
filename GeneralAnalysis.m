@@ -614,7 +614,7 @@ methods (Static)
          diptruesize(h,200);
      end
      
-     function [stitchimage, ccpeak] = stitch2images(im1,im2,ccpeak)
+     function [stitchimage, ccpeak] = stitch2images(im1,im2,ccpeak,cleanbool)
          % this functions uses matlab's normxcorr2 function to combine
          % images at the maximum cross correlation position. the larger of
          % the two images serves as the base 'image' and then the smaller
@@ -641,13 +641,14 @@ methods (Static)
          xpeak = ccpeak{1};
          ypeak = ccpeak{2};
          % make template image that's image with template sized perimeter (template size -1)
-         newimage = zeros((size(template,1)-1)+size(image,1),(size(template,2)-1)*2+size(image,2));
+         newimage = zeros((size(template,1)-1)+size(image,1),(size(template,2)-1)+size(image,2));
          % switch the order of these 2 lines to put the template in the
          % region of overlap instead of the image
          newimage(xpeak+1:xpeak+size(template,1),ypeak+1:ypeak+size(template,2)) = template;
          newimage(size(template,1)+1:size(template,1)+size(image,1),size(template,2)+1:size(template,2)+size(image,2)) = image;
          
-         % clean up the image
+          % clean up the image
+         if nargin>3 && cleanbool
          test1 = sum(newimage,1);
          yfirst = find(test1>0,1,'first');
          ylast = find(test1>0,1,'last');
@@ -655,10 +656,28 @@ methods (Static)
          xfirst = find(test2>0,1,'first');
          xlast = find(test2>0,1,'last');
          stitchimage = newimage(xfirst:xlast,yfirst:ylast,:);  
+         else
+             stitchimage = newimage;
+         end
      end
-     
+         
      function [stitchmovie,ccpeak_out] = stitch2movies(mov1,mov2,ccpeak_in)
-         % put this on the GPU
+         if isa(mov1,'dip_image')
+             try
+                 mov1 = single(mov1);
+             catch
+                 warning('input must be an image matrix');
+                 return;
+             end
+         end
+         if isa(mov2,'dip_image')
+             try
+                 mov2 = single(mov2);
+             catch
+                 warning('input must be an image matrix');
+                 return;
+             end
+         end 
          assert(size(mov1,3) == size(mov2,3));
          if nargin>2
          % make sure that there is a ccpeak for each frame
