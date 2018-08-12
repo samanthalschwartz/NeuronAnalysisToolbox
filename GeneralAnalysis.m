@@ -300,7 +300,8 @@ methods (Static)
         ov(lb~=0) = 0;
         g = dipfig('ov');
         dipshow(ov,'log');
-        diptruesize(g,200);
+        imviewsz = 150;
+        diptruesize(g,imviewsz);
         while(ishandle(g))
             try
                 [B,C] = dipcrop(g);
@@ -324,7 +325,7 @@ methods (Static)
             end
             ov = underimgin;
             ov(lb~=0) = 0
-            diptruesize(gcf,200);
+            diptruesize(gcf,imviewsz);
         end
       dipfig -unlink
       newmask = logical(lb);  
