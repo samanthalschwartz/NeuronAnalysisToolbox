@@ -5,6 +5,8 @@ classdef channelCellFill < channelBase
         gsig = [1 1 0];
         soma_mask = [];
         soma_vertices = [];
+        fullsoma_mask = [];
+        fullsoma_vertices = [];
     end
     
     methods
@@ -56,6 +58,15 @@ classdef channelCellFill < channelBase
            [roi, v] = diproi(h);      
            obj.soma_mask = repmat(roi,[1 1 size(obj.image,3)]);
            obj.soma_vertices = v;
+           close(h);        
+       end
+       function selectFullSoma(obj)
+           uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));
+           h = dipshow(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]),'log');
+           diptruesize(h,150);
+           [roi, v] = diproi(h);      
+           obj.fullsoma_mask = repmat(roi,[1 1 size(obj.image,3)]);
+           obj.fullsoma_vertices = v;
            close(h);        
        end
        function [h,overlayim] = viewSoma(obj)

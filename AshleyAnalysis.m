@@ -263,11 +263,17 @@ classdef AshleyAnalysis < handle
            cargomask = newsfmask*obj.cellFill.mask;
            obj.cleanedcargomask = cargomask;
        end
-       function cleanSurfaceCargoMask_Manual(obj)
+       function cleanSurfaceCargoMask_Manual(obj,reset)
+           % uses current cleaned surface mask to start with if it exists
+           % any input in the function call acts as a reset
            [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
            close(h);
            overlayim(overlayim==0) = max(overlayim)*2;
+            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
+             cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask);
+           else
            cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.surfaceCargo.mask*obj.cellFill.mask);
+            end
            obj.cleanedcargomask = cargomask;
        end
        

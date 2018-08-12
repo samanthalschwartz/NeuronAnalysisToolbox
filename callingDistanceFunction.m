@@ -1,9 +1,9 @@
 %% call this to calculate and plot distances of an Ashley File
 % this will prompt to select multiple files to run. Currently need to only
 % select files from the same directory 
-addpath(genpath('C:\Users\sammy\Documents\Git'));
+% addpath(genpath('C:\Users\sammy\Documents\Git'));
 % addpath(genpath('Z:\Lab Resources\Analysis Resources\Matlab Resource\NeuronAnalysisToolBox'));
-startdir = 'G:\Sam\Data\Ashley';
+startdir = 'Z:\Sam\MJK_zapERtrap_for_sam';
 % startdir = 'Z:\Ashley\For Sam';
 [filename, pathname] = uigetfile(fullfile(startdir,'*.mat'),...
     'Pick the AshleyFiles to Calculate Distances (can pick more than 1)','MultiSelect', 'on');
@@ -16,7 +16,7 @@ else
 end
 
 plotflag = 0; % use 1 to keep .tif file of plots each frame, 0 to not
-saveflag = 1; % use 1 to create movie of plots, 0 to not
+saveflag = 0; % use 1 to create movie of plots, 0 to not
 for ii = 1:filesize
     plotsavename = filename{ii}(1:end-4);
     plotsavedir = fullfile(pathname,plotsavename);

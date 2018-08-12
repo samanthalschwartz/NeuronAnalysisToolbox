@@ -105,7 +105,7 @@ colormatrix = zeros(sz(2),sz(1),sz(3));
 for cc = 1:sz(3)
     colormatrix(:,:,cc) = cc;
 end
-
+% input = reshape(in,66:1);
 patch(isosurface(0:sz(1)-1,0:sz(2)-1,0:sz(3)-1,double(in),value,colormatrix.*double(in)),'parent',ax,...
 'facelighting','phong','facecolor','flat','edgecolor','none');
 
@@ -122,16 +122,17 @@ patch(isosurface(0:sz(1)-1,0:sz(2)-1,0:sz(3)-1,double(in),value,colormatrix.*dou
 set(ax,'xlim',[0,sz(1)-1],'ylim',[0,sz(2)-1],'zlim',[0,sz(3)-1],...
    'projection','perspective','box','on',...
    'cameraposition',[-4.0657,-5.4502,4.8301].*sz); % view(3)
-pbaspect([1 1 .3])
+pbaspect([1 1 .4])
 % xlabel('x'), ylabel('y'), zlabel('z')
 delete(findobj(plotF,'type','light'));
 light('parent',ax,'position',get(ax,'CameraPosition'));
 light('parent',ax,'position',-get(ax,'CameraPosition')); % one light on each side of the surface
 drawnow
+colormap(flip(jet(sz(3))));
 set(udata.co,'Visible','off');
-xlabel('x-axis')
-ylabel('y-axis')
+
 axis ij
+dipisosurfaceprinti
 
 function axis_change
 [ob,plotF] = gcbo;

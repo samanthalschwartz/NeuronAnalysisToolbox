@@ -592,10 +592,14 @@ methods (Static)
             waitbar(tt/(size(seed_mask,3)-1),wb);
         end
         close(wb);
+        if plotflag
         close(pathfig);
+        end
         if saveflag
             distMovie = readtimeseries(fullfile(plotsavedir,['MinPath_frame#'  '*.tif']),'',[],1,0);
             save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat','sink_mask','seed_mask','geom_mask');
+        else
+            save(fullfile(plotsavedir,'MinPaths'),'distMat','sink_mask','seed_mask','geom_mask');
         end
     end
     
