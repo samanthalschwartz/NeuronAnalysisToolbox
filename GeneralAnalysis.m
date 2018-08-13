@@ -295,7 +295,7 @@ methods (Static)
 %             h = dipshow(ov,'log');
 %             dipmapping(h,'global');
 %         end
-        lb = label(mask_in);
+        lb = label(logical(mask_in));
         ov = underimgin;
         ov(lb~=0) = 0;
         g = dipfig('ov');
@@ -487,15 +487,12 @@ methods (Static)
             lbl_out(:,:,tt) = lbl_outframe;
         end
     end
-    function distMat = geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,plotsavedir,saveflag)
-        if nargin<6
-            saveflag = 0;
-        end
-        if nargin<5
-            plotsavedir = pwd;
-        elseif nargin<4
+    function distMat = geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,plotsavedir)
+        if nargin<4
             plotflag = 0;
             plotsavedir = [];
+        elseif nargin<5
+            plotsavedir = pwd;
         end
         assert(isequal(size(sink_mask),size(seed_mask)) & isequal(size(sink_mask),size(geom_mask)));
         if numel(size(sink_mask))<3
@@ -513,11 +510,11 @@ methods (Static)
         temp = seed_mask(:,:,end);
         temp_labeled = label(temp,1);
         numrows = max(temp_labeled)*tsize;
-        distMat = nan(numrows,2); %this is matrix of all distances matched to frame
+        distMat = nan(numrows,4); %this is matrix of all distances matched to frame
         dm_id = 1;
         %          distMap = zeros(size(single(sink_mask))); %this is a movie of all the distance images to check how good it did. only creates if plotFlag = 1
-        for tt = 0:tsize-1
-            geoframe = bclosing(logical(squeeze(geom_mask(:,:,tt))));
+        for tt = 1:tsize
+            geoframe = bclosing(squeeze(geom_mask(:,:,tt)));
             sinkframe = sink_mask(:,:,tt);
             seedframe = seed_mask(:,:,tt);
             % calc dist map for geom_mask in frame tt
@@ -535,14 +532,16 @@ methods (Static)
                 P = imoverlay(P, ~logical(geoframe), [1 1 1]);
                 P = imoverlay(P, logical(sinkframe), [0 0 1]);
             end
+            seedmsr = measure(seedlbl,0*seedlbl,'Center');
             for ll = 1:max(seedlbl)
                 seedlbl_ll = squeeze((seedlbl == ll));
-                seedmsr = measure(seedlbl_ll,0*seedlbl_ll,'Center');
-                seeds = floor(seedmsr.Center);
+%                 seedmsr = measure(seedlbl_ll,0*seedlbl_ll,'Center');
+                seeds = floor(seedmsr(ll).Center);
                 rows = seeds(1,:)+1;
                 cols = seeds(2,:)+1;
+                %--- this is the actual set of important calls
                 seedDist = bwdistgeodesic(logical(geoframe),rows,cols, 'quasi-euclidean');
-%                 seedDist = bwdistgeodesic(logical(geoframe),logical(seedlbl_ll), 'quasi-euclidean');
+                %                 seedDist = bwdistgeodesic(logical(geoframe),logical(seedlbl_ll), 'quasi-euclidean');
                 D = sinkDist+seedDist;
                 % actual distance value should be minimum. save this value
                 distval = min(D(:));
@@ -561,23 +560,24 @@ methods (Static)
                 %                 paths_thinned_many = bwmorph(paths, 'thin', inf); -- thin
                 %                 does not do what 'Steve' thinks here. See how to do in
                 %                 plotting function
-%                 track = typicalShortestPath(sinkDist,[rows,cols],min(D(:)));
-               
-%                 typicalpaths = dip_image(false(size(sinkDist)));
-%                 for ii = 1:size(track,1)
-%                    typicalpaths(track(ii,1),track(ii,2)) = true; 
-%                 end
+                %                 track = typicalShortestPath(sinkDist,[rows,cols],min(D(:)));
+                
+                %                 typicalpaths = dip_image(false(size(sinkDist)));
+                %                 for ii = 1:size(track,1)
+                %                    typicalpaths(track(ii,1),track(ii,2)) = true;
+                %                 end
                 
                 
                 if plotflag
-                     closedmask = bwmorph(mindistmask,'fill',inf);
-                paths_thinned_many = bwmorph(closedmask, 'thin', inf);
+                    closedmask = bwmorph(mindistmask,'fill',inf);
+                    paths_thinned_many = bwmorph(closedmask, 'thin', inf);
                     P = imoverlay(P, paths_thinned_many, [.5 .5 .5]);
-%                     P = imoverlay(P, logical(typicalpaths), [0 1 0]);
+                    %                     P = imoverlay(P, logical(typicalpaths), [0 1 0]);
                     P = imoverlay(P, logical(seedlbl_ll), [1 0 0]);
                 end
                 %                 dist = size(find(paths_thinned_many),1);
                 labeledmat(ll,2) = distval;
+                labeledmat(ll,[3 4]) = seeds(1:2)';
             end
             if (dm_id + size(labeledmat,1) -1) > size(distMat,1)  % need to make more space
                 addons = nan(numrows,2);
@@ -594,13 +594,11 @@ methods (Static)
         end
         close(wb);
         if plotflag
-        close(pathfig);
-        end
-        if saveflag
+            close(pathfig);
             distMovie = readtimeseries(fullfile(plotsavedir,['MinPath_frame#'  '*.tif']),'',[],1,0);
-            save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat','sink_mask','seed_mask','geom_mask');
+            save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat');
         else
-            save(fullfile(plotsavedir,'MinPaths'),'distMat','sink_mask','seed_mask','geom_mask');
+            save(fullfile(plotsavedir,'MinPaths'),'distMat');
         end
     end
     
@@ -668,7 +666,7 @@ methods (Static)
          diptruesize(h,200);
      end
      
-     function [stitchimage, ccpeak] = stitch2images(im1,im2,ccpeak,cleanbool)
+     function [stitchimage, ccpeak] = stitch2images(dendrite,soma,ccpeak,cleanbool)
          % this functions uses matlab's normxcorr2 function to combine
          % images at the maximum cross correlation position. the larger of
          % the two images serves as the base 'image' and then the smaller
@@ -679,28 +677,22 @@ methods (Static)
          % values of the crosscorrelation (normxcorr2) as calculated when
          % the larger of im1,im2 is used as image and the smaller as the
          % template.
-         
-         if numel(im1)>numel(im2)
-             image = im1;
-             template = im2;
-         else
-             template = im1;
-             image = im2;
-         end
-         if nargin<3
-             cc = normxcorr2(template,image);
+         dendx = min(size(dendrite,1),size(soma,1));
+         dendy = min(size(dendrite,2),size(soma,2));
+         dendrite = dendrite(1:dendx,1:dendy);
+         if nargin<3 || isempty(ccpeak)
+             cc = normxcorr2(dendrite,soma);
              [xpeak, ypeak] = find(cc==max(cc(:)));
              ccpeak = {xpeak,ypeak};
          end
          xpeak = ccpeak{1};
          ypeak = ccpeak{2};
          % make template image that's image with template sized perimeter (template size -1)
-         newimage = zeros((size(template,1)-1)+size(image,1),(size(template,2)-1)+size(image,2));
+         newimage = zeros((size(dendrite,1)-1)+size(soma,1),(size(dendrite,2)-1)+size(soma,2));
          % switch the order of these 2 lines to put the template in the
-         % region of overlap instead of the image
-         newimage(xpeak+1:xpeak+size(template,1),ypeak+1:ypeak+size(template,2)) = template;
-         newimage(size(template,1)+1:size(template,1)+size(image,1),size(template,2)+1:size(template,2)+size(image,2)) = image;
-         
+         % region of overlap instead of the image 
+         newimage(xpeak:xpeak+size(dendrite,1)-1,ypeak:ypeak+size(dendrite,2)-1) = dendrite;
+         newimage(size(dendrite,1)+1:size(dendrite,1)+size(soma,1),size(dendrite,2)+1:size(dendrite,2)+size(soma,2)) = soma;
           % clean up the image
          if nargin>3 && cleanbool
          test1 = sum(newimage,1);
@@ -714,7 +706,7 @@ methods (Static)
              stitchimage = newimage;
          end
      end
-         
+             
      function [stitchmovie,ccpeak_out] = stitch2movies(mov1,mov2,ccpeak_in)
          if isa(mov1,'dip_image')
              try

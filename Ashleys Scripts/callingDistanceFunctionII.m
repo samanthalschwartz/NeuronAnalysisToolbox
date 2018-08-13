@@ -27,14 +27,7 @@ for ii = 1:filesize
     disp('Loading File.....');
     load(fullfile(filename{ii}));
     disp(['File Loaded: ' fullfile(filename{ii})]);
-    aa.maskCargoInsideCell;
-    sink_mask = dip_image(aa.cellFill.soma_mask);
-    seed_mask = dip_image(aa.inCellSurfaceCargo);
-    aa.cellFill.make_thickMask();
-    geom_mask = bclosing(logical(aa.cellFill.mask_thick));
-    distMat = GeneralAnalysis.geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,plotsavedir,saveflag);
-    aa.distancematrix = distMat;
-    disp(['SavingFile: ' fullfile(plotsavedir,'.mat')]);
-    save(fullfile([plotsavedir,'.mat']),'aa');
+    aa.calculateSurfaceCargoDistances(1,plotsavedir);
+    save(fullfile(filename{ii}),'aa');
     disp('File Saved');
 end

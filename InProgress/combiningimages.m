@@ -1,8 +1,8 @@
 % load('C:\Users\schwsama\Documents\Data\zapERtrap\cell3_AshleyFile.mat');
-load('E:\zapERtrap\050118 NL1 insertion\cell3_AshleyFile.mat');
+load('E:\Sam\Data\MJK_zapERtrap_for_sam\AMB_previous\050118 NL1 insertion\cell3_AshleyFile.mat');
 body = uint16(squeeze(sum(aa.cellFill.image(:,:,1),[],3)));
 % load('C:\Users\schwsama\Documents\Data\zapERtrap\cell3dendrites_AshleyFile.mat');
-load('E:\zapERtrap\050118 NL1 insertion\cell3dendrites_AshleyFile.mat');
+load('E:\Sam\Data\MJK_zapERtrap_for_sam\AMB_previous\050118 NL1 insertion\cell3dendrites_AshleyFile.mat');
 dends = uint16(squeeze(sum(aa.cellFill.image(:,:,1),[],3)));
 
 cc = normxcorr2(dends,body);

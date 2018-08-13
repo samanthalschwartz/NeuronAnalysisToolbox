@@ -13,7 +13,7 @@ coststencil = [sqrt(2),0,sqrt(2),0,0,sqrt(2),0,sqrt(2)];
 curloc = startpixel;
 dip_sinkdistancetransform = dip_image(sinkdistancetransform);
 % make 1 pixel of nan around the edge
-
+figure;
 while dist2sink>0
     neighbors = neighborstencil + repmat(curloc,size(neighborstencil,1),1);
     neighbors(:,:) = max(neighbors(:,:),0);
@@ -33,6 +33,7 @@ while dist2sink>0
     tracklength = tracklength + 1;
     track(tracklength,:) = curloc;
     dist2sink = neighbordistance(idx);
+    plot(track(:,1),track(:,2),'-');   
 end
 track(isnan(track(:,1)),:) = [];
 % figure; hold on;
