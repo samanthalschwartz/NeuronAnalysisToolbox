@@ -57,6 +57,10 @@ classdef AshleyAnalysis < handle
            obj.surfaceCargo.setfilepath(obj.path_channel_surfaceCargo);
            obj.TfR.setfilepath(obj.path_channel_TfR);
        end
+       function recrop(obj)
+           
+           
+       end
        function maskCargoInsideCell(obj)
            obj.inCellSurfaceCargo = obj.surfaceCargo.mask.*obj.cellFill.mask;
        end
@@ -255,6 +259,27 @@ classdef AshleyAnalysis < handle
                writeDipImageMovie(h,savename,options)
            end
        end
+       
+       function calculateSurfaceCargoDistances(obj,plotflag,savedir)
+           if isempty(obj.inCellSurfaceCargo)
+           obj.maskCargoInsideCell;
+           end
+           if isempty(obj.cellFill.mask_thick)
+               obj.cellFill.make_thickMask();
+           end
+           sink_mask = logical(obj.cellFill.soma_mask);
+           seed_mask = logical(obj.inCellSurfaceCargo);
+           geom_mask = logical(obj.cellFill.mask_thick>0);
+           if nargin==3
+               distMat = GeneralAnalysis.geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,savedir);
+           elseif nargin==2
+               distMat = GeneralAnalysis.geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag);
+           else
+               distMat = GeneralAnalysis.geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask);
+           end
+           obj.distancematrix = distMat;
+       end
+       
        function cleanSurfaceCargoMask(obj)
            img4wtsd = gaussf(obj.surfaceCargo.image);
            wshed = GeneralAnalysis.watershed_timeseries(-img4wtsd,1);
