@@ -295,7 +295,7 @@ methods (Static)
 %             h = dipshow(ov,'log');
 %             dipmapping(h,'global');
 %         end
-        lb = label(mask_in);
+        lb = label(logical(mask_in));
         ov = underimgin;
         ov(lb~=0) = 0;
         g = dipfig('ov');
