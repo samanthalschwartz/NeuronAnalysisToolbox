@@ -13,6 +13,14 @@ classdef AshleyAnalysis < handle
     pxsize = 1/3.5;
     M = [];
     cleanedcargomask = [];
+    imagingparams = struct(...
+        'baselineframe_start', [],...  % first frame of baseline (ie: 1);
+        'baselineframe_end', [],... % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
+        'baselineframerate',[],... % frame rate in min/frame (ie: 1, 1 minute interval between frames)
+        'releasetime',[],... % duration of 405 light in min (ie: 1, means 1 minute between end of baseline and first frame of post release-- this dictates the time at postreleaseframe_start 
+        'postreleaseframe_start', [],... % first frame of baseline (ie: 7, frame 7 is first frame of post release, occurs at time = releasetime
+        'postreleaseframe_end', [],... % last frame of baseline. a string can also be used (ie: 'end', use the last frame)
+        'postreleaseframerate', []); % frame rate in min/frame (ie: 2, 2 min interval between frames)
    end
    
    methods
@@ -261,14 +269,18 @@ classdef AshleyAnalysis < handle
        end
        
        function calculateSurfaceCargoDistances(obj,plotflag,savedir)
-           if isempty(obj.inCellSurfaceCargo)
-           obj.maskCargoInsideCell;
+           if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) 
+               seed_mask = obj.cleanedcargomask;
+           else
+               if isempty(obj.inCellSurfaceCargo)
+                   obj.maskCargoInsideCell;
+               end
+               seed_mask = logical(obj.inCellSurfaceCargo);
            end
            if isempty(obj.cellFill.mask_thick)
                obj.cellFill.make_thickMask();
            end
-           sink_mask = logical(obj.cellFill.soma_mask);
-           seed_mask = logical(obj.inCellSurfaceCargo);
+           sink_mask = logical(obj.cellFill.fullsoma_mask);
            geom_mask = logical(obj.cellFill.mask_thick>0);
            if nargin==3
                distMat = GeneralAnalysis.geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,savedir);

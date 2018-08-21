@@ -507,7 +507,7 @@ methods (Static)
         end
         % make a guess at distance matrix by using # of objects at a
         % random frame * # of frames
-        temp = seed_mask(:,:,end);
+        temp = seed_mask(:,:,end-2);
         temp_labeled = label(temp,1);
         numrows = max(temp_labeled)*tsize;
         distMat = nan(numrows,4); %this is matrix of all distances matched to frame
@@ -525,7 +525,7 @@ methods (Static)
             if ~any(seedlbl)
                 continue;
             end
-            labeledmat = zeros(max(seedlbl),2);
+            labeledmat = zeros(max(seedlbl),4);
             labeledmat(:,1) = tt;
             if plotflag
                 P = false(size(logical(seedlbl)));
@@ -641,12 +641,58 @@ methods (Static)
      function img_out = applydriftCorrect(img_in,sv_arr)
          img_out = 0*img_in;
          img_out(:,:,0) = img_in(:,:,0);
+        wb = waitbar(0,'Applying Drift Correction...');
         for ii = 1:(size(img_in,3)-1)
             currframe = squeeze(img_in(:,:,ii));
-            shiftcurrframe = shift(currframe,sv_arr(:,ii));
-            img_out(:,:,ii) = shiftcurrframe;            
+            sv1 = sv_arr(:,ii);
+            shiftcurrframe = shift(currframe,sv1);
+            
+            if size(sv1,1) == 2
+               if sv1(1)>0
+                   shiftcurrframe(0:ceil(sv1(1)),:) = 0;
+               else
+                   shiftcurrframe(end+ceil(sv1(1)):end,:) = 0;
+               end
+               if sv1(2)>0
+                   shiftcurrframe(:,0:ceil(sv1(2))) = 0;
+               else
+                   shiftcurrframe(:,end+ceil(sv1(2)):end) = 0;
+               end
+            end
+            img_out(:,:,ii) = shiftcurrframe;
+            waitbar(ii/(size(img_in,3)-1),wb);
         end
+        close(wb);
      end
+     
+     function img_out = applyshift(img_in,sv_arr)
+         shiftcurrframe = shift(img_in,sv_arr);
+         if size(sv_arr,1) == 2
+             if sv_arr(1)>0
+                 shiftcurrframe(0:ceil(sv_arr(1)),:) = 0;
+             else
+                 shiftcurrframe(end+ceil(sv_arr(1)):end,:) = 0;
+             end
+             if sv_arr(2)>0
+                 shiftcurrframe(:,0:ceil(sv_arr(2))) = 0;
+             else
+                 shiftcurrframe(:,end+ceil(sv_arr(2)):end) = 0;
+             end
+         end
+         img_out = shiftcurrframe;
+     end
+     
+     function imgseries_out = applyshift2series(imgseries_in,sv_arr)
+         imgseries_out = dip_image(permute(zeros(size(imgseries_in)),[2 1 3]));
+%           wb = waitbar(0,'Applying Shift to Image Series...');
+        for ii=1:size(imgseries_in,3)
+           currframe = GeneralAnalysis.applyshift(squeeze(imgseries_in(:,:,ii-1)),sv_arr);
+           imgseries_out(:,:,ii-1) = currframe;
+%            waitbar(ii/size(imgseries_in,3),wb);
+        end
+%          close(wb);  
+     end
+     
      function [h,overlayim] = overlay(grey_im,bin_im,cm,mskcol)
          % this function overloads the dipimage overlay method but with a
          % better colormapping
