@@ -136,10 +136,7 @@ classdef AshleyAnalysis < handle
            blackjet = flip(jet(255));
            blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
            
-           %-- now plot results
-           h = dipshow(test,blackjet);
-           dipmapping(h,[0 size(labeledim,3)]);
-           diptruesize(h,100);
+           
            % get colorbar tick info
            %            colorunit = size(labeledim,3)/255;
            if nargin<2
@@ -151,6 +148,12 @@ classdef AshleyAnalysis < handle
            numofcolbarval = 4;
            colbarplace =[0:numofcolbarval]*255/4;
            colbarval = [floor(colbarplace * colorunit)];
+           
+           %-- now plot results
+           h = dipshow(test,blackjet);
+           dipmapping(h,[0 size(timerange,2)]);
+           diptruesize(h,100);
+           
            
            c = colorbar;
            c.Location = 'WestOutside';
