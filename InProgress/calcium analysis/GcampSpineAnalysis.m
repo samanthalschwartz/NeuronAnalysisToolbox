@@ -38,6 +38,16 @@ newimg_post = ga.applyshift2series(img_post,sv_arr);
 fullseq = cat(3,img_pre,newimg_post);
  % align cellfill to img
 imgsum = sum(fullseq,[],3);
+
+test = ga.applyshift2series(img_post,sv_arr);
+% test = ga.applydriftCorrect(post_firstframe,sv_arr);
+test1m  = cat(3,pre_lastframe,test);
+img_post_align = ga.applydriftCorrect(img_post,repmat(sv_arr,1,size(img_post,3)));
+img_post = img_post_aligned(:,:,1:end);
+
+test = cat(3,img_pre,img_post);
+% align cellfill to img
+imgsum = sum(img,[],3);
 corrimg = cat(3,imgsum,cellfill_pre);
 dc_corrimg = ga.timedriftCorrect(corrimg);
 cellfill = dc_corrimg(:,:,end);
