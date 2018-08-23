@@ -9,7 +9,7 @@ numlines = 1;
 flstring_pre=inputdlg(prompt_pre,name,numlines,defaultanswer);
 flstring_pre = flstring_pre{1};
 % -- get post file
-[FILENAME_post, PATHNAME_post] = uigetfile(fullfile(pwd,'*.*'),'Select a post condition calcium image');
+[FILENAME_post, PATHNAME_post] = uigetfile(fullfile(PATHNAME_pre,'*.*'),'Select a post condition calcium image');
 prompt_post = 'Select the Unique File Identifier: use * for wildcard';
 name = 'Calcium Data Selection';
 defaultanswer = {FILENAME_post};
@@ -17,7 +17,7 @@ numlines = 1;
 flstring_post=inputdlg(prompt_post,name,numlines,defaultanswer);
 flstring_post = flstring_post{1};
 % -- get cell fill file
-[FILENAME_cf, PATHNAME_cf] = uigetfile(fullfile(PATHNAME,'*.*'),'Select the corresponding cell fill image');
+[FILENAME_cf, PATHNAME_cf] = uigetfile(fullfile(PATHNAME_post,'*.*'),'Select the corresponding cell fill image');
 
 img_pre = dip_image(ga.loadtiffseries(PATHNAME_pre,flstring_pre));
 img_post = dip_image(ga.loadtiffseries(PATHNAME_post,flstring_post));
@@ -29,8 +29,8 @@ post_firstframe = img_post(:,:,end);
 img_post_foralign = cat(3,pre_lastframe,post_firstframe);
 [out,sv_arr] = ga.timedriftCorrect(img_post_foralign);
 test = ga.applyshift2series(img_post,sv_arr);
-test = ga.applydriftCorrect(post_firstframe,sv_arr);
-test1 = cat(3,pre_lastframe,test);
+% test = ga.applydriftCorrect(post_firstframe,sv_arr);
+test1m  = cat(3,pre_lastframe,test);
 img_post_align = ga.applydriftCorrect(img_post,repmat(sv_arr,1,size(img_post,3)));
 img_post = img_post_aligned(:,:,1:end);
 
