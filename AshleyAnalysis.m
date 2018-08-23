@@ -88,52 +88,92 @@ classdef AshleyAnalysis < handle
            newsfmask(:,:,end-3);
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
-       function h = plot_cargo_minFrame(obj,cellperim)
-%            cellperim is boolean for including cell perimeter in image
-         [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.surfaceCargo.mask);
-         labeledim = lbl_out.*obj.cellFill.mask;
-%          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
-         test = min(labeledim,labeledim>0,3);
-         test(test>(size(labeledim,3)+1)) = 0;
-         if nargin==2
-         dist = dt(obj.cellFill.mask(:,:,0));
-         test(dist==1) = max(test)+1;
-         end
-         %-- make colormap for plotting
-         blackjet = flip(jet(255));
-         blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
-         
-         %-- now plot results
-         h = dipshow(test,blackjet);
-         dipmapping(h,[0 size(labeledim,3)]);
-         diptruesize(h,100);         
-         % get colorbar tick info
-         colorunit = size(labeledim,3)/255;
-         numofcolbarval = 4;
-         colbarplace =[0:numofcolbarval]*255/4;
-         colbarval = floor(colbarplace * colorunit);
-         c = colorbar;
-         c.Location = 'WestOutside';
-         c.Ticks = colbarplace;
-         c.TickLabels = colbarval;
-         c.FontSize = 16;
-         c.Label.String = 'First Frame with Cargo Insertion';
-         c.Label.FontSize = 16;
-         h.OuterPosition = h.OuterPosition + [0 0 400 50];
+       function h = plot_cargo_minFrame(obj,maxtime,cellperim)
+           % cellperim is boolean for including cell perimeter in image
+           if ~isempty(obj.cleanedcargomask)
+               maskimg = obj.cleanedcargomask;
+           else
+               maskimg = obj.surfaceCargo.mask;
+           end
+           
+           if ~isempty(obj.imagingparams.baselineframe_start)
+               startfrm = obj.imagingparams.baselineframe_start;
+               endfrm = obj.imagingparams.postreleaseframe_end;
+               if ischar(endfrm)
+                   if strcmp(endfrm,'end')
+                       endfrm = size(obj.cellFill.image,3);
+                   end
+               end
+               if isa(maskimg,'dip_image')
+                   [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg(:,:,startfrm-1:endfrm-1));
+               else
+                   [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg(:,:,startfrm:endfrm));
+               end
+               
+               if isa(obj.cellFill.mask,'dip_image')
+                   cfmask = obj.cellFill.mask(:,:,startfrm-1:endfrm-1);
+               else
+                   cfmask = obj.cellFill.mask(:,:,startfrm:endfrm);
+               end
+               postfrmrate = obj.imagingparams.postreleaseframerate;
+               firstfrmtime = obj.imagingparams.releasetime;
+           else
+               [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg);
+               postfrmrate = 1;
+               firstfrmtime = 1;
+               endfrm = size(obj.cellFill.image,3);
+               cfmask = obj.cellFill.mask;
+           end
+           labeledim = lbl_out.*cfmask;
+           %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
+           test = min(labeledim,labeledim>0,3);
+           test(test>(size(labeledim,3)+1)) = 0;
+           if nargin==3
+               dist = dt(cfmask(:,:,0));
+               test(dist==1) = max(test)+1;
+           end
+           %-- make colormap for plotting
+           blackjet = flip(jet(255));
+           blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
+           
+           %-- now plot results
+           h = dipshow(test,blackjet);
+           dipmapping(h,[0 size(labeledim,3)]);
+           diptruesize(h,100);
+           % get colorbar tick info
+           %            colorunit = size(labeledim,3)/255;
+           if nargin<2
+               timerange = firstfrmtime:postfrmrate: (size(labeledim,3)*postfrmrate)+firstfrmtime;
+           elseif nargin==2
+               timerange = firstfrmtime:postfrmrate: maxtime;
+           end
+           colorunit = timerange(end)/255;
+           numofcolbarval = 4;
+           colbarplace =[0:numofcolbarval]*255/4;
+           colbarval = [floor(colbarplace * colorunit)];
+           
+           c = colorbar;
+           c.Location = 'WestOutside';
+           c.Ticks = colbarplace;
+           c.TickLabels = colbarval;
+           c.FontSize = 16;
+           c.Label.String = 'Time of First Appeareance After Release (min)';
+           c.Label.FontSize = 16;
+           h.OuterPosition = h.OuterPosition + [0 0 400 50];
        end
        
        function M = plotDensityperTime(obj,distances)
-           %input:  distances in microns as an 1 x n vector of max values, values between are used 
+           %input:  distances in microns as an 1 x n vector of max values, values between are used
            %    example: distances = [100,200,300, inf]; interval is
            %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
-           % Average intensity within the distance is 
+           % Average intensity within the distance is
            % make the distance mask
            
            if nargin<2
-           distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
+               distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
            end
            clear M;
-          
+           
            distmask = obj.makeDistanceMask();
            interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
            sfim = obj.surfaceCargo.image*interestmsk;
