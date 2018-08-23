@@ -2,11 +2,10 @@
 % this will prompt to select multiple files to run. Currently need to only
 % select files from the same directory 
 
-addpath(genpath('Z:\Lab Resources\Analysis Resources\Matlab Resource\NeuronAnalysisToolBox'));
-startdir = 'Z:\Ashley\For Sam';
+startdir = 'C:\Users\schwsama\Documents\Data\zapERtrap';
 % [filename, pathname] = uigetfile(fullfile(startdir,'*.mat'),...
 %     'Pick the AshleyFiles to Calculate Distances (can pick more than 1)','MultiSelect', 'on');
-filename = uipickfiles('Prompt','Pick all the AshleyFiles to Calculate Distances (can pick more than 1)')
+filename = uipickfiles('Prompt','Pick all the AshleyFiles to Calculate Distances (can pick more than 1)');
 if ~iscell(filename)
     filesize = 1;
     filename = {filename};
@@ -15,7 +14,6 @@ else
 end
 
 plotflag = 1; % use 1 to keep .tif file of plots each frame, 0 to not
-saveflag = 1; % use 1 to create movie of plots, 0 to not
 for ii = 1:filesize
     [pathname,currfilename,EXT] = fileparts(filename{ii});
     plotsavename = currfilename;
@@ -27,7 +25,7 @@ for ii = 1:filesize
     disp('Loading File.....');
     load(fullfile(filename{ii}));
     disp(['File Loaded: ' fullfile(filename{ii})]);
-    aa.calculateSurfaceCargoDistances(1,plotsavedir);
+    aa.calculateSurfaceCargoDistances(plotflag,plotsavedir);
     save(fullfile(filename{ii}),'aa');
     disp('File Saved');
 end

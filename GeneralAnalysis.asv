@@ -295,7 +295,7 @@ methods (Static)
 %             h = dipshow(ov,'log');
 %             dipmapping(h,'global');
 %         end
-        lb = label(mask_in);
+        lb = label(logical(mask_in));
         ov = underimgin;
         ov(lb~=0) = 0;
         g = dipfig('ov');
@@ -488,11 +488,11 @@ methods (Static)
         end
     end
     function distMat = geodesic_seedDistfromMask(sink_mask,seed_mask,geom_mask,plotflag,plotsavedir)
-        if nargin<5
-            plotsavedir = pwd;
-        elseif nargin<4
+        if nargin<4
             plotflag = 0;
             plotsavedir = [];
+        elseif nargin<5
+            plotsavedir = pwd;
         end
         assert(isequal(size(sink_mask),size(seed_mask)) & isequal(size(sink_mask),size(geom_mask)));
         if numel(size(sink_mask))<3
@@ -507,14 +507,14 @@ methods (Static)
         end
         % make a guess at distance matrix by using # of objects at a
         % random frame * # of frames
-        temp = seed_mask(:,:,end);
+        temp = seed_mask(:,:,end-2);
         temp_labeled = label(temp,1);
         numrows = max(temp_labeled)*tsize;
-        distMat = nan(numrows,2); %this is matrix of all distances matched to frame
+        distMat = nan(numrows,4); %this is matrix of all distances matched to frame
         dm_id = 1;
         %          distMap = zeros(size(single(sink_mask))); %this is a movie of all the distance images to check how good it did. only creates if plotFlag = 1
-        for tt = 0:tsize-1
-            geoframe = bclosing(logical(squeeze(geom_mask(:,:,tt))));
+        for tt = 1:tsize
+            geoframe = bclosing(squeeze(geom_mask(:,:,tt)));
             sinkframe = sink_mask(:,:,tt);
             seedframe = seed_mask(:,:,tt);
             % calc dist map for geom_mask in frame tt
@@ -525,19 +525,21 @@ methods (Static)
             if ~any(seedlbl)
                 continue;
             end
-            labeledmat = zeros(max(seedlbl),2);
+            labeledmat = zeros(max(seedlbl),4);
             labeledmat(:,1) = tt;
             if plotflag
                 P = false(size(logical(seedlbl)));
                 P = imoverlay(P, ~logical(geoframe), [1 1 1]);
                 P = imoverlay(P, logical(sinkframe), [0 0 1]);
             end
+            seedmsr = measure(seedlbl,0*seedlbl,'Center');
             for ll = 1:max(seedlbl)
                 seedlbl_ll = squeeze((seedlbl == ll));
-                seedmsr = measure(seedlbl_ll,0*seedlbl_ll,'Center');
-                seeds = floor(seedmsr.Center);
+%                 seedmsr = measure(seedlbl_ll,0*seedlbl_ll,'Center');
+                seeds = floor(seedmsr(ll).Center);
                 rows = seeds(1,:)+1;
                 cols = seeds(2,:)+1;
+                %--- this is the actual set of important calls
                 seedDist = bwdistgeodesic(logical(geoframe),rows,cols, 'quasi-euclidean');
                 %                 seedDist = bwdistgeodesic(logical(geoframe),logical(seedlbl_ll), 'quasi-euclidean');
                 D = sinkDist+seedDist;
@@ -575,6 +577,7 @@ methods (Static)
                 end
                 %                 dist = size(find(paths_thinned_many),1);
                 labeledmat(ll,2) = distval;
+                labeledmat(ll,[3 4]) = seeds(1:2)';
             end
             if (dm_id + size(labeledmat,1) -1) > size(distMat,1)  % need to make more space
                 addons = nan(numrows,2);
@@ -593,9 +596,9 @@ methods (Static)
         if plotflag
             close(pathfig);
             distMovie = readtimeseries(fullfile(plotsavedir,['MinPath_frame#'  '*.tif']),'',[],1,0);
-            save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat','sink_mask','seed_mask','geom_mask');
+            save(fullfile(plotsavedir,'MinPaths'),'distMovie','distMat');
         else
-            save(fullfile(plotsavedir,'MinPaths'),'distMat','sink_mask','seed_mask','geom_mask');
+            save(fullfile(plotsavedir,'MinPaths'),'distMat');
         end
     end
     
@@ -638,12 +641,64 @@ methods (Static)
      function img_out = applydriftCorrect(img_in,sv_arr)
          img_out = 0*img_in;
          img_out(:,:,0) = img_in(:,:,0);
+        wb = waitbar(0,'Applying Drift Correction...');
         for ii = 1:(size(img_in,3)-1)
             currframe = squeeze(img_in(:,:,ii));
-            shiftcurrframe = shift(currframe,sv_arr(:,ii));
-            img_out(:,:,ii) = shiftcurrframe;            
+            sv1 = sv_arr(:,ii);
+            shiftcurrframe = shift(currframe,sv1);
+            
+            if size(sv1,1) == 2
+               if sv1(1)>0
+                   shiftcurrframe(0:ceil(sv1(1)),:) = 0;
+               else
+                   shiftcurrframe(end+ceil(sv1(1)):end,:) = 0;
+               end
+               if sv1(2)>0
+                   shiftcurrframe(:,0:ceil(sv1(2))) = 0;
+               else
+                   shiftcurrframe(:,end+ceil(sv1(2)):end) = 0;
+               end
+            end
+            img_out(:,:,ii) = shiftcurrframe;
+            waitbar(ii/(size(img_in,3)-1),wb);
         end
+        close(wb);
      end
+     
+     function img_out = applyshift(img_in,sv_arr)
+         if ndims(sv_arr) == ndims(img_in)+1
+            %  
+             
+             
+         end
+         img_out = 0*img_in;
+         img_out(:,:,0) = img_in(:,:,0);
+        wb = waitbar(0,'Applying Drift Correction...');
+        for ii = 1:(size(img_in,3)-1)
+            currframe = squeeze(img_in(:,:,ii));
+            sv1 = sv_arr(:,ii);
+            shiftcurrframe = shift(currframe,sv1);
+            
+            if size(sv1,1) == 2
+               if sv1(1)>0
+                   shiftcurrframe(0:ceil(sv1(1)),:) = 0;
+               else
+                   shiftcurrframe(end+ceil(sv1(1)):end,:) = 0;
+               end
+               if sv1(2)>0
+                   shiftcurrframe(:,0:ceil(sv1(2))) = 0;
+               else
+                   shiftcurrframe(:,end+ceil(sv1(2)):end) = 0;
+               end
+            end
+            img_out(:,:,ii) = shiftcurrframe;
+            waitbar(ii/(size(img_in,3)-1),wb);
+        end
+        close(wb);
+     end
+     
+     
+     
      function [h,overlayim] = overlay(grey_im,bin_im,cm,mskcol)
          % this function overloads the dipimage overlay method but with a
          % better colormapping
