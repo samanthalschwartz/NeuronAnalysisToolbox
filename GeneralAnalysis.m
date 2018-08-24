@@ -281,7 +281,7 @@ methods (Static)
       dipfig -unlink
       newmask = logical(lb);  
     end
-    function newmask = cleanUpMask_manual_square(underimgin,mask_in)
+    function newmask = cleanUpMask_manual_square(underimgin,mask_in,imviewsz)
         %        lb = label(mask_in);
 %         ov = overlay(underimgin,mask_in);
 %         h = dipshow(ov,'log');
@@ -295,13 +295,17 @@ methods (Static)
 %             h = dipshow(ov,'log');
 %             dipmapping(h,'global');
 %         end
+         if nargin<3
+             imviewsz = 150;
+         end
         lb = label(logical(mask_in));
         ov = underimgin;
         ov(lb~=0) = 0;
         g = dipfig('ov');
         dipshow(ov,'log');
-        imviewsz = 150;
         diptruesize(g,imviewsz);
+        clmp = jet(255);
+        clmp(1,:) = [1 0 0];
         while(ishandle(g))
             try
                 [B,C] = dipcrop(g);
@@ -326,6 +330,8 @@ methods (Static)
             ov = underimgin;
             ov(lb~=0) = 0
             diptruesize(gcf,imviewsz);
+            dipmapping('lin')
+            dipmapping('colormap',clmp);
         end
       dipfig -unlink
       newmask = logical(lb);  
@@ -679,18 +685,26 @@ methods (Static)
                  shiftcurrframe(:,end+ceil(sv_arr(2)):end) = 0;
              end
          end
+%          tic
          img_out = shiftcurrframe;
+%      toc
      end
      
      function imgseries_out = applyshift2series(imgseries_in,sv_arr)
-         imgseries_out = dip_image(permute(zeros(size(imgseries_in)),[2 1 3]));
-%           wb = waitbar(0,'Applying Shift to Image Series...');
-        for ii=1:size(imgseries_in,3)
-           currframe = GeneralAnalysis.applyshift(squeeze(imgseries_in(:,:,ii-1)),sv_arr);
-           imgseries_out(:,:,ii-1) = currframe;
-%            waitbar(ii/size(imgseries_in,3),wb);
-        end
-%          close(wb);  
+         %          imgseries_out = dip_image(permute(zeros(size(imgseries_in)),[2 1 3]));
+         imgseries_out = zeros(size(imgseries_in));
+         imserin = single(imgseries_in);
+         wb = waitbar(0,'Applying Shift to Image Series...');
+         for ii=1:size(imserin,3)
+%              tic
+             currframe = GeneralAnalysis.applyshift(squeeze(imserin(:,:,ii)),sv_arr);
+%              toc
+             %            imgseries_out(:,:,ii-1) = currframe;
+             imgseries_out(:,:,ii) = single(currframe);
+             waitbar(ii/size(imgseries_in,3),wb);
+         end
+         imgseries_out = dip_image(imgseries_out);
+         close(wb);
      end
      
      function [h,overlayim] = overlay(grey_im,bin_im,cm,mskcol)
