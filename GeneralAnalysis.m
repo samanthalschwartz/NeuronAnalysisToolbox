@@ -717,12 +717,13 @@ methods (Static)
              cm = bone(256);
          end
          cm(1,:) = mskcol;
+         cm(end+1,:) = [1 0 0];
          overlayim = grey_im;
-         overlayim(bin_im) = 0;
+         overlayim(bin_im) = max(grey_im)*10;
          h = dipshow(overlayim,cm);
          dipmapping(h,'global');
          dipmapping(h,'lin');
-         dipmapping(h,[0 3500]);
+%          dipmapping(h,[0 3500]);
          diptruesize(h,200);
      end
      
