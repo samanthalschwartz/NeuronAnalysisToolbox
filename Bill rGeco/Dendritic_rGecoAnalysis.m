@@ -5,7 +5,7 @@
 %  there will be an error.
 %% run this cell to test out thresholding parameter using 'Run Section' button.
 % then once you're happy with the parameter, 'Run' the entire script
-threshold_parameter = 1.3; % smaller number is more sensitive, larger number is less sensitive
+threshold_parameter = 1.4; % smaller number is more sensitive, larger number is less sensitive
 
 % Select the file you want to analyze: for now this is a 1 color time
 % series tif file
@@ -95,11 +95,15 @@ close(wb);
 % sheetname = [foldernames{ff} '-' savenames{pf}];
 goodids = Fnorm>=1.05;
 goodFnorms = Fnorm.*goodids;
+goodmaxs = maxsizes'.*goodids;
+goodmaxs(goodmaxs == 0) = NaN;
+
 goodFnorms(goodFnorms == 0) = NaN;
-xlswrite(excelfileinfo_Fnorm,[Fval,Fnorm],sheetname);
+xlswrite(excelfileinfo_Fnorm,[Fval,Fnorm,goodFnorms],sheetname);
 %% write to excel file
 % save max extents
-xlswrite(excelfileinfo_maxextent,maxsizes',sheetname);
+newmaxsizes = [maxsizes',goodmaxs];
+xlswrite(excelfileinfo_maxextent,newmaxsizes,sheetname);
 % save F values
 xlswrite(excelfileinfo_Fvalues,ord_trace,sheetname);
 %% save some of the file info
