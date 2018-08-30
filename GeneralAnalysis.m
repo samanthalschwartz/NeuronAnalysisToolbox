@@ -304,7 +304,7 @@ methods (Static)
         g = dipfig('ov');
         dipshow(ov,'log');
         diptruesize(g,imviewsz);
-        clmp = jet(255);
+        clmp = bone(255);
         clmp(1,:) = [1 0 0];
         while(ishandle(g))
             try
@@ -330,7 +330,7 @@ methods (Static)
             ov = underimgin;
             ov(lb~=0) = 0
             diptruesize(gcf,imviewsz);
-            dipmapping('lin')
+            dipmapping('log')
             dipmapping('colormap',clmp);
         end
       dipfig -unlink
