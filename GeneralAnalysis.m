@@ -221,6 +221,20 @@ methods (Static)
         img_dcccutoff(img_dcccutoff<0) = 0;
     end
         
+     function img_dgg = imgDgg(img_in,gsig)
+        if nargin<2
+            gsig = 1;
+        end
+        img_dgg = dgg(img_in,gsig);
+    end
+    function img_dggcutoff = imgDggCutoff(img_in,gsig) %good for edge detection!
+        if nargin<2
+            gsig = 1;
+        end
+        img_dgg = GeneralAnalysis.imgDgg(img_in,gsig);
+        img_dggcutoff = -img_dgg;
+        img_dggcutoff(img_dggcutoff<0) = 0;
+    end
     function mask = imgThreshold(img_in)
         threshval = multithresh(single(img_in),2);
         mask = img_in>=threshval(1);
