@@ -463,6 +463,9 @@ methods (Static)
         bgim_out = dip_image(im);
     end
     function wshed = watershed_timeseries(image_in,conn)
+        if nargin<2
+            conn = 1;
+        end
         wshed = dip_image(zeros(size(image_in,2),size(image_in,1),size(image_in,3)));
         for ii = 1:size(image_in,3)
             wshedframe = watershed(single(image_in(:,:,ii-1)),conn);
