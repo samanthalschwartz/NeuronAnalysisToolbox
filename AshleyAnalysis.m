@@ -85,7 +85,6 @@ classdef AshleyAnalysis < handle
            wshed = GeneralAnalysis.watershed_timeseries(-img4wtsd,1);
            newsfmask = obj.surfaceCargo.mask;
            newsfmask(wshed==1) = 0;
-           newsfmask(:,:,end-3);
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
        function h = plot_cargo_minFrame(obj,maxtime,cellperim)
