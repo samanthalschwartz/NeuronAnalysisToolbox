@@ -1,6 +1,15 @@
 %% Script to Identify CellFill and Recruitment Objects to make an 'AshleyFile' Object
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
+%-- set imaging parameters:
+baselineframe_start = 1;
+baselineframe_end = 6;
+baselineframerate = 2;
+releasetime = 1;
+postreleaseframe_start = 7;
+postreleaseframe_end = 'end';
+postreleaseframerate = 2;
+
 %% select - in order - the pre and post files you want to concat
 files = uipickfiles('prompt','select the 2 images to concatenate',...
     'FilterSpec','Z:\Sam\MJK_zapERtrap_for_sam\AMB_globalrelease\041718_DHFR-GFP-NL1_TfRmChSEP_antiHA');
@@ -20,6 +29,15 @@ aa.path_3ch_datafile = files;
 aa.cellFill = channelCellFill();
 aa.surfaceCargo = channelSurfaceCargo();
 aa.TfR = channelTfR();
+%%
+aa.imagingparams.baselineframe_start =baselineframe_start;
+aa.imagingparams.baselineframe_end =baselineframe_end;
+aa.imagingparams.baselineframerate =baselineframerate;
+aa.imagingparams.releasetime =releasetime;
+aa.imagingparams.postreleaseframe_start =postreleaseframe_start;
+aa.imagingparams.postreleaseframe_end =postreleaseframe_end;
+aa.imagingparams.postreleaseframerate =postreleaseframerate;
+%%
 
 % use last index to represent which stack to use
 aa.cellFill.setimage(im_array(:,:,:,1));
@@ -74,6 +92,12 @@ aa.surfaceCargo.viewMaskOverlayPerim;
 % 
 % select cell soma for the file 
 aa.cellFill.selectSoma();
+
+% clean up the image:
+uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
+aa.cleanSurfaceCargoMask_Manual();
+% aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
+
 
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
