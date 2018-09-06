@@ -4,11 +4,17 @@ close all; clear all;
 %-- set imaging parameters:
 baselineframe_start = 1; % first frame number that baseline acquisition begins
 baselineframe_end = 6; % last frame number of baseline
-baselineframerate = 2; % frame rate in seconds/frame 
+baselineframerate = 2; % frame rate in minutes/frame 
 releasetime = 1; % time in minutes, after release, that first frame of post release starts
-postreleaseframe_start = 7; % first frame number of post release
-postreleaseframe_end = 'end'; %last frame number of post release - or 'end' if post release goes until end of series
-postreleaseframerate = 2; % frame rate in seconds/frame
+postrelease(1).frame_start = 7; % first frame number of post release
+postrelease(1).frame_end = 20; % last frame number of post release - or 'end' if post release goes until end of series
+postrelease(1).framerate = 2; % frame rate in minutes/frame
+postrelease(2).frame_start = 21;
+postrelease(2).frame_end = 'end';
+postrelease(2).framerate = 1;
+
+
+
 
 %% select - in order - the pre and post files you want to concat
 files = uipickfiles('prompt','select the 2 images to concatenate',...
@@ -34,9 +40,7 @@ aa.imagingparams.baselineframe_start =baselineframe_start;
 aa.imagingparams.baselineframe_end =baselineframe_end;
 aa.imagingparams.baselineframerate =baselineframerate;
 aa.imagingparams.releasetime =releasetime;
-aa.imagingparams.postreleaseframe_start =postreleaseframe_start;
-aa.imagingparams.postreleaseframe_end =postreleaseframe_end;
-aa.imagingparams.postreleaseframerate =postreleaseframerate;
+aa.imagingparams.postrelease = postrelease;
 %%
 
 % use last index to represent which stack to use

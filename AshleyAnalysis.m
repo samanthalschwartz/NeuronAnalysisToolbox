@@ -18,9 +18,7 @@ classdef AshleyAnalysis < handle
         'baselineframe_end', [],... % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
         'baselineframerate',[],... % frame rate in min/frame (ie: 1, 1 minute interval between frames)
         'releasetime',[],... % duration of 405 light in min (ie: 1, means 1 minute between end of baseline and first frame of post release-- this dictates the time at postreleaseframe_start 
-        'postreleaseframe_start', [],... % first frame of baseline (ie: 7, frame 7 is first frame of post release, occurs at time = releasetime
-        'postreleaseframe_end', [],... % last frame of baseline. a string can also be used (ie: 'end', use the last frame)
-        'postreleaseframerate', []); % frame rate in min/frame (ie: 2, 2 min interval between frames)
+        'postrelease', struct('frame_start',[],'frame_end',[], 'framerate',[])); % first frame of baseline (ie: 7, frame 7 is first frame of post release, occurs at time = releasetime
    end
    
    methods
@@ -87,7 +85,7 @@ classdef AshleyAnalysis < handle
            newsfmask(wshed==1) = 0;
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
-       function h = plot_cargo_minFrame(obj,maxtime,cellperim)
+       function h = plot_cargo_minFrame(obj,maxtime,perimbool)
            % cellperim is boolean for including cell perimeter in image
            if ~isempty(obj.cleanedcargomask)
                maskimg = obj.cleanedcargomask;
@@ -96,11 +94,15 @@ classdef AshleyAnalysis < handle
            end
            
            if ~isempty(obj.imagingparams.baselineframe_start)
-               startfrm = obj.imagingparams.baselineframe_start;
-               endfrm = obj.imagingparams.postreleaseframe_end;
-               if ischar(endfrm)
+               startfrm = obj.imagingparams.postrelease(1).frame_start;
+               postrelease = obj.imagingparams.postrelease;
+               endfrm = postrelease(end).frame_end;
+               if nargin>1
+                   endfrm = maxtime;
+               elseif ischar(endfrm)
                    if strcmp(endfrm,'end')
                        endfrm = size(obj.cellFill.image,3);
+                       postrelease(end).frame_end = endfrm;
                    end
                end
                if isa(maskimg,'dip_image')
@@ -114,14 +116,26 @@ classdef AshleyAnalysis < handle
                else
                    cfmask = obj.cellFill.mask(:,:,startfrm:endfrm);
                end
-               postfrmrate = obj.imagingparams.postreleaseframerate;
                firstfrmtime = obj.imagingparams.releasetime;
-           else
+               
+               currfirst = firstfrmtime;
+               timerange = [];
+               for ff = 1:numel(postrelease)
+               duration = (postrelease(ff).frame_end - postrelease(ff).frame_start)*postrelease(ff).framerate;
+               newend = duration+currfirst;
+               timerange = [timerange, currfirst:postrelease(ff).framerate:newend];
+               currfirst = newend;
+               end
+               
+           else %no imaging params set
                [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg);
-               postfrmrate = 1;
-               firstfrmtime = 1;
-               endfrm = size(obj.cellFill.image,3);
+               if nargin>1
+                   endfrm = maxtime;
+               else
+                   endfrm = size(obj.cellFill.image,3);
+               end
                cfmask = obj.cellFill.mask;
+               timerange  = 1:endfrm;
            end
            labeledim = lbl_out.*cfmask;
            %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
@@ -138,11 +152,6 @@ classdef AshleyAnalysis < handle
            
            % get colorbar tick info
            %            colorunit = size(labeledim,3)/255;
-           if nargin<2
-               timerange = firstfrmtime:postfrmrate: (size(labeledim,3)*postfrmrate)+firstfrmtime;
-           elseif nargin==2
-               timerange = firstfrmtime:postfrmrate: maxtime;
-           end
            colorunit = timerange(end)/255;
            numofcolbarval = 4;
            colbarplace =[0:numofcolbarval]*255/4;
