@@ -2,13 +2,13 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %-- set imaging parameters:
-baselineframe_start = 1;
-baselineframe_end = 6;
-baselineframerate = 2;
-releasetime = 1;
-postreleaseframe_start = 7;
-postreleaseframe_end = 'end';
-postreleaseframerate = 2;
+baselineframe_start = 1; % first frame number that baseline acquisition begins
+baselineframe_end = 6; % last frame number of baseline
+baselineframerate = 2; % frame rate in seconds/frame 
+releasetime = 1; % time in minutes, after release, that first frame of post release starts
+postreleaseframe_start = 7; % first frame number of post release
+postreleaseframe_end = 'end'; %last frame number of post release - or 'end' if post release goes until end of series
+postreleaseframerate = 2; % frame rate in seconds/frame
 
 %% select - in order - the pre and post files you want to concat
 files = uipickfiles('prompt','select the 2 images to concatenate',...

@@ -1,68 +1,65 @@
 classdef SEP < handle
 properties
     % file info
-    filepath;
-    filename;
+    filepath
+    filename
     % images
-    sep;
-    cellfill;
+    sep
+    cellfill
     % image masks
-    msk_cellfill;
-    max_msk_cellfill;
-    sep_mask;
-    sep_mask_fixed;
+    msk_cellfill
+    max_msk_cellfill
+    sep_mask
+    sep_mask_fixed
     % labeled mask
-    sep_mask_fixed_label;
+    sep_mask_fixed_label
     % labeled measured info
-    sep_sums;
-    sep_sizes;
+    sep_sums
+    sep_sizes
     % full image measurements
-    shaftmask;
-    shafttrace_intensity_varsize;
-    shafttrace_size_varsize;
-    shafttrace_intensity_fixedsize;
-    shafttrace_size_fixedsize;
-    spinetrace_intensity_varsize;
-    spinetrace_size_varsize;
-    spinetrace_intensity_fixedsize;
-    spinetrace_size_fixedsize;
+    shafttrace_intensity_varsize
+    shafttrace_size_varsize
+    shafttrace_intensity_fixedsize
+    shafttrace_size_fixedsize
+    spinetrace_intensity_varsize
+    spinetrace_size_varsize
+    spinetrace_intensity_fixedsize
+    spinetrace_size_fixedsize
     % heatmap info
-    ord_trace;
-    hm;
+    ord_trace
+    hm
     % for viewing
-    oldROIs1;
-    oldROIs2;
+    oldROIs
 end
 
-methods
-    function loadimages(obj)
-        image = loadtiff(fullfile(obj.filepath,obj.filename));
+methods (Static)
+    function loadimages(filepath)
+        image = loadtiff(fullfile(filepath,filename));% uiopen('E:\Matt Becker Data (For Review)\SEPGlua1_mch\20150609_SEPGlua1_mch_4_2.tif',1);
         obj.sep = image(:,:,:,3);
         obj.cellfill = image(:,:,:,1);
     end
     
     function make_mask_cellfill(obj)
        obj.msk_cellfill = threshold(gaussf(obj.cellfill),'otsu');
-       obj.max_msk_cellfill = max(obj.msk_cellfill,[],3);
+        obj.max_msk_cellfill = max(msk_cellfill,[],3);
     end
     
     function make_mask_sep(obj)
         image_out = opening(obj.sep,5,'elliptic');
-        wth = obj.sep - image_out;
+        wth = sep - image_out;
         dggsep = GeneralAnalysis.imgDggCutoff(wth);
-        dggsep(dggsep>(10^2)) = 0;
         varsep = varif(dggsep,5,'elliptic');
-        obj.sep_mask = threshold(varsep,'otsu');
+        obj.sep_mask = threshold(varsep.^.8,'otsu');
     end
     
     function make_mask_sep_fixed(obj)
         max_sep = max(obj.sep,[],3);
-        max_spines = max(obj.sep_mask,[],3);
+        max_spines = max(obj.mask_sep,[],3);
         wshed = watershed(-gaussf(max_sep),2);
         max_spines(wshed) = 0;
-        lb = label(max_spines,1,20);
-        obj.sep_mask_fixed = repmat(lb>0,1,1,size(obj.sep,3));
-        obj.sep_mask_fixed_label = repmat(lb,1,1,size(obj.sep,3));
+        lb = label(max_spines,1,30);
+        obj.sep_mask_fixed = repmat(lb>0,1,1,size(sep,3));
+        obj.sep_mask_fixed_label = repmat(lb,1,1,size(sep,3));
     end
     
     function calculate_sepintensities(obj)
@@ -70,7 +67,7 @@ methods
         sepim = dip_image(obj.sep);
         maxframe = size(obj.sep,3);
         msrarray = cell(1,maxframe);
-        wb = waitbar(0,'Calculating Intensities within Masks....');
+        wb = waitbar(0);
         for ll = 0:(maxframe-1)
             msr = measure(spinelabel(:,:,ll),sepim(:,:,ll),{'size','sum'});
             msrarray{ll+1} = msr;
@@ -80,17 +77,15 @@ methods
         obj.sep_sums = zeros(max(spinelabel),maxframe);
         obj.sep_sizes = zeros(max(spinelabel),1);
         %reshape array
-        for tt = 1:maxframe
-                currarr = msrarray{tt};
-                obj.sep_sums(:,tt) = currarr.sum;
-%             for ll = 1:max(spinelabel)
-%                 obj.sep_sums(ll,tt) = currarr(ll).sum;
-%             end
-%             obj.sep_sizes(ll) = msrarray{1}(ll).size;
+        for ll = 1:max(spinelabel)
+            for tt = 1:maxframe
+                obj.sep_sums(ll,tt) = msrarray{tt}(ll).sum;
+            end
+            obj.sep_sizes(ll) = msrarray{1}(ll).size;
         end
     end
     
-    function [f] = calculate_sepIHeatMap(obj)
+    function [hm, f] = calculate_sepIHeatMap(obj)
         f = figure;
         trace = obj.sep_sums./obj.sep_sums(:,1);
         allsum = sum(trace,2);
@@ -103,34 +98,26 @@ methods
     end
     
     function loadIJROIs1(obj)
-        strFilename = fullfile(obj.filepath,[obj.filename(1:end-4) '_ROI1.zip']);
-        try
+        strFilename = fullfile(filepath,[filename(1:end-4) '_ROI1.zip']);
         obj.oldROIs1 = ReadImageJROI(strFilename);
-         catch
-            display('No ROI file exists');
-        end
     end
     
     function loadIJROIs2(obj)
-        strFilename = fullfile(obj.filepath,[obj.filename(1:end-4) '_ROI2.zip']);
-        try
+        strFilename = fullfile(filepath,[filename(1:end-4) '_ROI2.zip']);
         obj.oldROIs2 = ReadImageJROI(strFilename);
-        catch
-            display('No ROI file exists');
-        end
     end
     
     function plotoldROIs(obj)
         sROI = obj.oldROIs1;
         for ii = 1:numel(sROI)
             radii = (sROI{ii}.vnRectBounds(3)-sROI{ii}.vnRectBounds(1))/2;
-            centers = [sROI{ii}.vnRectBounds(2) + radii+1, sROI{ii}.vnRectBounds(1) + radii+1];
+            centers = [sROI{ii}.vnRectBounds(2) + radii, sROI{ii}.vnRectBounds(1) + radii];
             viscircles(centers,radii,'Color','g','LineWidth',1.5);
         end
         sROI = obj.oldROIs2;
         for ii = 1:numel(sROI)
             radii = (sROI{ii}.vnRectBounds(3)-sROI{ii}.vnRectBounds(1))/2;
-            centers = [sROI{ii}.vnRectBounds(2) + radii+1, sROI{ii}.vnRectBounds(1) + radii+1];
+            centers = [sROI{ii}.vnRectBounds(2) + radii, sROI{ii}.vnRectBounds(1) + radii];
             viscircles(centers,radii,'Color',[1 0 1],'LineWidth',1);
         end
     end
@@ -139,12 +126,12 @@ methods
         sepim = dip_image(obj.sep);
         % ---- fixed mask sizes ----
         % create mask of shaft - area of spines/sep intensity
-        shaftmask = obj.msk_cellfill.*(~bdilation(obj.sep_mask_fixed,2));
-        obj.shafttrace_intensity_fixedsize = squeeze(single(sum(sepim,shaftmask,[1 2])));
-        obj.shafttrace_size_fixedsize = squeeze(single(sum(shaftmask(:,:,1),[],[1 2])));
+        shaftmask = obj.msk_cellfill.*(-obj.sep_mask_fixed);
+        obj.shafttrace_intensity_fixedsize = sum(sepim,shaftmask,[1 2]);
+        obj.shafttrace_size_fixedsize = sum(shaftmask(:,:,1),[],[1 2]);
         % create mask of spines/sep intensity
-        obj.spinetrace_intensity_fixedsize = squeeze(single(sum(sepim,obj.sep_mask_fixed,[1 2])));
-        obj.spinetrace_size_fixedsize = squeeze(single(sum(obj.sep_mask_fixed(:,:,1),[],[1 2])));
+        obj.spinetrace_intensity_fixedsize = sum(sepim,obj.sep_mask_fixed,[1 2]);
+        obj.spinetrace_size_fixedsize = sum(obj.sep_mask_fixed(:,:,1),[],[1 2]);
         
                
         % ---- variable mask sizes ----
@@ -152,35 +139,35 @@ methods
         % create mask of spines/sep intensity
         clear shaftmask;
         maskedspines = bdilation(obj.sep_mask,1);
-        shaftmask = obj.msk_cellfill.*(~maskedspines);
-        obj.shafttrace_intensity_varsize = squeeze(single(sum(sepim,shaftmask,[1 2])));
-        obj.shafttrace_size_varsize = squeeze(single(sum(shaftmask,[],[1 2])));
+        shaftmask = msk_cellfill.*(-maskedspines);
+        obj.shafttrace_intensity_varsize = sum(sepim,shaftmask,[1 2]);
+        obj.shafttrace_size_varsize = sum(shaftmask,[],[1 2]);
         
-        obj.spinetrace_intensity_varsize = squeeze(single(sum(sepim,maskedspines,[1 2])));
-        obj.spinetrace_size_varsize = squeeze(single(sum(maskedspines,[],[1 2])));
+        obj.spinetrace_intensity_varsize = sum(sepim,maskedspines,[1 2]);
+        obj.spinetrace_size_varsize = sum(maskedspines,[],[1 2]);
     end
     
     function saveSEP(obj,savepath)
         if nargin<2
             savepath = obj.filepath;
         end
-        save(fullfile(savepath,obj.filename(1:end-4)),'obj');
+        save(fullfile(savepath,obj.filename),'obj');
     end
     
     function h = viewSEPMaskFixed(obj)
-        h = GeneralAnalysis.viewMaskOverlayPerimStatic(dip_image(obj.sep),obj.sep_mask_fixed);
+        h = ga.viewMaskOverlayPerimStatic(dip_image(obj.sep),obj.sep_mask_fixed);
         dipmapping(h,'colormap',jet);
         dipmapping(h,[0 2500]);
         diptruesize(h,100);
     end
     function h = viewSEPMask(obj)
-         h = GeneralAnalysis.viewMaskOverlayPerimStatic(dip_image(obj.sep),obj.sep_mask);
+         h = ga.viewMaskOverlayPerimStatic(dip_image(obj.sep),obj.sep_mask);
         dipmapping(h,'colormap',jet);
         dipmapping(h,[0 2500]);
         diptruesize(h,100);   
     end
     function h = viewSEPMaskFixedwOldRois(obj)
-        h = GeneralAnalysis.viewMaskOverlayPerimStatic(dip_image(obj.sep),obj.sep_mask_fixed);
+        h = ga.viewMaskOverlayPerimStatic(dip_image(obj.sep),obj.sep_mask_fixed);
         dipmapping(h,'colormap',jet);
         dipmapping(h,[0 2500]);
         diptruesize(h,100);

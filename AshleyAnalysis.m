@@ -348,11 +348,11 @@ classdef AshleyAnalysis < handle
            [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
            close(h);
            overlayim(overlayim==0) = max(overlayim)*2;
-            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
-             cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask);
+           if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask);
            else
-           cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.surfaceCargo.mask*obj.cellFill.mask);
-            end
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.surfaceCargo.mask*obj.cellFill.mask);
+           end
            obj.cleanedcargomask = cargomask;
        end
        
