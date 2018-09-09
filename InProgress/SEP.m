@@ -19,6 +19,10 @@ properties
     % labeled measured info
     sep_sums;
     sep_sizes;
+    oldROI1_sep_sums
+    oldROI1_sep_sizes
+    oldROI2_sep_sums
+    oldROI2_sep_sizes
     % full image measurements
     shaftmask;
     shafttrace_intensity_varsize;
@@ -106,9 +110,9 @@ methods
             if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
                 continue;
             end
-            ROI1mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
-            obj.oldROI1mask = dip_image(logical(ROI1mask));
+            ROI1mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;     
         end
+        obj.oldROI1mask = logical(ROI1mask);
         %          ROI2
         for rr = 1:numel(obj.oldROIs1)
             bnds = obj.oldROIs1{rr}.vnRectBounds;
@@ -116,29 +120,48 @@ methods
                 continue;
             end
             ROI2mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
-            obj.oldROI2mask = dip_image(logical(ROI2mask));
         end
-        % measuremaxframe = size(obj.sep,3);
+        obj.oldROI2mask = logical(ROI2mask);
+        
         % --to modify---
+        % measure ROI1
+        lbl1 = label(obj.oldROI1mask);
+        sepim = dip_image(obj.sep);
+        maxframe = size(obj.sep,3);
         msrarray = cell(1,maxframe);
-        wb = waitbar(0,'Calculating Intensities within Masks....');
+        wb = waitbar(0,'Calculating Intensities within Old ROI 1....');
         for ll = 0:(maxframe-1)
-            msr = measure(spinelabel(:,:,ll),sepim(:,:,ll),{'size','sum'});
+            msr = measure(lbl1(:,:,ll),sepim(:,:,ll),{'size','sum'});
             msrarray{ll+1} = msr;
             waitbar((ll+1)/maxframe,wb);
         end
         close(wb) 
-        obj.sep_sums = zeros(max(spinelabel),maxframe);
-        obj.sep_sizes = zeros(max(spinelabel),1);
+        obj.oldROI1_sep_sums = zeros(max(lbl1),maxframe);
+        obj.oldROI1_sep_sizes = zeros(max(lbl1),1);
         %reshape array
         for tt = 1:maxframe
                 currarr = msrarray{tt};
-                obj.sep_sums(:,tt) = currarr.sum;
+                obj.oldROI1_sep_sums(:,tt) = currarr.sum;
         end
-        
-          
-        
-        
+        % measure ROI2
+        lbl2 = label(obj.oldROI2mask);
+        sepim = dip_image(obj.sep);
+        maxframe = size(obj.sep,3);
+        msrarray = cell(1,maxframe);
+        wb = waitbar(0,'Calculating Intensities within Old ROI 2....');
+        for ll = 0:(maxframe-1)
+            msr = measure(lbl2(:,:,ll),sepim(:,:,ll),{'size','sum'});
+            msrarray{ll+1} = msr;
+            waitbar((ll+1)/maxframe,wb);
+        end
+        close(wb) 
+        obj.oldROI2_sep_sums = zeros(max(lbl2),maxframe);
+        obj.oldROI2_sep_sizes = zeros(max(lbl2),1);
+        %reshape array
+        for tt = 1:maxframe
+                currarr = msrarray{tt};
+                obj.oldROI2_sep_sums(:,tt) = currarr.sum;
+        end    
     end
     
     
@@ -243,6 +266,20 @@ methods
     function h = viewHeatMap(obj)
        h = figure;
        obj.hm;
+    end
+end
+
+methods (Static)
+    function [f] = calculate_HeatMap(in_trace)
+        f = figure;
+        trace = in_trace./mean(in_trace(:,1:3),2);
+        allsum = sum(trace,2);
+        [~, ordx] = sort(allsum, 'descend');
+        ord_trace = trace(ordx,:);
+        hm = heatmap(ord_trace);
+        hm.GridVisible = 'off';
+        hm.Colormap = jet(50);
+        hm.ColorLimits = [0 4];
     end
 end
 end
