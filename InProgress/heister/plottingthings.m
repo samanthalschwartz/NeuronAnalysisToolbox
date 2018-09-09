@@ -15,7 +15,7 @@ end
 % shafttraces_fixedsize(4,:) = [];
 save(fullfile(filepath,'traces'),'shafttraces_fixedsize','septraces_fixedsize','files');
 %%
-filepath = 'E:\Matt Becker Data (For Review)\SEPfiles\+TeNT';
+filepath = 'E:\Matt Becker Data (For Review)\SEPfiles\+TeNT\traces_averageperimage';
 load(fullfile(filepath,'traces'));
 titlestr = '+TeNT';
 out_shaft = shafttraces_fixedsize(:,all(~isnan(shafttraces_fixedsize)));
@@ -41,3 +41,37 @@ fmsp = figure; errorbar(meansep,stdsep,'CapSize',0); ylim([0.75 1.25]); set(fmsp
 saveas(fmsp,fullfile(filepath,'meanSEPTraces'),'png');
 saveas(fmsp,fullfile(filepath,'meanSEPTraces'),'fig');
 close(fmsp)
+
+%% plot shaft intensity with sep roi intensities
+filepath = 'E:\Matt Becker Data (For Review)\SEPfiles\+TeNT\traces_averageperimage';
+load(fullfile(filepath,'traces'));
+out_shaft = shafttraces_fixedsize(:,all(~isnan(shafttraces_fixedsize)));
+out_sep = septraces_fixedsize(:,all(~isnan(septraces_fixedsize)));
+meanshaft = mean(out_shaft,1);
+stdshaft = std(out_shaft,1)./sqrt(size(out_shaft,1));
+meansep = mean(out_sep,1);
+stdsep = std(out_sep,1)./sqrt(size(out_sep,1));
+
+fmsh = figure; hold on;
+
+errorbar(meansep,stdsep,'CapSize',0,'Color','k');
+plot(meansep,'Color','k','LineWidth',2)
+
+filepath = 'E:\Matt Becker Data (For Review)\SEPfiles\-TeNT\traces_averageperimage';
+load(fullfile(filepath,'traces'));
+out_shaft = shafttraces_fixedsize(:,all(~isnan(shafttraces_fixedsize)));
+out_sep = septraces_fixedsize(:,all(~isnan(septraces_fixedsize)));
+meanshaft = mean(out_shaft,1);
+stdshaft = std(out_shaft,1)./sqrt(size(out_shaft,1));
+
+errorbar(meanshaft,stdshaft,'LineStyle','--','CapSize',0,'Color','k','LineWidth',.5); 
+plot(meanshaft,'LineStyle','--','Color','k','LineWidth',3)
+meansep = mean(out_sep,1);
+stdsep = std(out_sep,1)./sqrt(size(out_sep,1));
+errorbar(meansep,stdsep,'CapSize',0,'Color','r');
+plot(meansep,'Color','r','LineWidth',3)
+
+ylim([.8 1.2]); 
+set(fmsh,'Position',[2109,104,1289,857]);
+savename = 'E:\Matt Becker Data (For Review)\Figures\dendriteIntensity';
+saveas(gcf,savename,'emf')
