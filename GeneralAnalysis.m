@@ -240,6 +240,9 @@ methods (Static)
         mask = img_in>=threshval(1);
     end
     function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
+        if ~isa(img_in,'dip_image')
+            img_in = dip_image(img_in);
+        end
         uiwait(msgbox('Select a representative background region','Title','modal'));
         if nargin<2
             image4selection = img_in;

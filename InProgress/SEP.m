@@ -270,9 +270,9 @@ methods
 end
 
 methods (Static)
-    function [f] = calculate_HeatMap(in_trace)
+    function [f] = calculate_HeatMap(trace)
         f = figure;
-        trace = in_trace./mean(in_trace(:,1:3),2);
+%         trace = in_trace./mean(in_trace(:,1:3),2);
         allsum = sum(trace,2);
         [~, ordx] = sort(allsum, 'descend');
         ord_trace = trace(ordx,:);
