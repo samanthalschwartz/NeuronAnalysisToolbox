@@ -25,13 +25,13 @@ planeparts = strsplit(planestr,{' plane ','/'});
 info.currPlane = str2double(planeparts{2});
 info.totalPlane = str2double(planeparts{3});
 
-zbool = cellfun(@(x) contains(x,'Z?='),splstr1);
+zbool = cellfun(@(x) contains(x,'Z='),splstr1);
 zstr = splstr1{zbool};
 zparts = strsplit(zstr,{'=','/'});
 info.currZ = str2double(zparts{2});
 info.totalZ = str2double(zparts{3});
 
-colbool = cellfun(@(x) contains(x,'C?='),splstr1);
+colbool = cellfun(@(x) contains(x,'C='),splstr1);
 colstr = splstr1{colbool};
 colparts = strsplit(colstr,{'=','/'});
 info.currCol = str2double(colparts{2});
