@@ -103,65 +103,71 @@ methods
         end
         ROI1mask = zeros(size(obj.sep_mask_fixed));
         ROI2mask = zeros(size(obj.sep_mask_fixed));
+
+        sepim_pre = dip_image(obj.sep);
+        bgmsk =  ~(bdilation(obj.sep_mask_fixed,3)| bdilation(obj.max_msk_cellfill,3));
+        bgpx = sum(bgmsk.*sepim_pre)./sum(bgmsk);
+        sepim = sepim_pre-bgpx;
+        
         % now loop through each ROI and make mask
         %          ROI1
-        for rr = 1:numel(obj.oldROIs1)
-            bnds = obj.oldROIs1{rr}.vnRectBounds;
-            if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
-                continue;
+        if ~isempty(obj.oldROIs1)
+            for rr = 1:numel(obj.oldROIs1)
+                bnds = obj.oldROIs1{rr}.vnRectBounds;
+                if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
+                    continue;
+                end
+                ROI1mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
             end
-            ROI1mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;     
-        end
-        obj.oldROI1mask = logical(ROI1mask);
-        %          ROI2
-        for rr = 1:numel(obj.oldROIs1)
-            bnds = obj.oldROIs1{rr}.vnRectBounds;
-            if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
-                continue;
+            obj.oldROI1mask = logical(ROI1mask);
+            % measure ROI1
+            lbl1 = label(obj.oldROI1mask);
+            maxframe = size(obj.sep,3);
+            obj.oldROI1_sep_sums = zeros(max(lbl1),maxframe);
+            obj.oldROI1_sep_sizes = zeros(max(lbl1),1);
+            msrarray = cell(1,maxframe);
+            wb = waitbar(0,'Calculating Intensities within Old ROI 1....');
+            for ll = 0:(maxframe-1)
+                msr = measure(lbl1(:,:,ll),sepim(:,:,ll),{'size','sum'});
+                msrarray{ll+1} = msr;
+                waitbar((ll+1)/maxframe,wb);
             end
-            ROI2mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
-        end
-        obj.oldROI2mask = logical(ROI2mask);
-        
-        % --to modify---
-        % measure ROI1
-        lbl1 = label(obj.oldROI1mask);
-        sepim = dip_image(obj.sep);
-        maxframe = size(obj.sep,3);
-        msrarray = cell(1,maxframe);
-        wb = waitbar(0,'Calculating Intensities within Old ROI 1....');
-        for ll = 0:(maxframe-1)
-            msr = measure(lbl1(:,:,ll),sepim(:,:,ll),{'size','sum'});
-            msrarray{ll+1} = msr;
-            waitbar((ll+1)/maxframe,wb);
-        end
-        close(wb) 
-        obj.oldROI1_sep_sums = zeros(max(lbl1),maxframe);
-        obj.oldROI1_sep_sizes = zeros(max(lbl1),1);
-        %reshape array
-        for tt = 1:maxframe
+            close(wb)
+            %reshape array
+            for tt = 1:maxframe
                 currarr = msrarray{tt};
                 obj.oldROI1_sep_sums(:,tt) = currarr.sum;
+            end
         end
-        % measure ROI2
-        lbl2 = label(obj.oldROI2mask);
-        sepim = dip_image(obj.sep);
-        maxframe = size(obj.sep,3);
-        msrarray = cell(1,maxframe);
-        wb = waitbar(0,'Calculating Intensities within Old ROI 2....');
-        for ll = 0:(maxframe-1)
-            msr = measure(lbl2(:,:,ll),sepim(:,:,ll),{'size','sum'});
-            msrarray{ll+1} = msr;
-            waitbar((ll+1)/maxframe,wb);
-        end
-        close(wb) 
-        obj.oldROI2_sep_sums = zeros(max(lbl2),maxframe);
-        obj.oldROI2_sep_sizes = zeros(max(lbl2),1);
-        %reshape array
-        for tt = 1:maxframe
+        %          ROI2
+        if ~isempty(obj.oldROIs2)
+            for rr = 1:numel(obj.oldROIs2)
+                bnds = obj.oldROIs2{rr}.vnRectBounds;
+                if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
+                    continue;
+                end
+                ROI2mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
+            end
+            obj.oldROI2mask = logical(ROI2mask);
+            % measure ROI2
+            lbl2 = label(obj.oldROI2mask);
+            maxframe = size(obj.sep,3);
+            msrarray = cell(1,maxframe);
+            wb = waitbar(0,'Calculating Intensities within Old ROI 2....');
+            for ll = 0:(maxframe-1)
+                msr = measure(lbl2(:,:,ll),sepim(:,:,ll),{'size','sum'});
+                msrarray{ll+1} = msr;
+                waitbar((ll+1)/maxframe,wb);
+            end
+            close(wb)
+            obj.oldROI2_sep_sums = zeros(max(lbl2),maxframe);
+            obj.oldROI2_sep_sizes = zeros(max(lbl2),1);
+            %reshape array
+            for tt = 1:maxframe
                 currarr = msrarray{tt};
                 obj.oldROI2_sep_sums(:,tt) = currarr.sum;
-        end    
+            end
+        end
     end
     
     
@@ -279,7 +285,7 @@ methods (Static)
         hm = heatmap(ord_trace);
         hm.GridVisible = 'off';
         hm.Colormap = jet(50);
-        hm.ColorLimits = [0 4];
+        hm.ColorLimits = [0 3.5];
     end
 end
 end
