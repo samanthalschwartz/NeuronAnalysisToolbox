@@ -8,9 +8,9 @@ wb = waitbar(0,'Calculating -TenT');
 for ff = 1:numel(files_noT)
     clear obj;
     load(fullfile(datadir,files_noT(ff).name));
-    obj.calculate_OldROIsintensities();
-    disp('Saving file....');
-    save(fullfile(datadir,files_noT(ff).name),'obj');
+%     obj.calculate_OldROIsintensities();
+%     disp('Saving file....');
+%     save(fullfile(datadir,files_noT(ff).name),'obj');
     disp('Done');
     trace1 = obj.oldROI1_sep_sums;
     trace2 = obj.oldROI2_sep_sums;
@@ -29,9 +29,9 @@ wb = waitbar(0,'Calculating +TenT');
 for ff = 1:numel(files_T)
     clear obj;
     load(fullfile(datadir,files_T(ff).name));
-    obj.calculate_OldROIsintensities();
-    disp('Saving file....');
-    save(fullfile(datadir,files_T(ff).name),'obj');
+%     obj.calculate_OldROIsintensities();
+%     disp('Saving file....');
+%     save(fullfile(datadir,files_T(ff).name),'obj');
     disp('Done');
     trace1 = obj.oldROI1_sep_sums;
     trace2 = obj.oldROI2_sep_sums;
@@ -82,19 +82,19 @@ hm1.ColorLimits = [0 setval];
 hm2.ColorLimits = [0 setval];
 %% cdf plots
 figuredirname = 'E:\Matt Becker Data (For Review)\Figures\oldROIs';
-allvalsnoT = cell2mat(alltraces2_noT);
-allvalsT = cell2mat(alltraces2_T);
+allvalsnoT = cell2mat(alltraces1_noT);
+allvalsT = cell2mat(alltraces1_T);
 % allvalsT = allvalsT([15:end],:);
 
 
 
 
-minval = 1.3;
+minval = 0;
 id_noT = sum(allvalsnoT>minval,2)>2;
 id_T = sum(allvalsT>minval,2)>2;
 
 
-maxval = 2;
+maxval = 10;
 
 timewindow = 1:20;
 newT = sort(allvalsT(id_T,timewindow),2,'descend');
@@ -109,7 +109,7 @@ plot(Y,G,'LineWidth',3,'LineStyle','-','Color','k')
 set(gca,'FontSize',16)
 xlabel('Max Fold Increase (within first 25 frames)','FontSize',16)
 ylabel('Cumulative Probability','FontSize',16);
-xlim([0.5 maxval])
+xlim([0.75 3])
 ylim([0 1])
 [H,P] = kstest2(newT(:,2),newnoT(:,2))
 % saveas(gcf,fullfile(figuredirname,'maxCDF'),'emf');

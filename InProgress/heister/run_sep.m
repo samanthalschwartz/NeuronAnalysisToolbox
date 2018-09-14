@@ -57,6 +57,12 @@ close(f)
 alltraces_noT{ff} = sep.obj.ord_trace;
 end
 
+tottraces = 0;
+for ff = 1:numel(files_noT)
+    tottraces = tottraces + size(alltraces_noT{ff},1);
+end
+% 3220 traces!
+
 datadir = 'E:\Matt Becker Data (For Review)\SEPfiles\+TeNT';
 % files = uipickfiles('Prompt','Pick Files','FilterSpec',datadir);
 files_T = dir(fullfile(datadir,'*.mat'));

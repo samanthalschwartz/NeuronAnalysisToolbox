@@ -486,6 +486,15 @@ methods (Static)
        sm(sm>0) = 1;
        sumproj_out = repmat(sm,[1 1 size(mask_in,3)]);
     end
+    function lbl_out = removeLabels(lbl_in,ids2remove)
+        lbl = single(lbl_in);
+        for ii = ids2remove
+        lbl(lbl == ii) = 0;
+        end
+        lbl_out = dip_image(lbl);
+    end
+    
+    
     function lbl_out = findLabelsInMask(lbl_in,mask)
         % Excludes labels in a labeled image that are exclusively out of the bounds of an input mask.
         % or Includes labels in a labeled image if any part of the label is within the bounds of an input mask.
@@ -850,6 +859,30 @@ methods (Static)
          bin_im = (perim==1);
          
          [h,overlayim] = GeneralAnalysis.overlay(image,bin_im,cm,mskcol);
+     end
+     function [h,overlayarr] = viewMaskOverlay(grayim,mask)
+         if ~isa(grayim,'dip_image')
+            try
+                grayim = dip_image(img_in);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+         assert(ndims(grayim) == ndims(mask));
+         grayim_minusmask = grayim.*~mask;
+         mskfrm = max(grayim)*10*mask + grayim_minusmask;
+         switch ndims(grayim)
+             case 2
+                 rch = cat(3,mskfrm,grayim);
+                 gch = cat(3,grayim_minusmask,grayim);
+             case 3
+                 rch = cat(4,mskfrm,grayim);
+                 gch = cat(4,grayim_minusmask,grayim);
+         end
+         bch = gch;
+         overlayarr = joinchannels('rgb',rch,gch,bch); 
+         h = dipshow(overlayarr,'log');
      end
 end
 end
