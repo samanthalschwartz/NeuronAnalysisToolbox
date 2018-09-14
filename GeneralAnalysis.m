@@ -259,6 +259,7 @@ methods (Static)
         mask = threshold(img_in,'fixed',threshval);
         close(h);
     end
+   
     function newmask = cleanUpMask_manual_click(underimgin,mask_in)
         %        lb = label(mask_in);
 %         ov = overlay(underimgin,mask_in);
@@ -353,6 +354,82 @@ methods (Static)
       dipfig -unlink
       newmask = logical(lb);  
     end
+    function newmask = cleanUpMaskKeepers_manual_square(underimgin,mask_in,imviewsz)
+        %        lb = label(mask_in);
+%         ov = overlay(underimgin,mask_in);
+%         h = dipshow(ov,'log');
+%         dipmapping(h,'global')
+        %       h = dipshow(lb,'labels');
+%         while(ishandle(h))
+%             [a b] = dipcrop(h);
+%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
+%             close(h);
+%             ov = overlay(underimgin,mask_in);
+%             h = dipshow(ov,'log');
+%             dipmapping(h,'global');
+%         end
+         if nargin<3
+             imviewsz = 50;
+         end
+        lb = label(logical(mask_in));
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        dipshow(ov,'log');
+        diptruesize(g,imviewsz);
+        clmp = bone(255);
+        clmp(1,:) = [1 0 0];
+        selectedROIs = [];
+        while(ishandle(g))
+            try
+            w = waitforbuttonpress;
+            a = gcf;
+            if strcmp(a.CurrentCharacter,'t')
+                a = gcf;
+                try
+                [B,C] = dipcrop(a);
+                selectedROIs = cat(1,selectedROIs, [C(1,1),C(1,2),C(1,1)+C(2,1),C(1,2)+C(2,1)]);
+                rectangle('Position',[C(1,1),C(1,2),C(2,1),C(2,1)]);
+                a.CurrentCharacter = 'f';
+                catch
+                    break;
+                end
+            end
+            catch
+            
+            
+            %             try
+            %
+% %                 v = dipgetcoords(g,1);
+%             catch
+%                 break;
+%             end
+%             lbs2remove = unique(single(img2remove));
+%             
+%             for ii = lbs2remove(lbs2remove~=0)'
+%             lb(lb == ii) = 0; 
+%             end
+%             ov = underimgin;
+%             ov(lb~=0) = 0
+%             diptruesize(gcf,imviewsz);
+%             dipmapping('log')
+%             dipmapping('colormap',clmp);
+            end
+        end
+        goodids = [];
+            for ii = 1:size(selectedROIs,1)
+            goodids = [goodids max(lb(selectedROIs(ii,1):selectedROIs(ii,3),selectedROIs(ii,2):selectedROIs(ii,4)))];
+            end
+           lbl_out = findLabelsInMask(lbl_in,mask)
+           for gg=goodids
+               
+              lbl_out 
+           end
+         lbl_out = findLabelsInMask(lb,selectedROIs);
+%       newmask = logical(lb);  
+    end
+    
+    
     function perim = maskperim(mask_in)
          perim = dt(mask_in);
          perim = (perim==1);     
@@ -863,7 +940,7 @@ methods (Static)
      function [h,overlayarr] = viewMaskOverlay(grayim,mask)
          if ~isa(grayim,'dip_image')
             try
-                grayim = dip_image(img_in);
+                grayim = dip_image(grayim);
             catch
                 warning('input must be an image matrix');
                     return;
