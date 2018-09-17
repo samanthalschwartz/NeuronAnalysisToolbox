@@ -141,3 +141,12 @@ wshed = GeneralAnalysis.watershed_timeseries(-gaussf(sch2_series,1),1);
 lbl = label(mask.*~wshed,1,8)
 msr = measure(lbl,dip_image(ch2),{'Size','Sum'});
 figure; histogram(msr.Sum./msr.Size)
+%%
+omeMeta = test{1, 4};
+stackSizeX = omeMeta.getPixelsSizeX(0).getValue(); % image width, pixels
+stackSizeY = omeMeta.getPixelsSizeY(0).getValue(); % image height, pixels
+stackSizeZ = omeMeta.getPixelsSizeZ(0).getValue(); % number of Z slices
+voxelSizeXdefaultValue = omeMeta.getPixelsPhysicalSizeX(0).value();           % returns value in default unit
+voxelSizeXdefaultUnit = omeMeta.getPixelsPhysicalSizeX(0).unit().getSymbol(); 
+voxelSizeZdefaultValue = omeMeta.getPixelsPhysicalSizeZ(0).value();           % returns value in default unit
+voxelSizeZdefaultUnit = omeMeta.getPixelsPhysicalSizeZ(0).unit().getSymbol(); 
