@@ -355,22 +355,9 @@ methods (Static)
       newmask = logical(lb);  
     end
     function newmask = cleanUpMaskKeepers_manual_square(underimgin,mask_in,imviewsz)
-        %        lb = label(mask_in);
-%         ov = overlay(underimgin,mask_in);
-%         h = dipshow(ov,'log');
-%         dipmapping(h,'global')
-        %       h = dipshow(lb,'labels');
-%         while(ishandle(h))
-%             [a b] = dipcrop(h);
-%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
-%             close(h);
-%             ov = overlay(underimgin,mask_in);
-%             h = dipshow(ov,'log');
-%             dipmapping(h,'global');
-%         end
-         if nargin<3
-             imviewsz = 50;
-         end
+        if nargin<3
+            imviewsz = 50;
+        end
         lb = label(logical(mask_in));
         ov = underimgin;
         ov(lb~=0) = 0;
@@ -382,51 +369,30 @@ methods (Static)
         selectedROIs = [];
         while(ishandle(g))
             try
-            w = waitforbuttonpress;
-            a = gcf;
-            if strcmp(a.CurrentCharacter,'t')
+                w = waitforbuttonpress;
                 a = gcf;
-                try
-                [B,C] = dipcrop(a);
-                selectedROIs = cat(1,selectedROIs, [C(1,1),C(1,2),C(1,1)+C(2,1),C(1,2)+C(2,1)]);
-                rectangle('Position',[C(1,1),C(1,2),C(2,1),C(2,1)]);
-                a.CurrentCharacter = 'f';
-                catch
-                    break;
+                if strcmp(a.CurrentCharacter,'t')
+                    a = gcf;
+                    try
+                        [B,C] = dipcrop(a);
+                        selectedROIs = cat(1,selectedROIs, [C(1,1),C(1,2),C(1,1)+C(2,1),C(1,2)+C(2,1)]);
+                        rectangle('Position',[C(1,1),C(1,2),C(2,1),C(2,1)]);
+                        a.CurrentCharacter = 'f';
+                    catch
+                        break;
+                    end
                 end
-            end
             catch
-            
-            
-            %             try
-            %
-% %                 v = dipgetcoords(g,1);
-%             catch
-%                 break;
-%             end
-%             lbs2remove = unique(single(img2remove));
-%             
-%             for ii = lbs2remove(lbs2remove~=0)'
-%             lb(lb == ii) = 0; 
-%             end
-%             ov = underimgin;
-%             ov(lb~=0) = 0
-%             diptruesize(gcf,imviewsz);
-%             dipmapping('log')
-%             dipmapping('colormap',clmp);
             end
         end
         goodids = [];
-            for ii = 1:size(selectedROIs,1)
+        for ii = 1:size(selectedROIs,1)
             goodids = [goodids max(lb(selectedROIs(ii,1):selectedROIs(ii,3),selectedROIs(ii,2):selectedROIs(ii,4)))];
-            end
-           lbl_out = findLabelsInMask(lbl_in,mask)
-           for gg=goodids
-               
-              lbl_out 
-           end
-         lbl_out = findLabelsInMask(lb,selectedROIs);
-%       newmask = logical(lb);  
+        end
+        newmask = lb*0;
+        for gg=goodids
+            newmask = newmask + (lb == gg);
+        end
     end
     
     
