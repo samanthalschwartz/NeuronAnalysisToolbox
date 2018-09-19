@@ -1,18 +1,22 @@
 classdef SIM < handle
     properties
-        filepath = '';
-        channelorderingstr = {'a-beta ch','ch1','ch2'};
-        channelordering = [2 1 3]; % array indicating which channel is which; 
-            %         channelordering(1) = abeta channel in image
-            %         channelordering(2) = channel in image corresponding to 'ch1';
-            %         channelordering(3) = channel in image corresponding to 'ch2';
+        filepath = '';        
+        channelordering = [2 1 3]; % array indicating which channel is which;
+        %         channelordering(1) = abeta channel in image
+        %         channelordering(2) = channel in image corresponding to 'ch1';
+        %         channelordering(3) = channel in image corresponding to 'ch2';
+        channelorderingstr = {'chABeta','ch1','ch2'};
         abeta = struct('image',[],'distance_mask',[],'mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
-            'abetaCh',struct('msr',[],'sizes',[],'densities',[]));
+            'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
+                        'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
+                        'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         ch2 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
-            'abetaCh',struct('msr',[],'sizes',[],'densities',[]));
+            'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
+                        'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
+                        'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         measurements = {'size','sum'};
         XYpxsize = 0.0321;
         XYpxsize_units = 'µm';
@@ -87,41 +91,19 @@ classdef SIM < handle
             disp('Calculating Ch2 Distance');
             obj.ch2.distance_mask = bwdistsc1(single(obj.ch2.mask),[1 1 zscale],maxval);
         end
-        
-        function calculateDensity_abetaINch1(obj)
-            nbins = 30;
-            density = zeros(nbins,1);
-            for nn = 1:nbins
-                if nn == 1
-                    curr_distmask = (obj.ch1.distance_mask<=nn).*obj.cellmask;
-                else
-                    curr_distmask = (obj.ch1.distance_mask>(nn-1) & obj.ch1.distance_mask<=nn).*obj.cellmask;
-                end
-                density(nn) = sum(obj.abeta.image.*curr_distmask)./sum(curr_distmask);
+        function calculateDensities_abetaINch1(obj,bins)
+            if nargin<2
+                bins = 0:30;
             end
-            avgdensity = sum(obj.abeta.image.*obj.cellmask)./sum(obj.cellmask);
-            xs = 1:nbins;
-            figure; plot(xs,density/avgdensity)
-        end
-        function calculateDensity_abetaINch2(obj)
-            nbins = 30; 
-            density = zeros(nbins,1);
-            for nn = 1:nbins
-                curr_distmask = [];
-                if nn == 1
-                    curr_distmask = (obj.ch2.distance_mask<=nn).*obj.cellmask;
-                else
-                    curr_distmask = (obj.ch2.distance_mask>(nn-1) & obj.ch2.distance_mask<=nn).*obj.cellmask;
-                end
-                density(nn) = sum(obj.abeta.image.*curr_distmask)./sum(curr_distmask);
-            end
-            avgdensity = sum(obj.abeta.image.*obj.cellmask)./sum(obj.cellmask);
-            xs = 1:nbins;
-            figure; plot(xs,density/avgdensity)
+            obj.ch1.abetaCh = obj.calculateDensities_abetaINch(obj.ch1,obj.abeta.mask,obj.abeta.image,obj.cellmask,bins);
         end
         
-        
-        
+        function calculateDensities_abetaINch2(obj,bins)
+            if nargin<2
+                bins = 0:30;
+            end
+            obj.ch2.abetaCh = obj.calculateDensities_abetaINch(obj.ch2,obj.abeta.mask,obj.abeta.image,obj.cellmask,bins);
+        end
         %-- helpers for making masks. if you want to change how the masks
         %are made then change which static method these are calling
         function make_maskchAB(obj)
@@ -134,16 +116,53 @@ classdef SIM < handle
             obj.ch2.mask = SIM.make_maskSynapseMarker(obj.ch2.image);
         end
         %----
+        function measure_allthings(obj)
+            disp('Measuring values inside masks');
+            obj.measure_AB;
+            obj.measure_ch1;
+            obj.measure_ch2;
+            obj.measure_AB_inch1;
+            obj.measure_AB_inch2;
+        end
         function measure_AB(obj)
+            msr = measure(obj.abeta.mask,obj.abeta.image,obj.measurements);
+            obj.abeta.msr = msr;
+            obj.abeta.sizes = msr.Size;
+            obj.abeta.densities = msr.sum./msr.size;
         end
         function measure_ch1(obj)
+            msr = measure(obj.ch1.mask,obj.ch1.image,obj.measurements);
+            obj.ch1.thisCh.msr = msr;
+            obj.ch1.thisCh.sizes = msr.Size;
+            obj.ch1.thisCh.densities = msr.sum./msr.size;
         end
         function measure_ch2(obj)
+            msr = measure(obj.ch2.mask,obj.ch2.image,obj.measurements);
+            obj.ch2.thisCh.msr = msr;
+            obj.ch2.thisCh.sizes = msr.Size;
+            obj.ch2.thisCh.densities = msr.sum./msr.size;
         end
         function measure_AB_inch1(obj)
+            msr = measure(obj.ch1.mask,obj.abeta.image,obj.measurements);
+            obj.ch1.abetaCh.msr = msr;
+            obj.ch1.abetaCh.sizes = msr.Size;
+            obj.ch1.abetaCh.densities = msr.sum./msr.size;
         end
         function measure_AB_inch2(obj)
+            msr = measure(obj.ch2.mask,obj.abeta.image,obj.measurements);
+            obj.ch2.abetaCh.msr = msr;
+            obj.ch2.abetaCh.sizes = msr.Size;
+            obj.ch2.abetaCh.densities = msr.sum./msr.size;
         end
+        
+        function dothething(obj)
+            obj.make_masks();
+            obj.make_distancemasks();
+            obj.calculateDensities_abetaINch1();
+            obj.calculateDensities_abetaINch2();
+            obj.measure_allthings();
+        end
+        
     end
     
     methods (Static)
@@ -204,5 +223,44 @@ classdef SIM < handle
             info.currCol = str2double(colparts{2});
             info.totalCol = str2double(colparts{3});
         end
+        
+        function output = calculateDensities_abetaINch(channel,abeta_mask,abeta_image,cellmask,bins)
+            nbins = numel(bins);
+            %-- alocate empty arrays for values calculated
+            density = zeros(nbins,1);
+            numb = zeros(nbins,1);
+            cumulative_numb = zeros(nbins,1);
+%             distmasks = zeros(size(obj.ch2.distance_mask,1),size(obj.ch2.distance_mask,1),nbins);
+            %-- label abeta mask to get individuals
+            lb = label(abeta_mask,1);
+            %-- loop through and calculate some things
+            wb = waitbar(0,'Calculating Density Information...');
+            for nn = 1:nbins
+                cumulative_distmask = (channel.distance_mask<=bins(nn)).*cellmask;
+                if nn == 1
+                    curr_distmask = (channel.distance_mask<=bins(nn)).*cellmask;
+                else
+                    curr_distmask = (channel.distance_mask>bins(nn-1) & channel.distance_mask<=bins(nn)).*cellmask;
+                end
+                density(nn) = sum(abeta_image.*curr_distmask)./sum(curr_distmask);
+                inmasklb = single(lb.*curr_distmask);
+                numb(nn) = size(unique(inmasklb),2)./sum(curr_distmask);
+                cumulative_numb(nn) = size(unique(lb.*cumulative_distmask))./sum(curr_distmask); 
+                waitbar(nn/nbins,wb);
+            end
+            close(wb);
+            avgdensity = sum(abeta_image.*cellmask)./sum(cellmask);
+            incelllb = single(lb.*cellmask);
+            avgnumberdensity = size(unique(incelllb),2)./sum(cellmask);
+            xs = bins;
+            output.radialdensity_norm = [xs',density/avgdensity];
+            output.radialdensity_raw = [xs',density];
+            output.radialnumberdensity_norm = [xs',numb/avgnumberdensity];
+            output.radialnumberdensity_norm_raw = [xs',numb];
+            output.cumulative_radialnumberdensity_norm_norm = [xs',cumulative_numb/avgnumberdensity];
+            output.cumulative_radialnumberdensity_norm_raw = [xs',cumulative_numb];
+        end  
+        
+        
     end
 end

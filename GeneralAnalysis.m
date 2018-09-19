@@ -537,7 +537,43 @@ methods (Static)
         lbl_out = dip_image(lbl);
     end
     
-    
+    function measure_structure = measureMaskTimeSeries(labeled,image,measurements)
+         if ~isa(image,'dip_image')
+            try
+                image = dip_image(image);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+        assert(isequal(size(labeled),size(image)));
+        if nargin<3
+           measurements = {'Size','Sum'};
+        end
+        if max(labeled) == 1
+            labeled = label(labeled);
+        end
+        maxframe = size(labeled,3);
+        msrarray = cell(1,maxframe);
+        wb = waitbar(0,'Calculating Intensities within Masks....');
+        for ll = 0:(maxframe-1)
+            msr = measure(labeled(:,:,ll),image(:,:,ll),measurements);
+            msrarray{ll+1} = msr;
+            waitbar((ll+1)/maxframe,wb);
+        end
+        close(wb) 
+        for m = 1:numel(measurements)
+            measure_structure.(measurements{m}) = zeros(max(labeled),maxframe);            
+        end
+        %reshape array
+        for tt = 1:maxframe
+                currarr = msrarray{tt};
+                for m = 1:numel(measurements)
+                measure_structure.(measurements{m})(:,tt) = currarr.(measurements{m})';
+                end
+        end
+    end 
+        
     function lbl_out = findLabelsInMask(lbl_in,mask)
         % Excludes labels in a labeled image that are exclusively out of the bounds of an input mask.
         % or Includes labels in a labeled image if any part of the label is within the bounds of an input mask.

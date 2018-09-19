@@ -22,7 +22,7 @@ flstring_post = flstring_post{1};
 % these are the raw data movies (they are dip images)
 img_pre = dip_image(ga.loadtiffseries(PATHNAME_pre,flstring_pre));
 img_post = dip_image(ga.loadtiffseries(PATHNAME_post,flstring_post));
-cellfill_pre = ga.loadtiff_1ch(fullfile(PATHNAME_cf,FILENAME_cf));
+cellfill_pre = ga.loadtiff(fullfile(PATHNAME_cf,FILENAME_cf));
 %%
 % align post image with last frame of pre-image
 pre_lastframe = img_pre(:,:,end);
