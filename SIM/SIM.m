@@ -70,14 +70,14 @@ classdef SIM < handle
              obj.cellmask = repmat(msk_open,1,1,size(obj.ch1.image,3));
         end
         function make_masks(obj)
+            disp('Generating Whole Cell Mask');
+            obj.make_cellmask;
             disp('Generating ABeta Mask');
             obj.make_maskchAB;
             disp('Generating CH1 Mask');
             obj.make_maskch1;
             disp('Generating CH2 Mask');
             obj.make_maskch2;
-            disp('Generating Whole Cell Mask');
-            obj.make_cellmask;
         end
         function make_distancemasks(obj,maxval)
             if nargin<2
@@ -110,10 +110,30 @@ classdef SIM < handle
              obj.abeta.mask = SIM.make_maskABeta(obj.abeta.image);
         end
         function make_maskch1(obj)
-            obj.ch1.mask = SIM.make_maskSynapseMarker(obj.ch1.image);
+            premask  = SIM.make_maskSynapseMarker(obj.ch1.image);
+            m = zeros(1,size(obj.cellmask,3));
+            image = dip_image(obj.ch1.image);
+            for ii = 0:(size(obj.cellmask,3)-1)
+                currframe = image(:,:,ii);
+                currcellmask = ~obj.cellmask(:,:,ii);
+                currcellmask = bdilation(currcellmask,2);
+                m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
+                premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
+            end
+            obj.ch1.mask = premask;
         end
         function make_maskch2(obj)
-            obj.ch2.mask = SIM.make_maskSynapseMarker(obj.ch2.image);
+            premask  = SIM.make_maskSynapseMarker(obj.ch2.image);
+            m = zeros(1,size(obj.cellmask,3));
+            image = dip_image(obj.ch1.image);
+            for ii = 0:(size(obj.cellmask,3)-1)
+                currframe = image(:,:,ii);
+                currcellmask = ~obj.cellmask(:,:,ii);
+                currcellmask = bdilation(currcellmask,2);
+                m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
+                premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
+            end
+            obj.ch2.mask = premask;
         end
         %----
         function measure_allthings(obj)
@@ -125,7 +145,8 @@ classdef SIM < handle
             obj.measure_AB_inch2;
         end
         function measure_AB(obj)
-            msr = measure(obj.abeta.mask,obj.abeta.image,obj.measurements);
+            lb = label(obj.abeta.mask,1);
+            msr = measure(lb,obj.abeta.image,obj.measurements);
             obj.abeta.msr = msr;
             obj.abeta.sizes = msr.Size;
             obj.abeta.densities = msr.sum./msr.size;

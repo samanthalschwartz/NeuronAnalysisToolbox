@@ -1,11 +1,11 @@
 classdef SIM < handle
     properties
-        filepath = '';
-        channelorderingstr = {'a-beta ch','ch1','ch2'};
-        channelordering = [2 1 3]; % array indicating which channel is which; 
-            %         channelordering(1) = abeta channel in image
-            %         channelordering(2) = channel in image corresponding to 'ch1';
-            %         channelordering(3) = channel in image corresponding to 'ch2';
+        filepath = '';        
+        channelordering = [2 1 3]; % array indicating which channel is which;
+        %         channelordering(1) = abeta channel in image
+        %         channelordering(2) = channel in image corresponding to 'ch1';
+        %         channelordering(3) = channel in image corresponding to 'ch2';
+        channelorderingstr = {'chABeta','ch1','ch2'};
         abeta = struct('image',[],'distance_mask',[],'mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
@@ -91,66 +91,43 @@ classdef SIM < handle
             disp('Calculating Ch2 Distance');
             obj.ch2.distance_mask = bwdistsc1(single(obj.ch2.mask),[1 1 zscale],maxval);
         end
-        
         function calculateDensities_abetaINch1(obj,bins)
             if nargin<2
                 bins = 0:30;
             end
-            output = calculateDensities_abetaINch(obj.ch1,obj.abeta.mask,obj.abeta.image,obj.cellmask,bins)
-        end  
+            obj.ch1.abetaCh = obj.calculateDensities_abetaINch(obj.ch1,obj.abeta.mask,obj.abeta.image,obj.cellmask,bins);
+        end
         
         function calculateDensities_abetaINch2(obj,bins)
-             disp('Calculating ABeta Densities From Ch2');
-            %-- get bin info
             if nargin<2
                 bins = 0:30;
             end
-            nbins = numel(bins);
-            %-- alocate empty arrays for values calculated
-            density = zeros(nbins,1);
-            numb = zeros(nbins,1);
-            cumulative_numb = zeros(nbins,1);
-%             distmasks = zeros(size(obj.ch2.distance_mask,1),size(obj.ch2.distance_mask,1),nbins);
-            %-- label abeta mask to get individuals
-            lb = label(obj.abeta.mask,1);
-            %-- loop through and calculate some things
-            
-            for nn = 1:nbins
-                cumulative_distmask = (obj.ch2.distance_mask<=bins(nn)).*obj.cellmask;
-                if nn == 1
-                    curr_distmask = (obj.ch2.distance_mask<=bins(nn)).*obj.cellmask;
-                else
-                    curr_distmask = (obj.ch2.distance_mask>bins(nn-1) & obj.ch2.distance_mask<=bins(nn)).*obj.cellmask;
-                end
-                density(nn) = sum(obj.abeta.image.*curr_distmask)./sum(curr_distmask);
-                inmasklb = single(lb.*curr_distmask);
-                numb(nn) = size(unique(inmasklb),2)./sum(curr_distmask);
-                cumulative_numb(nn) = size(unique(lb.*cumulative_distmask))./sum(curr_distmask);         
-            end
-            avgdensity = sum(obj.abeta.image.*obj.cellmask)./sum(obj.cellmask);
-            incelllb = single(lb.*obj.cellmask);
-            avgnumberdensity = size(unique(incelllb),2)./sum(obj.cellmask);
-            xs = bins;
-            obj.ch2.abetaCh.radialdensity_norm = [xs',density/avgdensity];
-            obj.ch2.abetaCh.radialdensity_raw = [xs',density];
-            obj.ch2.abetaCh.radialnumberdensity_norm = [xs',numb/avgnumberdensity];
-            obj.ch2.abetaCh.radialnumberdensity_norm_raw = [xs',numb];
-            obj.ch2.cumulative_radialnumberdensity_norm_norm = [xs',cumulative_numb/avgnumberdensity];
-            obj.ch2.cumulative_radialnumberdensity_norm_raw = [xs',cumulative_numb];
-        end  
+            obj.ch2.abetaCh = obj.calculateDensities_abetaINch(obj.ch2,obj.abeta.mask,obj.abeta.image,obj.cellmask,bins);
+        end
         %-- helpers for making masks. if you want to change how the masks
         %are made then change which static method these are calling
         function make_maskchAB(obj)
              obj.abeta.mask = SIM.make_maskABeta(obj.abeta.image);
         end
         function make_maskch1(obj)
-            obj.ch1.mask = SIM.make_maskSynapseMarker(obj.ch1.image);
+            premask  = SIM.make_maskSynapseMarker(obj.ch1.image);
+            m = zeros(1,size(obj.cellmask,3));
+            image = dip_image(obj.ch1.image);
+            for ii = 0:(size(obj.cellmask,3)-1)
+                currframe = image(:,:,ii);
+                currcellmask = ~obj.cellmask(:,:,ii);
+                currcellmask = bdilation(currcellmask,2);
+                m(ii) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask));
+                premask(:,:,ii-1) = premask(:,:,ii-1).*~(currframe<m(ii));
+            end
+            obj.ch1.mask = premask;
         end
         function make_maskch2(obj)
             obj.ch2.mask = SIM.make_maskSynapseMarker(obj.ch2.image);
         end
         %----
         function measure_allthings(obj)
+            disp('Measuring values inside masks');
             obj.measure_AB;
             obj.measure_ch1;
             obj.measure_ch2;
@@ -158,7 +135,8 @@ classdef SIM < handle
             obj.measure_AB_inch2;
         end
         function measure_AB(obj)
-            msr = measure(obj.abeta.mask,obj.abeta.image,obj.measurements);
+            lb = label(obj.abeta.mask,1);
+            msr = measure(lb,obj.abeta.image,obj.measurements);
             obj.abeta.msr = msr;
             obj.abeta.sizes = msr.Size;
             obj.abeta.densities = msr.sum./msr.size;
@@ -258,11 +236,6 @@ classdef SIM < handle
         end
         
         function output = calculateDensities_abetaINch(channel,abeta_mask,abeta_image,cellmask,bins)
-             disp('Calculating ABeta Densities From Ch2');
-            %-- get bin info
-            if nargin<2
-                bins = 0:30;
-            end
             nbins = numel(bins);
             %-- alocate empty arrays for values calculated
             density = zeros(nbins,1);
@@ -272,7 +245,7 @@ classdef SIM < handle
             %-- label abeta mask to get individuals
             lb = label(abeta_mask,1);
             %-- loop through and calculate some things
-            
+            wb = waitbar(0,'Calculating Density Information...');
             for nn = 1:nbins
                 cumulative_distmask = (channel.distance_mask<=bins(nn)).*cellmask;
                 if nn == 1
@@ -283,8 +256,10 @@ classdef SIM < handle
                 density(nn) = sum(abeta_image.*curr_distmask)./sum(curr_distmask);
                 inmasklb = single(lb.*curr_distmask);
                 numb(nn) = size(unique(inmasklb),2)./sum(curr_distmask);
-                cumulative_numb(nn) = size(unique(lb.*cumulative_distmask))./sum(curr_distmask);         
+                cumulative_numb(nn) = size(unique(lb.*cumulative_distmask))./sum(curr_distmask); 
+                waitbar(nn/nbins,wb);
             end
+            close(wb);
             avgdensity = sum(abeta_image.*cellmask)./sum(cellmask);
             incelllb = single(lb.*cellmask);
             avgnumberdensity = size(unique(incelllb),2)./sum(cellmask);
