@@ -13,7 +13,7 @@ channelorderingstr = {'chABeta','PSD95i','Gephyrin'}; % channel abeta, channel 1
 files = uipickfiles('FilterSpec',topdir,'Prompt',['Pick Files for ' channelorderingstr{1} ,...
                                             '-' channelorderingstr{2} '-' channelorderingstr{3}]);
 for ff = 1:numel(files)
-    filepath = files{ff};
+filepath = files{ff};
 s  = SIM();
 s.channelordering = ids;
 s.channelorderingstr = channelorderingstr;
