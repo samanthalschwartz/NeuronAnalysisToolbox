@@ -67,17 +67,17 @@ classdef SIM < handle
             openeninimage_out = opening(gmaxsumim,20,'rectangular');
             threshs = multithresh(single(openeninimage_out),2);
             msk_open = openeninimage_out>threshs(1);
-             obj.cellmask = repmat(msk_open,1,1,size(obj.ch1.image,3));
+            obj.cellmask = repmat(msk_open,1,1,size(obj.ch1.image,3));
         end
         function make_masks(obj)
+            disp('Generating Whole Cell Mask');
+            obj.make_cellmask;
             disp('Generating ABeta Mask');
             obj.make_maskchAB;
             disp('Generating CH1 Mask');
             obj.make_maskch1;
             disp('Generating CH2 Mask');
             obj.make_maskch2;
-            disp('Generating Whole Cell Mask');
-            obj.make_cellmask;
         end
         function make_distancemasks(obj,maxval)
             if nargin<2
@@ -110,20 +110,34 @@ classdef SIM < handle
              obj.abeta.mask = SIM.make_maskABeta(obj.abeta.image);
         end
         function make_maskch1(obj)
-            premask  = SIM.make_maskSynapseMarker(obj.ch1.image);
+            if strcmp(obj.channelorderingstr{2},'PSD95i')
+                premask  = SIM.make_maskPSD95ib(obj.ch1.image);
+            else
+                premask  = SIM.make_maskSynapseMarker(obj.ch1.image);
+            end
             m = zeros(1,size(obj.cellmask,3));
             image = dip_image(obj.ch1.image);
             for ii = 0:(size(obj.cellmask,3)-1)
                 currframe = image(:,:,ii);
                 currcellmask = ~obj.cellmask(:,:,ii);
                 currcellmask = bdilation(currcellmask,2);
-                m(ii) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask));
-                premask(:,:,ii-1) = premask(:,:,ii-1).*~(currframe<m(ii));
+                m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
+                premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
             end
             obj.ch1.mask = premask;
         end
         function make_maskch2(obj)
-            obj.ch2.mask = SIM.make_maskSynapseMarker(obj.ch2.image);
+            premask  = SIM.make_maskSynapseMarker(obj.ch2.image);
+            m = zeros(1,size(obj.cellmask,3));
+            image = dip_image(obj.ch2.image);
+            for ii = 0:(size(obj.cellmask,3)-1)
+                currframe = image(:,:,ii);
+                currcellmask = ~obj.cellmask(:,:,ii);
+                currcellmask = bdilation(currcellmask,2);
+                m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
+                premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
+            end
+            obj.ch2.mask = premask;
         end
         %----
         function measure_allthings(obj)
@@ -174,6 +188,12 @@ classdef SIM < handle
             obj.measure_allthings();
         end
         
+        function save(obj,savedir)
+            if nargin<2
+                savedir = [obj.filepath(1:end-4) '_SIM'];
+           save(savedir '_SIM'],'obj'); 
+        end
+        
     end
     
     methods (Static)
@@ -192,8 +212,26 @@ classdef SIM < handle
             gch = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(gch,[2 2 1],[2 2 1]);
             thr = multithresh(single(out),2);
+            mask = bdilation(out>thr(2),1);
+        end
+        
+        function mask = make_maskSynapseMarkerLow(image,params)
+            gch = gaussf(image);
+            out = GeneralAnalysis.imgLaplaceCutoff(gch,[2 2 1],[2 2 1]);
+            thr = multithresh(single(out),1);
             mask = bdilation(out>thr(1),1);
         end
+        
+        function mask = make_maskPSD95ib(image,params)
+            gch = gaussf(image);
+            out = GeneralAnalysis.imgLaplaceCutoff(gch,[2 2 1],[2 2 1]);
+            out = gaussf(out,[2 2 1]);
+            thr = multithresh(single(out),2);
+            mask = bdilation(out>thr(2),1); 
+        end
+        
+        
+        
         function [image,metadata] = ndFileloader(filename)
             if nargin<1
                 [name, path] = uigetfile('*.nd2');
@@ -222,13 +260,13 @@ classdef SIM < handle
             info.currPlane = str2double(planeparts{2});
             info.totalPlane = str2double(planeparts{3});
             
-            zbool = cellfun(@(x) contains(x,'Z='),splstr1);
+            zbool = cellfun(@(x) contains(x,'Z=')|contains(x,'Z?='),splstr1);
             zstr = splstr1{zbool};
             zparts = strsplit(zstr,{'=','/'});
             info.currZ = str2double(zparts{2});
             info.totalZ = str2double(zparts{3});
             
-            colbool = cellfun(@(x) contains(x,'C='),splstr1);
+            colbool = cellfun(@(x) contains(x,'C=')|contains(x,'C?='),splstr1);
             colstr = splstr1{colbool};
             colparts = strsplit(colstr,{'=','/'});
             info.currCol = str2double(colparts{2});
@@ -255,14 +293,19 @@ classdef SIM < handle
                 end
                 density(nn) = sum(abeta_image.*curr_distmask)./sum(curr_distmask);
                 inmasklb = single(lb.*curr_distmask);
-                numb(nn) = size(unique(inmasklb),2)./sum(curr_distmask);
-                cumulative_numb(nn) = size(unique(lb.*cumulative_distmask))./sum(curr_distmask); 
+                numb(nn) = size(unique(inmasklb),1);%./sum(curr_distmask);
+                cumulative_numb(nn) = size(unique(lb.*cumulative_distmask));%./sum(curr_distmask); 
+                try
                 waitbar(nn/nbins,wb);
+                catch
+                   wb = waitbar(nn/nbins,'Calculating Density Information...');
+                end
             end
             close(wb);
             avgdensity = sum(abeta_image.*cellmask)./sum(cellmask);
             incelllb = single(lb.*cellmask);
-            avgnumberdensity = size(unique(incelllb),2)./sum(cellmask);
+            avgnumberdensity = size(channel.thisCh.msr,1);
+%             avgnumberdensity = size(unique(incelllb),2)./sum(cellmask);
             xs = bins;
             output.radialdensity_norm = [xs',density/avgdensity];
             output.radialdensity_raw = [xs',density];

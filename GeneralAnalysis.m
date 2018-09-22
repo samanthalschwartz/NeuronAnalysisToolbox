@@ -818,6 +818,14 @@ methods (Static)
      function [h,overlayim] = overlay(grey_im,bin_im,cm,mskcol)
          % this function overloads the dipimage overlay method but with a
          % better colormapping
+         if ~isa(grey_im,'dip_image')
+             try
+                 grey_im = dip_image(grey_im);
+             catch
+                 warning('input must be an image matrix');
+                 return;
+             end
+         end
          if nargin<4
              mskcol = [1 0 0]; %make mask perim red
          end
