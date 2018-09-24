@@ -3,7 +3,6 @@
 close all; clear all;
 %% this script is for setting the top and bottom slice
 % set the file name
->>>>>>> c223574a64519aa83c2ba0d4c537d33d73918a53
 filename = 'C:\Users\KennedyLab\Documents\Hannah\SIM data\SIM_files\PSD95ib488_gephyrin561_Abeta647_003_Reconstructed_SIM.mat';
 load(filename);
 % show the file to look through
