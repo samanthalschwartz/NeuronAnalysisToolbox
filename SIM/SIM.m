@@ -8,7 +8,7 @@ classdef SIM < handle
         channelorderingstr = {'chABeta','ch1','ch2'};
         planeTOP = [];
         planeBOTTOM = [];
-        abeta = struct('image',[],'distance_mask',[],'mask',[],'msr',[],'sizes',[],'densities',[]);
+        abeta = struct('image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
@@ -83,7 +83,7 @@ classdef SIM < handle
         end
         function make_distancemasks(obj,maxval)
             if nargin<2
-                maxval = 30;
+                maxval = 40;
             end
             zscale = obj.Zpxsize/obj.XYpxsize;
             disp('Calculating ABeta Distance');
@@ -206,6 +206,7 @@ classdef SIM < handle
         function mask = make_maskABeta(image,params)
             ab = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(ab,[2 2 1],[2 2 1]);
+            out = gaussf(out);
             thr = multithresh(single(out),2);
             mask_start = out>thr(1);
             sch2 = sum(dip_image(image),[],3);
@@ -319,8 +320,115 @@ classdef SIM < handle
             output.radialnumberdensity_norm_raw = [xs',numb];
             output.cumulative_radialnumberdensity_norm_norm = [xs',cumulative_numb/avgnumberdensity];
             output.cumulative_radialnumberdensity_norm_raw = [xs',cumulative_numb];
+        end 
+        function results = calculateRadialDensity(mask1_distance,image,cellmask,bins)
+            % mask1 is the mask that distances are calculated from (ie: the synapse marker)
+            % mask1_distance mask - is distance transform
+            % image is the raw image that the intensity will be calculated from (ie: abeta image)
+            % cellmask is the whole cell mask that the area will be taken and normalized from
+            nbins = numel(bins);
+            %-- alocate empty arrays for values calculated
+            intensity = zeros(nbins,1);
+            volume = zeros(nbins,1);
+            %-- loop through and calculate some things
+            wb = waitbar(0,'Calculating Intensity Density Information...');
+            for nn = 1:nbins
+                if nn == 1
+                    curr_distmask = (mask1_distance<=bins(nn)).*cellmask;
+                else
+                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn)).*cellmask;
+                end
+                intensity(nn) = sum(image.*curr_distmask);
+                volume(nn) = sum(curr_distmask); 
+                try
+                waitbar(nn/nbins,wb);
+                catch
+                   wb = waitbar(nn/nbins,'Calculating Intensity Density Information...');
+                end
+            end
+            close(wb);
+            results.d = bins;
+            results.radialintensity = intensity;
+            results.cumulativeradialintensity = cumsum(intensity);
+            results.volume = volume;
+            results.cumulativevolume = cumsum(volume);
+            results.totalintensity = sum(image.*cellmask);
+            results.totalvolume = sum(cellmask);
+            results.radial_density = (results.radialintensity./results.volume)./(results.totalintensity/results.totalvolume);
+            results.cumulative_radial_density = (results.cumulativeradialintensity./results.cumulativevolume)./(results.totalintensity/results.totalvolume);
+        end
+        function results = calculateNumberDensity(mask1_distance,lb,cellmask,bins)
+            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
+            % image is the raw image that the intensity will be calculated from (ie: abeta image)
+            % cellmask is the whole cell mask that the area will be taken and normalized from
+            % radial_numberdensity is: (#abeta puncta/area)/#gephyrin
+            
+            nbins = numel(bins);
+            %-- alocate empty arrays for values calculated
+            numbers = zeros(nbins,1);
+            volume = zeros(nbins,1);
+            %-- loop through and calculate some things
+            wb = waitbar(0,'Calculating Number Density Information...');
+            mask10s = mask1_distance==0;
+            mask1_lb = label(mask10s,1);
+            nummask1 = size(unique(mask1_lb));
+            for nn = 1:nbins
+                if nn == 1
+                    curr_distmask = (mask1_distance<=bins(nn)).*cellmask;
+                else
+                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn)).*cellmask;
+                end
+                inmasklb = single(lb.*curr_distmask);
+                numbers(nn) = size(unique(inmasklb),1);
+                volume(nn) = sum(curr_distmask); 
+                try
+                waitbar(nn/nbins,wb);
+                catch
+                   wb = waitbar(nn/nbins,'Calculating Number Density Information...');
+                end
+            end
+            close(wb);
+            results.d = bins;
+            results.radialnumber = numbers;
+            results.cumulativeradialnumber = cumsum(numbers);
+            results.volume = volume;
+            results.cumulativevolume = cumsum(volume);
+            results.totalnumber = size(unique(lb.*cellmask));
+            results.totalvolume = sum(cellmask);
+            results.radial_numberdensity = results.radialnumber./nummask1;
+            results.cumulative_number_density = results.cumulativeradialnumber./nummask1;
+        end 
+        function results = calculateOverlap(mask1_distance,mask2,cellmask,bins)
+            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
+            % mask2 is the mask to find the area overlap from (ie: abeta mask
+            % cellmask is the whole cell mask that the area will be taken and normalized from
+            % radialareaoverlap is: area of abeta within distance from gephyrin/total area of abeta
+            
+            nbins = numel(bins);
+            %-- alocate empty arrays for values calculated
+            inmaskoverlap = zeros(nbins,1);
+            %-- loop through and calculate some things
+            wb = waitbar(0,'Calculating Number Density Information...');
+            for nn = 1:nbins
+                if nn == 1
+                    curr_distmask = (mask1_distance<=bins(nn)).*cellmask;
+                else
+                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn)).*cellmask;
+                end
+                inmaskoverlap(nn) = mask2.*curr_distmask;
+                try
+                waitbar(nn/nbins,wb);
+                catch
+                   wb = waitbar(nn/nbins,'Calculating Number Density Information...');
+                end
+            end
+            close(wb);
+            results.d = bins;
+            results.radialareaoverlap = sum(inmaskoverlap);
+            results.cumulativeareaoverlap = cumsum(results.radialareaoverlap);
+            results.totalarea = sum(mask2);
+            results.radialareaoverlap =  results.radialareaoverlap./results.totalarea;
+            results.cumulative_radialareaoverlap = results.cumulativeareaoverlap./results.totalarea;
         end  
-        
-        
     end
 end
