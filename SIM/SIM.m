@@ -109,7 +109,17 @@ classdef SIM < handle
         %-- helpers for making masks. if you want to change how the masks
         %are made then change which static method these are calling
         function make_maskchAB(obj)
-             obj.abeta.mask = SIM.make_maskABeta(obj.abeta.image);
+            premask  = SIM.make_maskABeta(obj.abeta.image);
+            m = zeros(1,size(obj.cellmask,3));
+            image = dip_image(obj.abeta.image);
+            for ii = 0:(size(obj.cellmask,3)-1)
+                currframe = image(:,:,ii);
+                currcellmask = ~obj.cellmask(:,:,ii);
+                currcellmask = bdilation(currcellmask,2);
+                m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
+                premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
+            end
+            obj.abeta.mask = premask;
         end
         function make_maskch1(obj)
             if strcmp(obj.channelorderingstr{2},'PSD95i')
@@ -206,9 +216,9 @@ classdef SIM < handle
         function mask = make_maskABeta(image,params)
             ab = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(ab,[2 2 1],[2 2 1]);
-            out = gaussf(out);
+%             out = gaussf(out,[2 2 1]);
             thr = multithresh(single(out),2);
-            mask_start = out>thr(1);
+            mask_start = out>thr(2);
             sch2 = sum(dip_image(image),[],3);
             sch2_series = repmat(sch2,1,1,size(image,3));
             wshed = GeneralAnalysis.watershed_timeseries(-gaussf(sch2_series,1),1);
