@@ -530,11 +530,12 @@ methods (Static)
        sumproj_out = repmat(sm,[1 1 size(mask_in,3)]);
     end
     function lbl_out = removeLabels(lbl_in,ids2remove)
-        lbl = single(lbl_in);
+%         lbl = single(lbl_in);
         for ii = ids2remove
-        lbl(lbl == ii) = 0;
+        lbl_in(lbl_in == ii) = 0;
         end
-        lbl_out = dip_image(lbl);
+        lbl_out = lbl_in;
+%         lbl_out = dip_image(lbl);
     end
     
     function measure_structure = measureMaskTimeSeries(labeled,image,measurements)
@@ -559,11 +560,15 @@ methods (Static)
         for ll = 0:(maxframe-1)
             msr = measure(labeled(:,:,ll),image(:,:,ll),measurements);
             msrarray{ll+1} = msr;
-            waitbar((ll+1)/maxframe,wb);
+            try
+                waitbar((ll+1)/maxframe,wb);
+            catch
+                wb=  waitbar((ll+1)/maxframe,'Calculating Intensities within Masks....');
+            end
         end
         close(wb) 
         for m = 1:numel(measurements)
-            measure_structure.(measurements{m}) = zeros(max(labeled),maxframe);            
+            measure_structure.(measurements{m}) = zeros(size(unique(labeled))-1,maxframe);            
         end
         %reshape array
         for tt = 1:maxframe

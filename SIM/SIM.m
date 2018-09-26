@@ -120,6 +120,7 @@ classdef SIM < handle
                 premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
             end
             obj.abeta.mask = premask;
+            obj.abeta.labeled_mask = label(obj.abeta.mask,1);
         end
         function make_maskch1(obj)
             if strcmp(obj.channelorderingstr{2},'PSD95i')
@@ -405,8 +406,9 @@ classdef SIM < handle
             results.cumulativevolume = cumsum(volume);
             results.totalnumber = size(unique(lb.*cellmask));
             results.totalvolume = sum(cellmask);
-            results.radial_numberdensity = results.radialnumber./nummask1;
-            results.cumulative_number_density = results.cumulativeradialnumber./nummask1;
+            results.radial_numberdensity = results.radialnumber;
+            results.cumulative_number_density = results.cumulativeradialnumber;
+            results.nummask1 = nummask1;
         end 
         function results = calculateOverlap(mask1_distance,mask2,cellmask,bins)
             % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
