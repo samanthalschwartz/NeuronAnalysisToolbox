@@ -37,3 +37,5 @@ t.Properties.VariableNames = {'ROI','TfRMaskSize','SynpMaskSize','Glua1MaskSize'
 [FILEPATH,NAME,EXT] = fileparts(glua1_path);
 savename= fullfile(FILEPATH,[NAME '_ResultsTable.xls']);
 writetable(t,savename);
+%% write ROIs as tiff files to overlay onto images 
+

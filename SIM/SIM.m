@@ -441,6 +441,17 @@ classdef SIM < handle
             results.totalarea = sum(mask2);
             results.radialareaoverlap =  results.radialareaoverlap./results.totalarea;
             results.cumulative_radialareaoverlap = results.cumulativeareaoverlap./results.totalarea;
-        end  
+        end
+        function pts = BresenhamPoints(p1,p2)  
+            d = p2-p1;
+            N = max(abs(d));
+            s = d/N;
+            pts = zeros(N,3);
+            pts(1,:) = p1;         
+            for ii=1:N
+                pts(ii+1,:) = pts(ii,:)+s;
+            end
+            pts = round(pts);
+        end
     end
 end
