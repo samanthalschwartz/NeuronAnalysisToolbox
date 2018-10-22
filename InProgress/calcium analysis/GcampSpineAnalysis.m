@@ -1,7 +1,7 @@
 %% select files and all that (cell fill and align etc)
 ga = GeneralAnalysis(); %make just an empty version of the class to be able to use ga as a shortcut
 % -- get pre file
-[FILENAME_pre, PATHNAME_pre] = uigetfile(fullfile(pwd,'*.*'),'Select a pre condition calcium image');
+[FILENAME_pre, PATHNAME_pre] = uigetfile(fullfile('G:\Hannah Calcium','*.*'),'Select a pre condition calcium image');
 prompt_pre = 'Select the Unique File Identifier: use * for wildcard';
 name = 'Calcium Data Selection';
 defaultanswer = {FILENAME_pre};
@@ -22,7 +22,7 @@ flstring_post = flstring_post{1};
 % these are the raw data movies (they are dip images)
 img_pre = dip_image(ga.loadtiffseries(PATHNAME_pre,flstring_pre));
 img_post = dip_image(ga.loadtiffseries(PATHNAME_post,flstring_post));
-cellfill_pre = ga.loadtiff(fullfile(PATHNAME_cf,FILENAME_cf));
+cellfill_pre = loadtiff(fullfile(PATHNAME_cf,FILENAME_cf));
 %%
 % align post image with last frame of pre-image
 pre_lastframe = img_pre(:,:,end);

@@ -19,7 +19,7 @@ classdef SIM < handle
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
-        measurements = {'size','sum'};
+        measurements = {'size','sum','Gravity'};
         XYpxsize = 0.0321;
         XYpxsize_units = 'µm';
         Zpxsize = 0.2;
@@ -216,10 +216,10 @@ classdef SIM < handle
     methods (Static)
         function mask = make_maskABeta(image,params)
             ab = gaussf(image);
-            out = GeneralAnalysis.imgLaplaceCutoff(ab,[2 2 1],[2 2 1]);
-%             out = gaussf(out,[2 2 1]);
+            out = GeneralAnalysis.imgLaplaceCutoff(ab,[1 1 1],[1 1 1]);
+            out = gaussf(out,[2 2 1]);
             thr = multithresh(single(out),2);
-            mask_start = out>thr(2);
+            mask_start = out>thr(1);
             sch2 = sum(dip_image(image),[],3);
             sch2_series = repmat(sch2,1,1,size(image,3));
             wshed = GeneralAnalysis.watershed_timeseries(-gaussf(sch2_series,1),1);
@@ -410,6 +410,62 @@ classdef SIM < handle
             results.cumulative_number_density = results.cumulativeradialnumber;
             results.nummask1 = nummask1;
         end 
+        function results = calculateNumberDensityCOM(mask1_distance,lb,lbimage,cellmask,bins)
+            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
+            % lbimage is the raw image that the intensity will be calculated from (ie: abeta image)
+            % cellmask is the whole cell mask that the area will be taken and normalized from
+            % radial_numberdensity is: (#abeta puncta/area)/#gephyrin
+            
+            % make com mask from lb
+            msrlb = measure(lb,lbimage,'Gravity');
+            newlbimage = zeros(size(lbimage));
+            lbscount = size(msrlb.Gravity,2); 
+            for nn = 1:lbscount
+                newlbimage(round(msrlb.Gravity(2,nn)+1),round(msrlb.Gravity(1,nn)+1),round(msrlb.Gravity(3,nn)+1)) = 1;
+            end
+            
+            nbins = numel(bins);
+            %-- alocate empty arrays for values calculated
+            numbers = zeros(nbins,1);
+            volume = zeros(nbins,1);
+            %-- loop through and calculate some things
+            wb = waitbar(0,'Calculating Number Density Information...');
+            mask10s = mask1_distance==0;
+            mask1_lb = label(mask10s,1);
+            nummask1 = size(unique(mask1_lb));
+            for nn = 1:nbins
+                if nn == 1
+                    curr_distmask = (mask1_distance<=bins(nn)).*cellmask;
+                else
+                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn)).*cellmask;
+                end
+                inmasklb = single(lb.*curr_distmask);
+                numbers(nn) = size(unique(inmasklb),1);
+                volume(nn) = sum(curr_distmask); 
+                try
+                waitbar(nn/nbins,wb);
+                catch
+                   wb = waitbar(nn/nbins,'Calculating Number Density Information...');
+                end
+            end
+            close(wb);
+            results.d = bins;
+            results.radialnumber = numbers;
+            results.cumulativeradialnumber = cumsum(numbers);
+            results.volume = volume;
+            results.cumulativevolume = cumsum(volume);
+            results.totalnumber = size(unique(lb.*cellmask));
+            results.totalvolume = sum(cellmask);
+            results.radial_numberdensity = results.radialnumber;
+            results.cumulative_number_density = results.cumulativeradialnumber;
+            results.nummask1 = nummask1;
+        end
+        
+        
+        
+        
+        
+        
         function results = calculateOverlap(mask1_distance,mask2,cellmask,bins)
             % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
             % mask2 is the mask to find the area overlap from (ie: abeta mask
@@ -443,13 +499,15 @@ classdef SIM < handle
             results.cumulative_radialareaoverlap = results.cumulativeareaoverlap./results.totalarea;
         end
         function pts = BresenhamPoints(p1,p2)  
-            pts = p1;
             d = p2-p1;
             N = max(abs(d));
             s = d/N;
+            pts = zeros(N,3);
+            pts(1,:) = p1;         
             for ii=1:N
-                pts( = pts+s;
+                pts(ii+1,:) = pts(ii,:)+s;
             end
+            pts = round(pts);
         end
     end
 end
