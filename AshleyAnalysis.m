@@ -13,10 +13,11 @@ classdef AshleyAnalysis < handle
     pxsize = 1/3.5;
     M = [];
     cleanedcargomask = [];
+    % first frame of baseline (ie: 1);
+    % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
+     % frame rate in min/frame (ie: 1, 1 minute interval between frames)
     imagingparams = struct(...
-        'baselineframe_start', [],...  % first frame of baseline (ie: 1);
-        'baselineframe_end', [],... % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
-        'baselineframerate',[],... % frame rate in min/frame (ie: 1, 1 minute interval between frames)
+        'baseline', struct('frame_start',[],'frame_end',[], 'framerate',[]),... 
         'releasetime',[],... % duration of 405 light in min (ie: 1, means 1 minute between end of baseline and first frame of post release-- this dictates the time at postreleaseframe_start 
         'postrelease', struct('frame_start',[],'frame_end',[], 'framerate',[])); % first frame of baseline (ie: 7, frame 7 is first frame of post release, occurs at time = releasetime
    end
