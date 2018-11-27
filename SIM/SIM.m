@@ -7,8 +7,12 @@ classdef SIM < handle
         %         channelordering(3) = channel in image corresponding to 'ch2';
         channelorderingstr = {'chABeta','ch1','ch2'};
         planeTOP = [];
+<<<<<<< HEAD
         planeBOTTOM = [];
         sizecutoff = 10; 
+=======
+        planeBOTTOM = []; % in dipimage format: 0 is first plane
+>>>>>>> 5cbd25b7d15c6f0a4bb9e4ab4780651a49447167
         abeta = struct('image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
@@ -204,10 +208,10 @@ classdef SIM < handle
         
         function save(obj,inputsavedir)
             if nargin<2
-                savedir = [obj.filepath(1:end-4) '_SIM'];
+                savedir = [obj.filepath(1:end-4) '_SIM.mat'];
             else
                 [~,NAME,~] = fileparts(obj.filepath);
-                savedir = fullfile(inputsavedir,[NAME '_SIM']);
+                savedir = fullfile(inputsavedir,[NAME '_SIM.mat']);
             end
            save(savedir,'obj'); 
         end
