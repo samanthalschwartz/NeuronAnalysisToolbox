@@ -3,7 +3,7 @@
 %         channelordering(2) = channel in image corresponding to 'ch1';
 %         channelordering(3) = channel in image corresponding to 'ch2';
 
-ids = [3 1 2];
+ids = [2 3 1];
 channelorderingstr = {'chABeta','PSD95i','Gephyrin'}; % channel abeta, channel 1, channel2
 filepath = 'C:\Users\KennedyLab\Documents\Hannah\SIM data\080317\500 nM Abeta_PSD95_gephyrin\PSD95ib488_gephyrin561_Abeta647_005_Reconstructed.nd2';
 

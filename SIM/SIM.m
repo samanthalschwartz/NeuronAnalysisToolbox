@@ -8,6 +8,7 @@ classdef SIM < handle
         channelorderingstr = {'chABeta','ch1','ch2'};
         planeTOP = [];
         planeBOTTOM = [];
+        sizecutoff = 10; 
         abeta = struct('image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
