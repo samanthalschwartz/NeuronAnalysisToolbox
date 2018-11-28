@@ -14,7 +14,10 @@ infostr(test2:end)
 
 
 % first test if there are defined channels
-test1=regexp(namestr,'_w*\d*(_s|_t|[?.tif])');
+test1=regexp(namestr,'_w*\d*(_s|_t|[?.tif])','split');
+
+[matches] = regexp(namestr,'_w\d|_t\d|_s\d','match')
+[out] = regexp(namestr,'_w\d|_t\d|_s\d')
 
 % if there are not multiple channels then check if it is a time series
 if isempty(test)

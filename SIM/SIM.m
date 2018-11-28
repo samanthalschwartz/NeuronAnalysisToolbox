@@ -7,9 +7,8 @@ classdef SIM < handle
         %         channelordering(3) = channel in image corresponding to 'ch2';
         channelorderingstr = {'chABeta','ch1','ch2'};
         planeTOP = [];
-        planeBOTTOM = [];
+        planeBOTTOM = [];% in dipimage format: 0 is first plane
         sizecutoff = 10; 
-        planeBOTTOM = []; % in dipimage format: 0 is first plane
         abeta = struct('image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
