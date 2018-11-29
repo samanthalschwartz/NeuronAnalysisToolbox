@@ -1,7 +1,9 @@
 topdir = 'Z:\Sam\Data!\181115 HaloPdisplay';
-% topdir = 'Z:\Sam\Data!\Other Datas\180516_GCaMP6';
-namestr = 'TfR-Halo_mChCellFill_6nMhalo660_longExp_timecourse_w1561_s4_t6';
-% namestr = 'GCaMP_postBayKcell1_t1.TIF';
+allfiles = dir(fullfile(topdir,'*.tif'));
+for aa = 1:numel(allfiles)
+namestr = allfiles(aa).name(1:end-4);
+% namestr = 'TfR-Halo_mChCellFill_6nMhalo660_longExp_timecourse_w1561_s4_t6';
+
 
 chstr = '_w';
 timestr = '_t';
@@ -11,18 +13,43 @@ stagestr = '_s';
 [matches] = regexp(namestr,'_w\d|_t\d|_s\d','match');
 [out] = regexp(namestr,'_w\d|_t\d|_s\d');
 
-savefoldername = namestr(1:min(out)-1);
+savefoldername = fullfile(topdir,namestr(1:min(out)-1));
+if ~exist(savefoldername,'dir')
+    mkdir(savefoldername)
+end
 
 % if there are multiple times, combine all into one image and move to
 % different folder
 timeid = cellfun(@(x) ~isempty(strfind(x,timestr)),matches);
 timepos = out(timeid);
 currname = namestr(1:timepos+1);
-files = dir2cell(topdir,[currname '*']);
+filesavefolder = fullfile(savefoldername,currname);
+if ~exist(filesavefolder)
+    mkdir(filesavefolder)
+end
+files = dir(fullfile(topdir,[currname '*']));
+for ff = 1:numel(files)
+    try
+    srcfile = fullfile(topdir,files(ff).name);
+    destfile = fullfile(filesavefolder,files(ff).name);
+    movefile(srcfile,destfile)
+    catch
+        display(['no file called ' srcfile]);
+    end
+end
+im_array = KennedyLabMicroscopeData.loadtiffseries(topdir,[currname '*'],'maxproj');
+[image2save,~] = GeneralAnalysis.timedriftCorrect(im_array);
+GeneralAnalysis.LibTiff(image2save,fullfile(savefoldername,currname));
+end
 
 
 
 
+%%
+
+chid = cellfun(@(x) ~isempty(strfind(x,chstr)),matches);
+chpos = out(chid);
+currname = namestr(1:chpos+1);
 
 
 
