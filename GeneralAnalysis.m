@@ -560,7 +560,9 @@ methods (Static)
        sumproj_out = repmat(sm,[1 1 size(mask_in,3)]);
     end
     function lbl_out = removeLabels(lbl_in,ids2remove)
-%         lbl = single(lbl_in);
+        if iscolumn(ids2remove)
+            ids2remove = ids2remove';
+        end
         for ii = ids2remove
         lbl_in(lbl_in == ii) = 0;
         end
