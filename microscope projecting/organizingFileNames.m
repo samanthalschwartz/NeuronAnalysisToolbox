@@ -1,10 +1,32 @@
-topdir = 'Z:\Sam\Data!\181121 Halo-pDisplay Kinetics';
-topdir = 'Z:\Sam\Data!\Other Datas\180516_GCaMP6';
-namestr = 'GFPcellfill_Rabl11mCh_TfR-Halo_timeseries_dyefr2_nowash2_w1488_t4';
-namestr = 'GCaMP_postBayKcell1_t1.TIF';
+topdir = 'Z:\Sam\Data!\181115 HaloPdisplay';
+% topdir = 'Z:\Sam\Data!\Other Datas\180516_GCaMP6';
+namestr = 'TfR-Halo_mChCellFill_6nMhalo660_longExp_timecourse_w1561_s4_t6';
+% namestr = 'GCaMP_postBayKcell1_t1.TIF';
+
+chstr = '_w';
+timestr = '_t';
+stagestr = '_s';
+
+% find if there are any channels, stage positions, timeseries
+[matches] = regexp(namestr,'_w\d|_t\d|_s\d','match');
+[out] = regexp(namestr,'_w\d|_t\d|_s\d');
+
+savefoldername = namestr(1:min(out)-1);
+
+% if there are multiple times, combine all into one image and move to
+% different folder
+timeid = cellfun(@(x) ~isempty(strfind(x,timestr)),matches);
+timepos = out(timeid);
+currname = namestr(1:timepos+1);
+files = dir2cell(topdir,[currname '*']);
 
 
 
+
+
+
+
+%% --- old to delete
 test=regexp(namestr,'_w*\d*(_s|_t)');
 
 infostr = namestr(test:end);
@@ -16,8 +38,6 @@ infostr(test2:end)
 % first test if there are defined channels
 test1=regexp(namestr,'_w*\d*(_s|_t|[?.tif])','split');
 
-[matches] = regexp(namestr,'_w\d|_t\d|_s\d','match')
-[out] = regexp(namestr,'_w\d|_t\d|_s\d')
 
 % if there are not multiple channels then check if it is a time series
 if isempty(test)
