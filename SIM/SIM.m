@@ -225,8 +225,13 @@ classdef SIM < handle
             old_bottom = str2double(obj.planeBOTTOM);
             bottom = min(old_top,old_bottom);
             top = max(old_top,old_bottom);
-            abmask = obj.abeta.distancemask(:,:,bottom:top);
-            ch1mask = obj.ch1.mask(:,:,bottom:top);
+            if ~isnan(bottom) || ~isnan(top)
+                abmask = obj.abeta.distance_mask(:,:,bottom:top);
+                ch1mask = obj.ch1.mask(:,:,bottom:top);
+            else
+                abmask = obj.abeta.distance_mask(:,:,2:9);
+                ch1mask = obj.ch1.mask(:,:,2:9);
+            end
             img_dist2ch1 = abmask .* ch1mask;
             msr = measure(ch1mask,img_dist2ch1,{'MinVal'});      
             tempvals = msr.MinVal;
@@ -243,9 +248,14 @@ classdef SIM < handle
             old_bottom = str2double(obj.planeBOTTOM);
             bottom = min(old_top,old_bottom);
             top = max(old_top,old_bottom);
-            abmask = obj.abeta.distancemask(:,:,bottom:top);
-            ch1mask = obj.ch2.mask(:,:,bottom:top);
-            img_dist2ch2 = abmask .* ch1mask;
+            if ~isnan(bottom) || ~isnan(top)
+                abmask = obj.abeta.distance_mask(:,:,bottom:top);
+                ch2mask = obj.ch2.mask(:,:,bottom:top);
+            else
+                abmask = obj.abeta.distance_mask(:,:,2:9);
+                ch2mask = obj.ch2.mask(:,:,2:9);
+            end
+            img_dist2ch2 = abmask .* ch2mask;
             msr = measure(ch2mask,img_dist2ch2,{'MinVal'});      
             tempvals = msr.MinVal;
             tempvals(tempvals==0) = [];
