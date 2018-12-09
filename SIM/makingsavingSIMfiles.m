@@ -79,6 +79,24 @@ obj.make_masks();
 s.save(savedir);
 end
 
+%%
+% datafolder = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\to fix from ndfiles\071917';
+savedir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071917';
+% files3 = dir(fullfile(datafolder,'Gephyrin488_Abeta561_Bassoon647*'));
+orginaldir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\071917\Gephyrin_Bassoon';
+files3 = uigetfile('C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\071917\Gephyrin_Bassoon','MultiSelect', 'on')
+for ff= 1:numel(files3)
+ids = [2 1 3];
+channelorderingstr = {'chABeta','Gephyrin','Bassoon'}; % channel abeta, channel 1, channel2
+filepath = fullfile(orginaldir,files3{ff});
+s = SIM();
+s.channelordering = ids;
+s.channelorderingstr = channelorderingstr;
+s.loadNDfile(filepath);
+s.make_masks();
+s.save(savedir);
+end
+
 
 
 

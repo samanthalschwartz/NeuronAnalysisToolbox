@@ -1,6 +1,6 @@
 % topdir = 'F:\GephIntrabody Project\180724 GephIntraOlig-GabamCh\coverslip2-olig-mChGaba';
 clear all
-topdir = 'F:\FromMicroscopeComputer\Sam\181102 GephOlig_pHujiGaba';
+topdir = 'G:\FromMicroscopeComputer\181204 TestingHaloClones';
 KennedyLabMicroscopeData.moveMetaMorphThumbs(topdir,'thumb')
 remainingfiles = dir(fullfile(topdir,'*.tif'));
 while ~isempty(remainingfiles)
@@ -28,7 +28,13 @@ while ~isempty(remainingfiles)
     % different folder
     timeid = cellfun(@(x) ~isempty(strfind(x,timestr)),matches);
     timepos = out(timeid);
-    if isempty(timeid) % if there aren't multiple times, just move file into savefoldername
+    if isempty(timepos) % if there aren't multiple times, just move file into savefoldername
+        im_array = KennedyLabMicroscopeData.loadtiffseries(topdir,namestr,'maxproj');
+        maxfold = fullfile(topdir,'maxfold');
+        if ~exist(maxfold)
+            mkdir(maxfold);
+        end
+        GeneralAnalysis.LibTiff(im_array,fullfile(fullfile(maxfold,[namestr(1:end-4) '_maxproj'])));
         srcfile = fullfile(topdir,namestr);
         destfile = fullfile(savefoldername,namestr);
         movefile(srcfile,destfile)
@@ -58,7 +64,8 @@ while ~isempty(remainingfiles)
             end
         end
         im_array = KennedyLabMicroscopeData.loadtiffseries(filesavefolder,[currname '*'],'maxproj');
-        [image2save,~] = GeneralAnalysis.timedriftCorrect(im_array);
+        %         [image2save,~] = GeneralAnalysis.timedriftCorrect(im_array);
+        image2save = im_array;
         GeneralAnalysis.LibTiff(image2save,fullfile(savefoldername,erase(currname,'*')));
     end
     remainingfiles = dir(fullfile(topdir,'*.tif'));

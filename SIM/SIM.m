@@ -1,6 +1,7 @@
 classdef SIM < handle
     properties
-        filepath = '';        
+        filepath = '';   
+        savepath = [];
         channelordering = [2 1 3]; % array indicating which channel is which;
         %         channelordering(1) = abeta channel in image
         %         channelordering(2) = channel in image corresponding to 'ch1';
@@ -21,6 +22,8 @@ classdef SIM < handle
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         measurements = {'size','sum','Gravity'};
+        results_closest_ch1_2ab = [];
+        results_closest_ch2_2ab = [];
         XYpxsize = 0.0321;
         XYpxsize_units = 'µm';
         Zpxsize = 0.2;
@@ -204,12 +207,50 @@ classdef SIM < handle
         
         function save(obj,inputsavedir)
             if nargin<2
-                savedir = [obj.filepath(1:end-4) '_SIM.mat'];
+                if isempty(obj.savepath)     
+                    obj.savepath = [obj.filepath(1:end-4) '_SIM.mat'];
+                end
             else
                 [~,NAME,~] = fileparts(obj.filepath);
-                savedir = fullfile(inputsavedir,[NAME '_SIM.mat']);
+                obj.savepath = fullfile(inputsavedir,[NAME '_SIM.mat']);
             end
-           save(savedir,'obj'); 
+           save(obj.savepath,'obj'); 
+        end
+        
+        function [tempvals,msr] = mindistCh1toAbeta(obj)
+            if isempty(obj.ch1.distance_mask)
+                obj.make_distancemasks;
+            end
+            old_top  = str2double(obj.planeTOP);
+            old_bottom = str2double(obj.planeBOTTOM);
+            bottom = min(old_top,old_bottom);
+            top = max(old_top,old_bottom);
+            abmask = obj.abeta.mask(:,:,bottom:top);
+            ch1mask = obj.ch1.distance_mask(:,:,bottom:top);
+            img_dist2ch1 = abmask .* ch1mask;
+            msr = measure(abmask,img_dist2ch1,{'MinVal'});      
+            tempvals = msr.MinVal;
+            tempvals(tempvals==0) = [];
+            tempvals(tempvals == 40) = [];
+            obj.results_closest_ch1_2ab = tempvals;
+        end
+        
+        function [tempvals,msr] = mindistCh2toAbeta(obj)
+            if isempty(obj.ch1.distance_mask)
+                obj.make_distancemasks;
+            end
+            old_top  = str2double(obj.planeTOP);
+            old_bottom = str2double(obj.planeBOTTOM);
+            bottom = min(old_top,old_bottom);
+            top = max(old_top,old_bottom);
+            abmask = obj.abeta.mask(:,:,bottom:top);
+            ch2mask = obj.ch2.distance_mask(:,:,bottom:top);
+            img_dist2ch2 = abmask.* ch2mask;
+            msr = measure(abmask,img_dist2ch2,{'MinVal'});      
+            tempvals = msr.MinVal;
+            tempvals(tempvals==0) = [];
+            tempvals(tempvals == 40) = [];
+            obj.results_closest_ch2_2ab = tempvals;
         end
         
     end
