@@ -217,36 +217,36 @@ classdef SIM < handle
            save(obj.savepath,'obj'); 
         end
         
-        function [tempvals,msr] = mindistCh1toAbeta(obj)
-            if isempty(obj.ch1.distance_mask)
+        function [tempvals,msr] = mindistCh1tofirstAbeta(obj)
+            if isempty(obj.abeta.distance_mask)
                 obj.make_distancemasks;
             end
             old_top  = str2double(obj.planeTOP);
             old_bottom = str2double(obj.planeBOTTOM);
             bottom = min(old_top,old_bottom);
             top = max(old_top,old_bottom);
-            abmask = obj.abeta.mask(:,:,bottom:top);
-            ch1mask = obj.ch1.distance_mask(:,:,bottom:top);
+            abmask = obj.abeta.distancemask(:,:,bottom:top);
+            ch1mask = obj.ch1.mask(:,:,bottom:top);
             img_dist2ch1 = abmask .* ch1mask;
-            msr = measure(abmask,img_dist2ch1,{'MinVal'});      
+            msr = measure(ch1mask,img_dist2ch1,{'MinVal'});      
             tempvals = msr.MinVal;
             tempvals(tempvals==0) = [];
             tempvals(tempvals == 40) = [];
             obj.results_closest_ch1_2ab = tempvals;
         end
         
-        function [tempvals,msr] = mindistCh2toAbeta(obj)
-            if isempty(obj.ch1.distance_mask)
+        function [tempvals,msr] = mindistCh2tofirstAbeta(obj)
+             if isempty(obj.abeta.distance_mask)
                 obj.make_distancemasks;
             end
             old_top  = str2double(obj.planeTOP);
             old_bottom = str2double(obj.planeBOTTOM);
             bottom = min(old_top,old_bottom);
             top = max(old_top,old_bottom);
-            abmask = obj.abeta.mask(:,:,bottom:top);
-            ch2mask = obj.ch2.distance_mask(:,:,bottom:top);
-            img_dist2ch2 = abmask.* ch2mask;
-            msr = measure(abmask,img_dist2ch2,{'MinVal'});      
+            abmask = obj.abeta.distancemask(:,:,bottom:top);
+            ch1mask = obj.ch2.mask(:,:,bottom:top);
+            img_dist2ch2 = abmask .* ch1mask;
+            msr = measure(ch2mask,img_dist2ch2,{'MinVal'});      
             tempvals = msr.MinVal;
             tempvals(tempvals==0) = [];
             tempvals(tempvals == 40) = [];
@@ -526,7 +526,7 @@ classdef SIM < handle
                     curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn)).*cellmask;
                 end
                 inmaskoverlap(nn) = mask2.*curr_distmask;
-                try
+                try 
                 waitbar(nn/nbins,wb);
                 catch
                    wb = waitbar(nn/nbins,'Calculating Number Density Information...');
