@@ -34,7 +34,7 @@ title(['Histogram of Min distance from ABeta to ' obj.channelorderingstr{3}]);
 
 %%
 clear all
-datadir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071117';
+datadir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071917';
 files = dir(fullfile(datadir,'PSD95488*'));
 
 allvals = [];
