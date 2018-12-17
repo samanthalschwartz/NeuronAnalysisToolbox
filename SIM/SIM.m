@@ -10,13 +10,13 @@ classdef SIM < handle
         planeTOP = [];
         planeBOTTOM = [];% in dipimage format: 0 is first plane
         sizecutoff = 10; 
-        abeta = struct('image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
-        ch1 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
+        abeta = struct('rawimage',[],'image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
+        ch1 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
-        ch2 = struct('image',[],'distance_mask',[],'mask',[],'name','',...
+        ch2 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
@@ -52,11 +52,11 @@ classdef SIM < handle
             end
             if size(image,4)<3  % assign channels
                 obj.abeta.rawimage = image(:,:,:,obj.channelordering(1));
-                obj.ch1 = image(:,:,:,obj.channelordering(2));
+                obj.ch1.rawimage = image(:,:,:,obj.channelordering(2));
             else
-                obj.abeta.image = image(:,:,:,obj.channelordering(1));
-                obj.ch1.image = image(:,:,:,obj.channelordering(2));
-                obj.ch2.image = image(:,:,:,obj.channelordering(3));
+                obj.abeta.rawimage = image(:,:,:,obj.channelordering(1));
+                obj.ch1.rawimage = image(:,:,:,obj.channelordering(2));
+                obj.ch2.rawimage = image(:,:,:,obj.channelordering(3));
             end
             %-- get some meta data info
             obj.XYpxsize = double(obj.metadata.getPixelsPhysicalSizeX(0).value());           % returns value in default unit
@@ -64,6 +64,35 @@ classdef SIM < handle
             obj.Zpxsize = double(obj.metadata.getPixelsPhysicalSizeZ(0).value());           % returns value in default unit
             obj.Zpxsize_units = char(obj.metadata.getPixelsPhysicalSizeZ(0).unit().getSymbol());
         end
+        
+        function setimage(obj) 
+            % sets obj.ch1.image etc to only include the selected frames (if obj.planeBOTTOM/obj.planeTOP are set)
+            % obj.rawimage is unaltered
+            % automatically orders top and bottom in case they were set wrong
+            if ~isempty(obj.planeTOP) || ~isempty(obj.planeBOTTOM) % check that these values are set
+                old_top  = str2double(obj.planeTOP);
+                old_bottom = str2double(obj.planeBOTTOM);
+                if ~isnan(old_bottom) % checks if bottom is a number
+                    bottom = min(old_top,old_bottom);
+                else
+                    bottom = 0;
+                end
+                if ~isnan(old_top) % checks if bottom is a number
+                    top = max(old_top,old_bottom);
+                else
+                    top = size(obj.ch1.image,3);
+                end
+                obj.ch1.image = obj.ch1.rawimage(:,:,bottom+1:top+1);
+                obj.ch2.image = obj.ch2.rawimage(:,:,bottom+1:top+1);
+                obj.abeta.image = obj.abeta.rawimage(:,:,bottom+1:top+1);
+            end
+        end
+        function make_laplacemasks(obj)
+           obj.ch1.mask = obj.laplacemask(obj.ch1.image);
+           obj.ch2.mask = obj.laplacemask(obj.ch2.image);
+           obj.abeta.mask = obj.laplacemask(obj.abeta.image);
+        end
+        
         function make_cellmask(obj)
             sumim = obj.ch1.image+obj.ch2.image+obj.abeta.image;
             maxsumim = max(sumim,[],3);
@@ -233,10 +262,10 @@ classdef SIM < handle
                 ch1mask = obj.ch1.mask(:,:,2:9);
             end
             img_dist2ch1 = abmask .* ch1mask;
+%             img_dist2ch1(img_dist2ch1==0) = Inf;
             msr = measure(ch1mask,img_dist2ch1,{'MinVal'});      
             tempvals = msr.MinVal;
-            tempvals(tempvals==0) = [];
-            tempvals(tempvals == 40) = [];
+            tempvals(tempvals >= 40) = [];
             obj.results_closest_ch1_2ab = tempvals;
         end
         
@@ -256,10 +285,10 @@ classdef SIM < handle
                 ch2mask = obj.ch2.mask(:,:,2:9);
             end
             img_dist2ch2 = abmask .* ch2mask;
+%             img_dist2ch2(img_dist2ch2==0) = Inf;
             msr = measure(ch2mask,img_dist2ch2,{'MinVal'});      
             tempvals = msr.MinVal;
-            tempvals(tempvals==0) = [];
-            tempvals(tempvals == 40) = [];
+            tempvals(tempvals >= 40) = [];
             obj.results_closest_ch2_2ab = tempvals;
         end
         
@@ -282,7 +311,8 @@ classdef SIM < handle
             gch = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(gch,[2 2 1],[2 2 1]);
             thr = multithresh(single(out),2);
-            mask = bdilation(out>thr(2),1);
+            mask = out>thr(2);
+%             mask = bdilation(out>thr(2),1);
         end
         
         function mask = make_maskSynapseMarkerLow(image,params)
@@ -292,7 +322,7 @@ classdef SIM < handle
             mask = bdilation(out>thr(1),1);
         end
         
-        function mask = make_maskPSD95ib(image,params)
+          function mask = make_maskPSD95ib(image,params)
             gch = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(gch,[2 2 1],[2 2 1]);
             out = gaussf(out,[2 2 1]);
@@ -300,7 +330,19 @@ classdef SIM < handle
             mask = bdilation(out>thr(2),1); 
         end
         
-        
+        function mask = laplacemask(image,params)
+            if nargin<2 || isempty(params)
+                params.minsize = 50;
+                params.maxsize = 30000;
+            end
+            lp = laplace(image,2);
+            img_laplcutoff = -lp;
+            img_laplcutoff(img_laplcutoff<0) = 0;
+            threshval = multithresh(single(img_laplcutoff),2);
+            firstmask = img_laplcutoff>threshval(2);
+            lb = label(firstmask,1,params.minsize,params.maxsize);
+            mask = lb>0;
+        end
         
         function [image,metadata] = ndFileloader(filename)
             if nargin<1
