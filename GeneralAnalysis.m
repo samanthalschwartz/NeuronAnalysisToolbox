@@ -289,7 +289,27 @@ methods (Static)
         mask = threshold(img_in,'fixed',threshval);
         close(h);
     end
-   
+   function [mask,threshval] = imgThreshold_fixedUserInput_fromsingleframe(img_in,image4selection)
+        if ~isa(img_in,'dip_image')
+            img_in = dip_image(img_in);
+        end
+        uiwait(msgbox('Select a representative background region','Title','modal'));
+        if nargin<2
+            image4selection = img_in;
+        end
+        h = dipshow(image4selection,'log');
+        diptruesize(h,125);
+        [~,C] = dipcrop(h);
+        if ndims(img_in)==3
+            im = getframe(h);
+            reg = im(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
+        elseif ismatrix(img_in)
+            reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
+        end
+        threshval = max(reg);
+        mask = threshold(img_in,'fixed',threshval);
+        close(h);
+    end
     function newmask = cleanUpMask_manual_click(underimgin,mask_in)
         %        lb = label(mask_in);
 %         ov = overlay(underimgin,mask_in);
