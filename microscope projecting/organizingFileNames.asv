@@ -1,6 +1,6 @@
 % topdir = 'F:\GephIntrabody Project\180724 GephIntraOlig-GabamCh\coverslip2-olig-mChGaba';
 clear all
-topdir = 'G:\FromMicroscopeComputer\190108 NL1Halo_2color early-late\19-01-09 no exstra cell fill 2 days express';
+topdir = 'G:\FromMicroscopeComputer\190110 mChmScarGephyrin\FRAP\FRAP\mScar-Gephyrin1_GFPGephIB_FRAPtest3_20190110_112214 AM_20190110_11819 PM';
 KennedyLabMicroscopeData.moveMetaMorphThumbs(topdir,'thumb')
 remainingfiles = dir(fullfile(topdir,'*.tif'));
 while ~isempty(remainingfiles)
@@ -58,8 +58,9 @@ while ~isempty(remainingfiles)
             try
                 srcfile = fullfile(filepath,[name,ext]);
                 destfile = fullfile(filesavefolder,[name,ext]);
-                if length(destfile)>255
-                    if ispc
+                if length(destfile)>255 && ispc
+                    display(['File name is too large for windows, saving file without name
+                       
 %                         srcfile = strrep(srcfile,'+','-');
                         destfile = strrep(destfile,'+','_');
                         destfile = strcat('\\?\',destfile);

@@ -246,47 +246,25 @@ classdef SIM < handle
            save(obj.savepath,'obj'); 
         end
         
-        function [tempvals,msr] = mindistCh1tofirstAbeta(obj)
-            if isempty(obj.abeta.distance_mask)
+        function [tempvals,msr] = mindistCh1tofirstAbeta(obj,redodistancebool)
+            if isempty(obj.abeta.distance_mask) || nargin>1
                 obj.make_distancemasks;
             end
-            old_top  = str2double(obj.planeTOP);
-            old_bottom = str2double(obj.planeBOTTOM);
-            bottom = min(old_top,old_bottom);
-            top = max(old_top,old_bottom);
-            if ~isnan(bottom) || ~isnan(top)
-                abmask = obj.abeta.distance_mask(:,:,bottom:top);
-                ch1mask = obj.ch1.mask(:,:,bottom:top);
-            else
-                abmask = obj.abeta.distance_mask(:,:,2:9);
-                ch1mask = obj.ch1.mask(:,:,2:9);
-            end
-            img_dist2ch1 = abmask .* ch1mask;
+            img_dist2ch1 = obj.abeta.distance_mask .* obj.ch1.mask;
 %             img_dist2ch1(img_dist2ch1==0) = Inf;
-            msr = measure(ch1mask,img_dist2ch1,{'MinVal'});      
+            msr = measure(obj.ch1.mask,img_dist2ch1,{'MinVal'});      
             tempvals = msr.MinVal;
             tempvals(tempvals >= 40) = [];
             obj.results_closest_ch1_2ab = tempvals;
         end
         
-        function [tempvals,msr] = mindistCh2tofirstAbeta(obj)
-             if isempty(obj.abeta.distance_mask)
+        function [tempvals,msr] = mindistCh2tofirstAbeta(obj,redodistancebool)
+            if isempty(obj.abeta.distance_mask) || nargin>1
                 obj.make_distancemasks;
             end
-            old_top  = str2double(obj.planeTOP);
-            old_bottom = str2double(obj.planeBOTTOM);
-            bottom = min(old_top,old_bottom);
-            top = max(old_top,old_bottom);
-            if ~isnan(bottom) || ~isnan(top)
-                abmask = obj.abeta.distance_mask(:,:,bottom:top);
-                ch2mask = obj.ch2.mask(:,:,bottom:top);
-            else
-                abmask = obj.abeta.distance_mask(:,:,2:9);
-                ch2mask = obj.ch2.mask(:,:,2:9);
-            end
-            img_dist2ch2 = abmask .* ch2mask;
-%             img_dist2ch2(img_dist2ch2==0) = Inf;
-            msr = measure(ch2mask,img_dist2ch2,{'MinVal'});      
+            img_dist2ch2 = obj.abeta.distance_mask .* obj.ch2.mask;
+%             img_dist2ch1(img_dist2ch1==0) = Inf;
+            msr = measure(obj.ch2.mask,img_dist2ch2,{'MinVal'});      
             tempvals = msr.MinVal;
             tempvals(tempvals >= 40) = [];
             obj.results_closest_ch2_2ab = tempvals;
@@ -298,13 +276,15 @@ classdef SIM < handle
         function mask = make_maskABeta(image,params)
             ab = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(ab,[1 1 1],[1 1 1]);
-            out = gaussf(out,[2 2 1]);
+%             out = gaussf(out,[2 2 1]);
             thr = multithresh(single(out),2);
             mask_start = out>thr(1);
             sch2 = sum(dip_image(image),[],3);
             sch2_series = repmat(sch2,1,1,size(image,3));
             wshed = GeneralAnalysis.watershed_timeseries(-gaussf(sch2_series,1),1);
-            mask = mask_start.*~wshed;
+            pre_mask = mask_start.*~wshed;
+            lb = label(pre_mask,1,100,10^10);
+            mask = lb>0;
         end
         
         function mask = make_maskSynapseMarker(image,params)
