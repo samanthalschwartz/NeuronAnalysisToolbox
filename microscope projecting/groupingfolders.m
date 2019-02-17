@@ -1,13 +1,11 @@
 % select the ordering of folders to find the files we want to group
-folders1 = {'G:\FromMicroscopeComputer\181220 CamKII test\HomerYFP-CamKIII205K-2b--prelight3',...
-    'G:\FromMicroscopeComputer\181220 CamKII test\HomerYFP-CamKIII205K-2b--light',...
-    'G:\FromMicroscopeComputer\181220 CamKII test\HomerYFP-CamKIII205K-2b-postlight',...
-    'G:\FromMicroscopeComputer\181220 CamKII test\HomerYFP-CamKIII205K-2b-postlight2'};
-textstrs = {'Pre-light-3','+488 Light','Post-light-1','Post-light-2'};
-numpositions = 7;
+folders1 = {'G:\FromMicroscopeComputer\190118 CamKII virus test\300nL_I206KTD_pre',...
+    'G:\FromMicroscopeComputer\190118 CamKII virus test\300nL_I206KTD_+488'};
+textstrs = {'Pre-light','+488 Light'};
+numpositions = 5;
 channels = {'561'};
 % what space to put in between?
-combinedfilesfold = 'G:\FromMicroscopeComputer\181220 CamKII test\CombinedMovies';
+combinedfilesfold = 'G:\FromMicroscopeComputer\190118 CamKII virus test\CombinedMovies';
 if ~exist(combinedfilesfold,'dir')
     mkdir(combinedfilesfold)
 end
@@ -20,7 +18,7 @@ for pp = 1:numpositions
     for cc = 1:numel(channels)
         newimage = [];
         for ff = 1:numel(folders1)
-            file = dir(fullfile(folders1{ff},['*' channels{cc} '_s' num2str(pp) '*']));
+            file = dir(fullfile(folders1{ff},['*' channels{cc} '_s' num2str(pp) '_*.tiff']));
              badids = [];
             for tt = 1:numel(file) 
                if file(tt).isdir 
@@ -40,6 +38,6 @@ for pp = 1:numpositions
             end
             newimage = cat(3,newimage,im);
         end
-        GeneralAnalysis.LibTiff(newimage,fullfile(combinedfilesfold,[file.name(1:end-4) '_allpositionscombined']));
+        GeneralAnalysis.LibTiff(newimage,fullfile(combinedfilesfold,[file.name(1:end-5) '_allpositionscombined']));
     end
 end

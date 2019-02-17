@@ -1,6 +1,6 @@
 % topdir = 'F:\GephIntrabody Project\180724 GephIntraOlig-GabamCh\coverslip2-olig-mChGaba';
 clear all
-topdir = 'G:\FromMicroscopeComputer\190108 NL1Halo_2color early-late\19-01-09 no exstra cell fill 2 days express';
+topdir = 'G:\FromMicroscopeComputer\190118 CamKII virus test';
 KennedyLabMicroscopeData.moveMetaMorphThumbs(topdir,'thumb')
 remainingfiles = dir(fullfile(topdir,'*.tif'));
 while ~isempty(remainingfiles)
@@ -55,21 +55,19 @@ while ~isempty(remainingfiles)
         files = dir2cell(topdir,[currname '*']);
         for ff = 1:numel(files)
             [filepath,name,ext] = fileparts(files{ff});
-            try
+%             try
                 srcfile = fullfile(filepath,[name,ext]);
                 destfile = fullfile(filesavefolder,[name,ext]);
                 if length(destfile)>255
-                    if ispc
-%                         srcfile = strrep(srcfile,'+','-');
-                        destfile = strrep(destfile,'+','_');
-                        destfile = strcat('\\?\',destfile);
-                        srcfile = strcat('\\?\',srcfile);
-                    end
+%                     if ispc
+% %                       srcfile = strrep(srcfile,'+','-');
+%                         destfile = namestr(min(regexp(namestr,'_[wt]')):end);
+%                     end
                 end
                 movefile(srcfile,destfile)
-            catch
-                display(['no file called ' srcfile]);
-            end
+%             catch
+%                 display(['no file called ' srcfile]);
+%             end
         end
         im_array = KennedyLabMicroscopeData.loadtiffseries(filesavefolder,[currname '*'],'maxproj');
         %         [image2save,~] = GeneralAnalysis.timedriftCorrect(im_array);

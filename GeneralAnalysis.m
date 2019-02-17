@@ -278,7 +278,7 @@ methods (Static)
             image4selection = img_in;
         end
         h = dipshow(image4selection,'log');
-        diptruesize(h,125);
+        diptruesize(h,25);
         [~,C] = dipcrop(h);
         if ndims(img_in)==3
         reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
