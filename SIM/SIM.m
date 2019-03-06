@@ -11,12 +11,12 @@ classdef SIM < handle
         planeBOTTOM = [];% in dipimage format: 0 is first plane
         sizecutoff = 10; 
         abeta = struct('rawimage',[],'image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
-        ch1 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'name','',...
+        ch1 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
-        ch2 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'name','',...
+        ch2 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
             'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
@@ -156,26 +156,31 @@ classdef SIM < handle
             obj.abeta.labeled_mask = label(obj.abeta.mask,1);
         end
         function make_maskch1(obj)
+            inputim = obj.ch1.image;
             if strcmp(obj.channelorderingstr{2},'PSD95i')
-                premask  = SIM.make_maskPSD95ib(obj.ch1.image);
+                premask_1  = SIM.make_maskPSD95ib(obj.ch1.image);
             else
-                premask  = SIM.make_maskSynapseMarker(obj.ch1.image);
+                 premask_1  = SIM.make_maskSynapseMarker(inputim);
             end
-            m = zeros(1,size(obj.cellmask,3));
-            image = dip_image(obj.ch1.image);
-            for ii = 0:(size(obj.cellmask,3)-1)
-                currframe = image(:,:,ii);
-                currcellmask = ~obj.cellmask(:,:,ii);
-                currcellmask = bdilation(currcellmask,2);
-                m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
-                premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
-            end
-            obj.ch1.mask = premask;
+            obj.ch1.mask = removeWeirdSIMartifact(obj,inputim,premask_1);
+            % second set of masks
+            premask_2  = SIM.make_maskSynapseMarkerI(inputim);
+            obj.ch1.mask_highsense = removeWeirdSIMartifact(obj,inputim,premask_2);
         end
         function make_maskch2(obj)
-            premask  = SIM.make_maskSynapseMarker(obj.ch2.image);
+            inputim = obj.ch2.image;
+            % first set of masks
+            premask_1  = SIM.make_maskSynapseMarker(inputim);
+            obj.ch2.mask = removeWeirdSIMartifact(obj,inputim,premask_1);
+            % second set of masks
+            premask_2  = SIM.make_maskSynapseMarkerI(inputim);
+            obj.ch2.mask_highsense = removeWeirdSIMartifact(obj,inputim,premask_2);
+        end
+        function mask = removeWeirdSIMartifact(obj,image,premask)
             m = zeros(1,size(obj.cellmask,3));
-            image = dip_image(obj.ch2.image);
+            if ~isa(image,'dip_image')
+            image = dip_image(image);
+            end
             for ii = 0:(size(obj.cellmask,3)-1)
                 currframe = image(:,:,ii);
                 currcellmask = ~obj.cellmask(:,:,ii);
@@ -183,7 +188,21 @@ classdef SIM < handle
                 m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
                 premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
             end
-            obj.ch2.mask = premask;
+            mask = premask;
+        end
+        
+        function abim = abetaCOM(obj)
+            obj.measure_AB;
+            alllabels = obj.abeta.msr.ID;
+            abim = dip_image(0*obj.abeta.image);
+            for nn = alllabels
+                xval = round(obj.abeta.msr.Gravity(1,nn));
+                yval = round(obj.abeta.msr.Gravity(2,nn));
+                zval = round(obj.abeta.msr.Gravity(3,nn));
+                zmin = max(0,zval-1);
+                zmax = min(size(obj.abeta.mask,3)-1,zval+1);
+                abim(xval-1:xval+1,yval-1:yval+1,zmin:zmax) = 1;
+            end
         end
         %----
         function measure_allthings(obj)
@@ -275,8 +294,9 @@ classdef SIM < handle
     methods (Static)
         function mask = make_maskABeta(image,params)
             ab = gaussf(image);
-            out = GeneralAnalysis.imgLaplaceCutoff(ab,[1 1 1],[1 1 1]);
-%             out = gaussf(out,[2 2 1]);
+%             out = GeneralAnalysis.imgLaplaceCutoff(ab,[1 1 1],[1 1 1]);
+             out = GeneralAnalysis.imgLaplaceCutoff(ab);
+%            out = gaussf(out,[2 2 1]);
             thr = multithresh(single(out),2);
             mask_start = out>thr(1);
             sch2 = sum(dip_image(image),[],3);
@@ -294,12 +314,19 @@ classdef SIM < handle
             mask = out>thr(2);
 %             mask = bdilation(out>thr(2),1);
         end
-        
+        function mask = make_maskSynapseMarkerI(image,params)
+            gch = gaussf(image);
+            out = GeneralAnalysis.imgLaplaceCutoff(gch);
+            thr = multithresh(single(out),2);
+            mask = out>thr(1);
+%             mask = bdilation(out>thr(2),1);
+        end
         function mask = make_maskSynapseMarkerLow(image,params)
             gch = gaussf(image);
             out = GeneralAnalysis.imgLaplaceCutoff(gch,[2 2 1],[2 2 1]);
             thr = multithresh(single(out),1);
-            mask = bdilation(out>thr(1),1);
+            mask = out>thr(1);
+%             mask = bdilation(out>thr(1),1);
         end
         
           function mask = make_maskPSD95ib(image,params)

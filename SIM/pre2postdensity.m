@@ -2,7 +2,7 @@
 %%
 ids = [2 1 3];
 channelorderingstr = {'chABeta','PSD95','Bassoon'}; % channel abeta, channel 1, channel2
-filepath = 'C:\Users\KennedyLab\Documents\Hannah\SIM data\071917\Abeta_PSD95_bassoon\PSD95488_Abeta561_Bassoon647_001_Reconstructed.nd2';
+filepath = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071917\PSD95488_Abeta561_Bassoon647_001_Reconstructed.nd2';
 % ids = [2 1 3];
 % channelorderingstr = {'chABeta','PSD95','Bassoon'}; % channel abeta, channel 1, channel2
 % filepath = 'C:\Users\KennedyLab\Documents\Hannah\SIM data\071117\PSD95_Abeta_Bassoon\PSD95488_Abeta561_Bassoon647_003_Reconstructed.nd2';

@@ -773,7 +773,10 @@ methods (Static)
         end
     end
     
-     function [img_out,sv_arr] = timedriftCorrect(img_in)
+     function [img_out,sv_arr] = timedriftCorrect(img_in,shiftmeth)
+         if nargin < 2
+             shiftmeth = 'iter';
+         end
          if ~isa(img_in,'dip_image')
             try
                 img_in = dip_image(img_in);
@@ -789,7 +792,7 @@ methods (Static)
         sv_arr = nan(2,size(img_in,3)-1);
         for ii = 1:(size(img_in,3)-1)
             imcurr= squeeze(img_in(:,:,ii));
-            sv1 = findshift(imref,imcurr,'iter',0);
+            sv1 = findshift(imref,imcurr,shiftmeth,0);
             shiftim = shift(imcurr,sv1,1);
             if size(sv1,1) == 2
                if sv1(1)>0

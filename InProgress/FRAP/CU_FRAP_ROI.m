@@ -1,4 +1,4 @@
-eclassdef CU_FRAP_ROI < handle
+classdef CU_FRAP_ROI < handle
     properties
         Intensity = []; % n x 2 image of intensities, where n is number of frames 
         time = [];

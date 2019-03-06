@@ -1,6 +1,6 @@
 % topdir = 'F:\GephIntrabody Project\180724 GephIntraOlig-GabamCh\coverslip2-olig-mChGaba';
 clear all
-topdir = 'G:\FromMicroscopeComputer\190118 CamKII virus test';
+topdir = 'G:\FromMicroscopeComputer\190220_HaloGephIBtest';
 KennedyLabMicroscopeData.moveMetaMorphThumbs(topdir,'thumb')
 remainingfiles = dir(fullfile(topdir,'*.tif'));
 while ~isempty(remainingfiles)
