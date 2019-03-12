@@ -1,17 +1,17 @@
 close all; clear all
-num_base = 4;
-num_repeats = 6;
+num_base = 8;
+num_repeats = 8;
 repeatlen_561only = 8;
 repeatlen_561_488 = 1;
 repeatlength_tot = repeatlen_561only+repeatlen_561_488;
 totlen = (num_base+num_repeats)*repeatlength_tot;
 real_totlen = num_base+repeatlength_tot*num_repeats;
-datadir = 'G:\FromMicroscopeComputer\190303 mScarGeph FRAP_FingR\Cry2Olig_GephIB\cell1_mScarGeph_Cry2OligGephIBGFP_20190303_92949 PM';
+datadir = 'G:\FromMicroscopeComputer\190227 mScarGeph FRAP\mScar_pSynCry2OligGephIBexpress_190228\to analyze\last_mScar_pSynCry2OligGephIBexpress_190228_20190228_60525 PM';
 savedir = datadir;
 % cd([datadir '/..']);
 % savedir = pwd;
 %%
-ch561_filebase = 'cell1_mScarGeph_Cry2OligGephIBGFP_w0001_z*';
+ch561_filebase = 'last_mScar_pSynCry2OligGephIBexpress_190228_w0001_z*';
 ch561files = dir2cell(datadir,ch561_filebase);
 clear im_561;
 for ii = 1:numel(ch561files)
@@ -30,7 +30,7 @@ end
 image_561 = max(dip_image(im_561),[],4);
 GeneralAnalysis.LibTiff(image_561,fullfile(savedir,ch561_filebase(1:end-1)));
 %% this section is wrong!!!
-ch488_filebase = 'cell1_mScarGeph_Cry2OligGephIBGFP_w0000_z*';
+ch488_filebase = 'last_mScar_pSynCry2OligGephIBexpress_190228_w0000_z*';
 ch488files = dir2cell(datadir,ch488_filebase);
 clear im_488;
 % im_post488_b = dimage_488(:,:,(num_base+1)*repeatlength_tot:(repeatlength_tot):end); % this is weird crap image over and over

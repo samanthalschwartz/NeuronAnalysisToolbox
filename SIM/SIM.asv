@@ -125,7 +125,7 @@ classdef SIM < handle
             obj.ch1.distance_mask = bwdistsc1(single(obj.ch1.mask),[1 1 zscale],maxval);
             disp('Calculating Ch2 Distance');
             obj.ch2.distance_mask = bwdistsc1(single(obj.ch2.mask),[1 1 zscale],maxval);
-        end
+            endii
         function calculateDensities_abetaINch1(obj,bins)
             if nargin<2
                 bins = 0:30;
@@ -211,40 +211,6 @@ classdef SIM < handle
             %                 abim(xval-1:xval+1,yval-1:yval+1,zmin:zmax) = 1;
             %             end
         end
-        
-         function results = calculateNumberDensityCOM(obj,bins)
-            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
-            % lbimage is the raw image that the intensity will be calculated from (ie: abeta image)
-            % cellmask is the whole cell mask that the area will be taken and normalized from
-            % radial_numberdensity is: (#abeta puncta/area)/#gephyrin
-            
-            % make com mask from lb
-            abim = abetaCOM(obj);
-            bins = 0:3:28;
-            nbins = size(bins,2);
-            mask1_distance = obj.ch1.distance_mask;
-            numbers = zeros(nbins,1);
-            results.bins = bins;
-            wb = waitbar(0,'Calculating Number Density Information...');
-            for nn = 1:nbins
-                if nn == 1
-                    curr_distmask = (mask1_distance<=bins(nn));
-                else
-                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn));
-                end
-                inmasklb = single(abim.*curr_distmask);
-                numbers(nn) = sum(inmasklb(:));
-                try
-                    waitbar(nn/nbins,wb);
-                catch
-                    wb = waitbar(nn/nbins,'Calculating Number Density Information...');
-                end
-            end
-            close(wb);
-            results.numbers = numbers;
-            lb = label(obj.ch1.mask,1);
-        end
-
         %----
         function measure_allthings(obj)
             disp('Measuring values inside masks');
@@ -552,7 +518,35 @@ classdef SIM < handle
 %             results.cumulative_number_density = results.cumulativeradialnumber;
 %             results.nummask1 = nummask1;
 %         end 
-             
+        function results = calculateNumberDensityCOM(mask1_distance,lb,lbimage,cellmask,bins)
+            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
+            % lbimage is the raw image that the intensity will be calculated from (ie: abeta image)
+            % cellmask is the whole cell mask that the area will be taken and normalized from
+            % radial_numberdensity is: (#abeta puncta/area)/#gephyrin
+            
+            % make com mask from lb
+            bins = 0:2:20;
+            abim = abetaCOM(obj);
+            mask1_distance = obj.ch1.distance_mask;
+            numbers = zeros(nbins,1);
+            wb = waitbar(0,'Calculating Number Density Information...');
+            for nn = 1:nbins
+                if nn == 1
+                    curr_distmask = (mask1_distance<=bins(nn));
+                else
+                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn));
+                end
+                inmasklb = single(abim.*curr_distmask);
+                numbers(nn) = sum(inmasklb(:));
+                try
+                    waitbar(nn/nbins,wb);
+                catch
+                    wb = waitbar(nn/nbins,'Calculating Number Density Information...');
+                end
+            end
+            results.bins = bins;
+        end
+        
 
         function results = calculateOverlap(mask1_distance,mask2,cellmask,bins)
             % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
