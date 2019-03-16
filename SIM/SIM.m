@@ -10,20 +10,19 @@ classdef SIM < handle
         planeTOP = [];
         planeBOTTOM = [];% in dipimage format: 0 is first plane
         sizecutoff = 10; 
-        abeta = struct('rawimage',[],'image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
+        abeta = struct('rawimage',[],'image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[],'COM_image',[]);
         ch1 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
-            'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
+            'thisCh',struct('msr',[],'sizes',[],'densities',[]),'results',[],...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         ch2 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
-            'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
+            'thisCh',struct('msr',[],'sizes',[],'densities',[]),'results',[],...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         measurements = {'size','sum','Gravity'};
-        results_closest_ch1_2ab = [];
-        results_closest_ch2_2ab = [];
+        results = [];
         XYpxsize = 0.0321;
         XYpxsize_units = 'µm';
         Zpxsize = 0.2;
@@ -202,6 +201,7 @@ classdef SIM < handle
                 zval = vals(3,nn);
                 abim(xval,yval,zval) = 1;
             end
+            obj.abeta.COM_image = abim;
             %             for nn = alllabels
             %                 xval = round(obj.abeta.msr.Gravity(1,nn));
             %                 yval = round(obj.abeta.msr.Gravity(2,nn));
@@ -212,28 +212,44 @@ classdef SIM < handle
             %             end
         end
         
-         function results = calculateNumberDensityCOM(obj,bins)
-            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
-            % lbimage is the raw image that the intensity will be calculated from (ie: abeta image)
-            % cellmask is the whole cell mask that the area will be taken and normalized from
-            % radial_numberdensity is: (#abeta puncta/area)/#gephyrin
+         function calculateNumberDensityCOM(obj,reset)
+             
+            if nargin>1
+                resetbool = reset;
+            else
+                resetbool = 0;
+            end
+            
+            % determine how many objects from Ch1 and Ch2 there are
+            ch1_lb = label(obj.ch1.mask,1);
+            ch1_numobj = max(ch1_lb(:));
+            ch2_lb = label(obj.ch2.mask,1);
+            ch2_numobj = max(ch2_lb(:));
+            ch1_maxdist = max(obj.ch1.distance_mask(:));
+            ch2_maxdist = max(obj.ch2.distance_mask(:));
             
             % make com mask from lb
-            abim = abetaCOM(obj);
-            bins = 0:3:28;
+            if ~isfield(obj.abeta,'COM_image') || isempty(obj.abeta.COM_image) || resetbool
+                abetaCOM(obj);
+            end
+            bins = 0:(max(ch1_maxdist,ch2_maxdist));
+            
             nbins = size(bins,2);
-            mask1_distance = obj.ch1.distance_mask;
-            numbers = zeros(nbins,1);
-            results.bins = bins;
+            ch1_numabeta = zeros(nbins,1);
+            ch2_numabeta = zeros(nbins,1);
             wb = waitbar(0,'Calculating Number Density Information...');
             for nn = 1:nbins
                 if nn == 1
-                    curr_distmask = (mask1_distance<=bins(nn));
+                    ch1_curr_distmask = (obj.ch1.distance_mask<=bins(nn));
+                    ch2_curr_distmask = (obj.ch2.distance_mask<=bins(nn));
                 else
-                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn));
+                    ch1_curr_distmask = (obj.ch1.distance_mask>bins(nn-1) & obj.ch1.distance_mask<=bins(nn));
+                    ch2_curr_distmask = (obj.ch2.distance_mask>bins(nn-1) & obj.ch2.distance_mask<=bins(nn));
                 end
-                inmasklb = single(abim.*curr_distmask);
-                numbers(nn) = sum(inmasklb(:));
+                ch1_inmasklb = single(obj.abeta.COM_image.*ch1_curr_distmask);
+                ch1_numabeta(nn) = sum(ch1_inmasklb(:));
+                ch2_inmasklb = single(obj.abeta.COM_image.*ch2_curr_distmask);
+                ch2_numabeta(nn) = sum(ch2_inmasklb(:));                
                 try
                     waitbar(nn/nbins,wb);
                 catch
@@ -241,8 +257,14 @@ classdef SIM < handle
                 end
             end
             close(wb);
-            results.numbers = numbers;
-            lb = label(obj.ch1.mask,1);
+            obj.ch1.results.bins = bins;
+            obj.ch1.results.numabeta = ch1_numabeta;
+            obj.ch1.results.numobj = ch1_numobj;
+            
+            obj.ch2.results.bins = bins;
+            obj.ch2.results.numabeta = ch2_numabeta;
+            obj.ch2.results.numobj = ch2_numobj;
+            
         end
 
         %----
