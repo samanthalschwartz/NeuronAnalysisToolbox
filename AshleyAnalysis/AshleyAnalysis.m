@@ -187,6 +187,8 @@ classdef AshleyAnalysis < handle
            clear M;
            
            distmask = obj.makeDistanceMask();
+           temp = distmask; temp(temp==Inf)=0;
+           maxdist = max(temp);
            interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
            sfim = obj.surfaceCargo.image*interestmsk;
            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
@@ -355,9 +357,10 @@ classdef AshleyAnalysis < handle
        function cleanSurfaceCargoMask_Manual(obj,reset)
            % uses current cleaned surface mask to start with if it exists
            % any input in the function call acts as a reset
-           [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
-           close(h);
-           overlayim(overlayim==0) = max(overlayim)*2;
+%            [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
+%            close(h);
+%            overlayim(overlayim==0) = max(overlayim)*2;
+           overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
                cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask);
            else
