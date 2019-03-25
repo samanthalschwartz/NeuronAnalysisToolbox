@@ -7,4 +7,5 @@ for (i=0; i<list.length; i++) {
 run("XY Coordinates... ","open=["+v+"]");
 roiManager("add");
 	}
+roiManager('save', dir +'-ROIset.zip');
       } 

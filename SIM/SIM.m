@@ -251,7 +251,42 @@ classdef SIM < handle
             end
             mask = premask;
         end
-        
+        function selectPrePostROI(obj)  
+            ch1 = obj.ch1.mask.*(obj.abeta.distance_mask<20);
+            ch2 = obj.ch2.mask.*(obj.abeta.distance_mask<20);
+            ov = joinchannels('rgb',ch1.*0,ch1,ch2);
+            g = dipfig('ov');
+            dipshow(ov);
+            diptruesize(g,100);
+            selectedROIs = [];
+            patches = [];
+            while(ishandle(g))
+                try
+                    w = waitforbuttonpress;
+                    a = gcf;
+                    if strcmp(a.CurrentCharacter,'t')
+                        a = gcf;
+                        try
+                            vertices = dipdrawpolygon(a);
+                            selectedROIs = cat(1,selectedROIs,{vertices});
+                            patch('Vertices',vertices,'EdgeColor',[1 0 0],'Faces',1:size(vertices,1),'FaceAlpha',0);
+                            a.CurrentCharacter = 'f';
+                        catch
+                            break;
+                        end
+                    end
+                    %                     if strcmp(a.CurrentCharacter,'x')
+%                         try
+%                             patches
+%                         catch
+%                             break
+%                         end
+%                     end
+                catch
+                end
+            end
+            obj.results.selectedROIs = selectedROIs;
+        end
         function abim = abetaCOM(obj)
             obj.measure_AB;
             alllabels = obj.abeta.msr.ID;
