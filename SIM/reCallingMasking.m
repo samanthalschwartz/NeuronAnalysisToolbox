@@ -1,6 +1,6 @@
 % re-run all the SIM file masking in these folders 
-folder1 = 'G:\Hannah Dropbox SIM data\SIM_Files\071917';
-folder2 = 'G:\Hannah Dropbox SIM data\SIM_Files\071117';
+folder1 = 'C:\Users\sammy\Desktop\Brooke SIM\SIM_Files\071917';
+folder2 = 'C:\Users\sammy\Desktop\Brooke SIM\SIM_Files\071117';
 
 folders = {folder1,folder2};
 
@@ -23,11 +23,12 @@ end
 
 %%
 close all; clear all;
-folder1 = 'G:\Hannah Dropbox SIM data\SIM_Files\112117';
-folder2 = 'G:\Hannah Dropbox SIM data\SIM_Files\111617';
-folder3 = 'G:\Hannah Dropbox SIM data\SIM_Files\080317';
-folder4 = 'G:\Hannah Dropbox SIM data\SIM_Files\072617';
-folders = {folder1,folder2,folder3,folder4};
+% folder1 = 'C:\Users\sammy\Desktop\Brooke SIM\SIM_Files\071917';
+% folder2 = 'C:\Users\sammy\Desktop\Brooke SIM\SIM_Files\071117';
+folder3 = 'C:\Users\sammy\Desktop\Brooke SIM\SIM_Files\111617';
+folder4 = 'C:\Users\sammy\Desktop\Brooke SIM\SIM_Files\112117';
+% folders = {folder1,folder2,folder3,folder4};
+folders = {folder3,folder4};
 
 for ff = 1:numel(folders)
     inputsavedir = folders{ff};
@@ -36,6 +37,7 @@ for ff = 1:numel(folders)
    for ii = 1:numel(files)
     clear obj;
     load(fullfile(folders{ff},files(ii).name));
+    obj.make_cellmask;
     obj.make_maskchAB;
     obj.make_maskch1;
     obj.make_maskch2;

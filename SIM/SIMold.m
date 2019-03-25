@@ -10,19 +10,20 @@ classdef SIM < handle
         planeTOP = [];
         planeBOTTOM = [];% in dipimage format: 0 is first plane
         sizecutoff = 10; 
-        abeta = struct('rawimage',[],'image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[],'COM_image',[]);
+        abeta = struct('rawimage',[],'image',[],'mask',[],'distance_mask',[],'labeled_mask',[],'msr',[],'sizes',[],'densities',[]);
         ch1 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
-            'thisCh',struct('msr',[],'sizes',[],'densities',[]),'results',[],...
+            'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         ch2 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
-            'thisCh',struct('msr',[],'sizes',[],'densities',[]),'results',[],...
+            'thisCh',struct('msr',[],'sizes',[],'densities',[]),...
             'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
                         'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         measurements = {'size','sum','Gravity'};
-        results = [];
+        results_closest_ch1_2ab = [];
+        results_closest_ch2_2ab = [];
         XYpxsize = 0.0321;
         XYpxsize_units = 'µm';
         Zpxsize = 0.2;
@@ -125,68 +126,6 @@ classdef SIM < handle
             disp('Calculating Ch2 Distance');
             obj.ch2.distance_mask = bwdistsc1(single(obj.ch2.mask),[1 1 zscale],maxval);
         end
-        function simulationAbeta(obj,distance)
-            if nargin<2
-                distance = 16;
-            end
-            % channnel 1
-            testim = 0.*obj.ch1.distance_mask;
-            for zz = 1:size(obj.abeta.image,3)
-                %
-                goodmask = obj.ch1.distance_mask(:,:,zz)<distance;
-                % find how many abeta COM in this frame
-                currmask = obj.abeta.COM_image(:,:,zz-1).*goodmask;
-                numabeta = sum(currmask(:));
-                sz_x = size(goodmask,1);
-                sz_y = size(goodmask,2);
-                % simulation
-                simvals = zeros(numabeta,2);
-                cnt = 0;
-                while cnt < numabeta
-                    xval = round(rand(1,1)*(sz_x-1)) + 1;
-                    yval = round(rand(1,1)*(sz_y-1)) + 1;
-                    if goodmask(xval,yval)
-                        cnt=cnt+1;
-                        simvals(cnt,:) = [xval,yval];
-                        testim(xval,yval,zz) = 1;
-                    end
-                end
-            end
-            obj.ch1.abetaSIM.COMimage = testim;
-            obj.ch1.abetaSIM.image = bdilation(logical(testim),3);
-            obj.ch1.abetaSIM.dist = distance;
-            clear testim;
-            testim = 0.*obj.ch2.distance_mask;
-            for zz = 1:size(obj.abeta.image,3)
-                %
-                goodmask = obj.ch2.distance_mask(:,:,zz)<distance;
-                % find how many abeta COM in this frame
-                currmask = obj.abeta.COM_image(:,:,zz-1).*goodmask;
-                numabeta = sum(currmask(:));
-                sz_x = size(goodmask,1);
-                sz_y = size(goodmask,2);
-                % simulation
-                simvals = zeros(numabeta,2);
-                cnt = 0;
-                while cnt < numabeta
-                    xval = round(rand(1,1)*(sz_x-1)) + 1;
-                    yval = round(rand(1,1)*(sz_y-1)) + 1;
-                    if goodmask(xval,yval)
-                        cnt=cnt+1;
-                        simvals(cnt,:) = [xval,yval];
-                        testim(xval,yval,zz) = 1;
-                    end
-                end
-            end
-            obj.ch2.abetaSIM.COMimage = testim;
-            obj.ch2.abetaSIM.image = bdilation(logical(testim),3);
-            obj.ch2.abetaSIM.dist = distance;
-            
-            zscale = obj.Zpxsize/obj.XYpxsize;
-%             obj.ch1.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch1.abetaSIM.image,zscale);
-%             obj.ch2.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch2.abetaSIM.image,zscale);
-        end
-        
         function calculateDensities_abetaINch1(obj,bins)
             if nargin<2
                 bins = 0:30;
@@ -263,7 +202,6 @@ classdef SIM < handle
                 zval = vals(3,nn);
                 abim(xval,yval,zval) = 1;
             end
-            obj.abeta.COM_image = abim;
             %             for nn = alllabels
             %                 xval = round(obj.abeta.msr.Gravity(1,nn));
             %                 yval = round(obj.abeta.msr.Gravity(2,nn));
@@ -274,61 +212,28 @@ classdef SIM < handle
             %             end
         end
         
-         function calculateNumberDensityCOM(obj,reset,simbool)
-            if nargin>1
-                resetbool = reset;
-                if nargin>2
-                else
-                    simbool = 0;
-                end
-            else
-                resetbool = 0;
-                simbool = 0;
-            end
+         function results = calculateNumberDensityCOM(obj)
+            % mask1_distance mask - is distance transform of mask (ie: synapse marker mask)
+            % lbimage is the raw image tha t the intensity will be calculated from (ie: abeta image)
+            % cellmask is the whole cell mask that the area will be taken and normalized from
+            % radial_numberdensity is: (#abeta puncta/area)/#gephyrin
             
-            % determine how many objects from Ch1 and Ch2 there are
-            ch1_lb = label(obj.ch1.mask,1);
-            ch1_numobj = max(ch1_lb(:));
-            ch2_lb = label(obj.ch2.mask,1);
-            ch2_numobj = max(ch2_lb(:));
-%             ch1_maxdist = max(obj.ch1.distance_mask(:));
-%             ch2_maxdist = max(obj.ch2.distance_mask(:));
-            ch1_maxdist = 20;
-            ch2_maxdist = 20;
             % make com mask from lb
-            if ~isfield(obj.abeta,'COM_image') || isempty(obj.abeta.COM_image) || resetbool
-                abetaCOM(obj);
-            end
-            if ~simbool
-               abetCOMim_ch1 = double(obj.abeta.COM_image); 
-               abetCOMim_ch2 = double(obj.abeta.COM_image);
-            else
-               abetCOMim_ch1 = obj.ch1.abetaSIM.COMimage; 
-               abetCOMim_ch2 = obj.ch2.abetaSIM.COMimage; 
-            end
-                
-            bins = 0:(max(ch1_maxdist,ch2_maxdist));
+            abim = abetaCOM(obj);
+            bins = 0:3:28;
             nbins = size(bins,2);
-            ch1_numabeta = zeros(nbins,1);
-            ch2_numabeta = zeros(nbins,1);
-            ch1_volume= zeros(nbins,1);
-            ch2_volume = zeros(nbins,1);
+            mask1_distance = obj.ch1.distance_mask;
+            numbers = zeros(nbins,1);
+            results.bins = bins;
             wb = waitbar(0,'Calculating Number Density Information...');
             for nn = 1:nbins
                 if nn == 1
-                    ch1_curr_distmask = (obj.ch1.distance_mask<=bins(nn));
-                    ch2_curr_distmask = (obj.ch2.distance_mask<=bins(nn));
+                    curr_distmask = (mask1_distance<=bins(nn));
                 else
-                    ch1_curr_distmask = (obj.ch1.distance_mask>bins(nn-1) & obj.ch1.distance_mask<=bins(nn));
-                    ch2_curr_distmask = (obj.ch2.distance_mask>bins(nn-1) & obj.ch2.distance_mask<=bins(nn));
+                    curr_distmask = (mask1_distance>bins(nn-1) & mask1_distance<=bins(nn));
                 end
-                ch1_inmasklb = single(abetCOMim_ch1.*ch1_curr_distmask);
-                ch1_numabeta(nn) = sum(ch1_inmasklb(:));
-                ch1_volume(nn) = sum(ch1_curr_distmask(:));
-                
-                ch2_inmasklb = single(abetCOMim_ch2.*ch2_curr_distmask);
-                ch2_numabeta(nn) = sum(ch2_inmasklb(:));  
-                ch2_volume(nn) = sum(ch2_curr_distmask(:));
+                inmasklb = single(abim.*curr_distmask);
+                numbers(nn) = sum(inmasklb(:));
                 try
                     waitbar(nn/nbins,wb);
                 catch
@@ -336,27 +241,8 @@ classdef SIM < handle
                 end
             end
             close(wb);
-            if ~simbool
-                obj.ch1.results.bins = bins;
-                obj.ch1.results.numabeta = ch1_numabeta;
-                obj.ch1.results.numobj = ch1_numobj;
-                obj.ch1.results.volume = ch1_volume;
-                
-                obj.ch2.results.bins = bins;
-                obj.ch2.results.numabeta = ch2_numabeta;
-                obj.ch2.results.numobj = ch2_numobj;
-                obj.ch2.results.volume = ch2_volume;
-            else
-                obj.ch1.abetaSIM.results.bins = bins;
-                obj.ch1.abetaSIM.results.numabeta = ch1_numabeta;
-                obj.ch1.abetaSIM.results.numobj = ch1_numobj;
-                obj.ch1.abetaSIM.results.volume = ch1_volume;
-                
-                obj.ch2.abetaSIM.results.bins = bins;
-                obj.ch2.abetaSIM.results.numabeta = ch2_numabeta;
-                obj.ch2.abetaSIM.results.numobj = ch2_numobj;
-                obj.ch2.abetaSIM.results.volume = ch2_volume;
-            end
+            results.numbers = numbers;
+            lb = label(obj.ch1.mask,1);
         end
 
         %----
@@ -410,18 +296,14 @@ classdef SIM < handle
         
         function save(obj,inputsavedir)
             if nargin<2
-                if isempty(obj.savepath)
+                if isempty(obj.savepath)     
                     obj.savepath = [obj.filepath(1:end-4) '_SIM.mat'];
                 end
             else
-                if isfolder(inputsavedir)
-                    [~,NAME,~] = fileparts(obj.filepath);
-                    obj.savepath = fullfile(inputsavedir,[NAME '_SIM.mat']);
-                elseif isfile(inputsavedir)
-                    obj.savepath = inputsavedir;
-                end
+                [~,NAME,~] = fileparts(obj.filepath);
+                obj.savepath = fullfile(inputsavedir,[NAME '_SIM.mat']);
             end
-            save(obj.savepath,'obj');
+           save(obj.savepath,'obj'); 
         end
         
         function [tempvals,msr] = mindistCh1tofirstAbeta(obj,redodistancebool)
@@ -446,24 +328,6 @@ classdef SIM < handle
             tempvals = msr.MinVal;
             tempvals(tempvals >= 40) = [];
             obj.results_closest_ch2_2ab = tempvals;
-        end
-        
-        function calculate_minDist2Abeta(obj)
-            [ch1_edges, ch1_N] = obj.static_calculate_minDist2Abeta(obj.ch1.mask,obj.abeta.distance_mask);
-            [ch2_edges, ch2_N] = obj.static_calculate_minDist2Abeta(obj.ch2.mask,obj.abeta.distance_mask);
-            obj.ch1.results.mindist2abeta.N = ch1_N;
-            obj.ch1.results.mindist2abeta.edges = ch1_edges;
-            obj.ch2.results.mindist2abeta.N = ch2_N;
-            obj.ch2.results.mindist2abeta.edges = ch2_edges;
-        end
-        
-        function calculate_SimulatedminDist2Abeta(obj)
-            [ch1_edges, ch1_N] = obj.static_calculate_minDist2Abeta(obj.ch1.mask,obj.ch1.abetaSIM.distance_mask);
-            [ch2_edges, ch2_N] = obj.static_calculate_minDist2Abeta(obj.ch2.mask,obj.ch2.abetaSIM.distance_mask);
-            obj.ch1.abetaSIM.results.mindist2abeta.N = ch1_N;
-            obj.ch1.abetaSIM.results.mindist2abeta.edges = ch1_edges;
-            obj.ch2.abetaSIM.results.mindist2abeta.N = ch2_N;
-            obj.ch2.abetaSIM.results.mindist2abeta.edges = ch2_edges;
         end
         
     end
@@ -721,22 +585,6 @@ classdef SIM < handle
             results.totalarea = sum(mask2);
             results.radialareaoverlap =  results.radialareaoverlap./results.totalarea;
             results.cumulative_radialareaoverlap = results.cumulativeareaoverlap./results.totalarea;
-        end
-        
-        function [edges, N] = static_calculate_minDist2Abeta(ch_mask,abeta_mask)
-            ch_lab = label(ch_mask,1);
-            ch_msr = measure(ch_lab,abeta_mask,{'MinVal'}); 
-            [N,edges] = histcounts(ch_msr.MinVal,'BinWidth',1,'Normalization','cdf');
-        end
-        function distance_mask = static_make_distancemasks(mask,zscale,maxval)
-            if nargin<3
-                maxval = 40;
-                if nargin<2
-                    zscale = 1;
-                end
-            end
-            disp('Calculating Distance Mask');
-            distance_mask = bwdistsc1(single(mask),[1 1 zscale],maxval);
         end
         function pts = BresenhamPoints(p1,p2)  
             d = p2-p1;
