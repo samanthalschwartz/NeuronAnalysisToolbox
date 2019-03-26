@@ -20,7 +20,7 @@ plot(obj.ch2.abetaSIM.results.bins,obj.ch2.abetaSIM.results.numabeta./obj.ch2.ab
 ch1data = obj.ch1.results.numabeta./obj.ch1.results.volume;
 ch1sim = obj.ch1.abetaSIM.results.numabeta./obj.ch1.abetaSIM.results.volume;
 ch1bins = obj.ch1.results.bins;
-ch2data = obj.ch2.results.numabeta./obj.ch2.results.volume;
+ch2  data = obj.ch2.results.numabeta./obj.ch2.results.volume;
 ch2sim = obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume;
 ch2bins = obj.ch2.results.bins;
 
