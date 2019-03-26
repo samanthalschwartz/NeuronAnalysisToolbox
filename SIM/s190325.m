@@ -14,6 +14,7 @@ plot(obj.ch1.abetaSIM.results.bins,obj.ch1.abetaSIM.results.numabeta./obj.ch1.ab
 
 figure; hold on;
 plot(obj.ch2.results.bins,obj.ch2.results.numabeta./obj.ch2.results.volume)
+<<<<<<< HEAD
 plot(obj.ch2.abetaSIM.results.bins,obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume)
 
 %%
@@ -39,3 +40,6 @@ title('Ch2');
 
 
 
+=======
+plot(obj.ch2.abetaSIM.results.bins,obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume)
+>>>>>>> 93d2c173a4d9a88af665503ae3ae71da30d1509e
