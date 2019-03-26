@@ -268,12 +268,16 @@ classdef SIM < handle
                         a = gcf;
                         try
                             vertices = dipdrawpolygon(a);
+                            gcfinfo = get(g,'UserData');
+                            currtime = gcfinfo.curslice;
+                            vertices = cat(2,vertices,repmat(currtime,size(vertices,1),1));
                             selectedROIs = cat(1,selectedROIs,{vertices});
                             patch('Vertices',vertices,'EdgeColor',[1 0 0],'Faces',1:size(vertices,1),'FaceAlpha',0);
                             a.CurrentCharacter = 'f';
                         catch
                             break;
                         end
+                       
                     end
                     %                     if strcmp(a.CurrentCharacter,'x')
 %                         try

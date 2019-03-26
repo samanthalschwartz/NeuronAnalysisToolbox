@@ -14,8 +14,8 @@ abeta.mask = obj.abeta.mask(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
 msrch1 = measure(ch1.mask,single(ch1.mask),obj.measurements);
 msrch2 = measure(ch2.mask,single(ch2.mask),obj.measurements);
 
-testim1= 0.*ch1.mask;
-testim1(round(msrch1.Gravity(1)),round(msrch1.Gravity(2)),round(msrch1.Gravity(3))) = 1;
+testim1= 0.*obj.ch1.mask;
+testim1(round(msr.Gravity(1)),round(msr.Gravity(2)),round(msr.Gravity(3))) = 1;
 joinchannels('rgb',testim1,testim1*0,ch1.mask)
 
 p1= round(msrch1.Gravity);
