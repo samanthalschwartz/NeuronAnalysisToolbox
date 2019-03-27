@@ -127,7 +127,10 @@ classdef SIM < handle
         end
         function simulationAbeta(obj,distance)
             if nargin<2
-                distance = 16;
+                distance = 20;
+            end
+            if isempty(obj.abeta.COM_image)
+                obj.abetaCOM;
             end
             % channnel 1
             testim = 0.*obj.ch1.distance_mask;
@@ -336,12 +339,15 @@ classdef SIM < handle
             ch2_maxdist = 20;
             % make com mask from lb
             if ~isfield(obj.abeta,'COM_image') || isempty(obj.abeta.COM_image) || resetbool
-                abetaCOM(obj);
+                obj.abetaCOM();
             end
             if ~simbool
                abetCOMim_ch1 = double(obj.abeta.COM_image); 
                abetCOMim_ch2 = double(obj.abeta.COM_image);
             else
+                if ~isfield(obj.ch1,'abetaSIM')
+                    obj.simulationAbeta(20);
+                end
                abetCOMim_ch1 = obj.ch1.abetaSIM.COMimage; 
                abetCOMim_ch2 = obj.ch2.abetaSIM.COMimage; 
             end
