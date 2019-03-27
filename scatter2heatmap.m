@@ -1,4 +1,4 @@
-function ga = scatter2heatmap(x,y,bins)
+function [ga,N] = scatter2heatmap(x,y,bins)
 if nargin<3
     bins = 100;
 end

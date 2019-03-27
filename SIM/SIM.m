@@ -184,10 +184,72 @@ classdef SIM < handle
             obj.ch2.abetaSIM.COMimage = testim;
             obj.ch2.abetaSIM.image = bdilation(logical(testim),3);
             obj.ch2.abetaSIM.dist = distance;
-            
             zscale = obj.Zpxsize/obj.XYpxsize;
 %             obj.ch1.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch1.abetaSIM.image,zscale);
 %             obj.ch2.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch2.abetaSIM.image,zscale);
+        end
+        
+        function abetaDensityAlongPrePost(obj)
+            totab = sum(obj.abeta.COM_image);
+            plotvals = zeros(2,totab);
+            prepostdis_list = zeros(1,numel(obj.results.selectedROIs));
+            numabeta_aroundsynapse = zeros(1,numel(obj.results.selectedROIs));
+            wb = waitbar(0);
+            cnt = 0;
+            prepostdis_cnt = 0;
+            for aa = 1:numel(obj.results.selectedROIs)
+                prepostdis_cnt = prepostdis_cnt+1;
+                vertices = obj.results.selectedROIs{aa};
+                if size(vertices,1)<3
+                    disp('Not enough vertices to make a region');
+                    continue;
+                end
+                zscale = obj.Zpxsize/obj.XYpxsize;
+                coords_pre = getCOMfromVerts(vertices,obj.ch1.mask);
+                coords_post = getCOMfromVerts(vertices,obj.ch2.mask);
+                
+                PrPo_vec = coords_post - coords_pre;
+                PrPo_vec(3) = PrPo_vec(3)*zscale;
+                Lmag = sqrt(sum(PrPo_vec).^2);
+                prepostdis_list(prepostdis_cnt) = Lmag;
+                
+                lowbound = max(min(coords_pre,coords_post)-[20;20;3],[0; 0; 0]);
+                maxbound = min(max(coords_pre,coords_post)+[20;20;3],(size(obj.abeta.image)-1)');
+                
+                abeta_im = obj.abeta.COM_image;
+                labab = label(logical(abeta_im),1);
+                cropped_labab = labab(floor(lowbound(1)):ceil(maxbound(1)),floor(lowbound(2)):ceil(maxbound(2)),floor(lowbound(3)):ceil(maxbound(3)));
+                ids = unique(single(cropped_labab(:))); ids = ids(ids~=0);
+                numabeta_aroundsynapse(prepostdis_cnt) = numel(ids);
+                for ii =1 :numel(ids)
+                    cnt= cnt+1;
+                    c = findcoord(labab==ids(ii));
+                    p1 = c';
+                    
+                    %     pre_img = 0*obj.ch1.mask;
+                    %     pre_img( round(coords_pre(1)),round(coords_pre(2)),round(coords_pre(3)) ) = 1;
+                    %     pre_imgsub = pre_img(floor(lowbound(1)):ceil(maxbound(1)),floor(lowbound(2)):ceil(maxbound(2)),floor(lowbound(3)):ceil(maxbound(3)))
+                    %
+                    %     post_img = 0*obj.ch1.mask;
+                    %     post_img( round(coords_post(1)),round(coords_post(2)),round(coords_post(3)) ) = 1;
+                    %     post_imgsub = post_img(floor(lowbound(1)):ceil(maxbound(1)),floor(lowbound(2)):ceil(maxbound(2)),floor(lowbound(3)):ceil(maxbound(3)))
+                    L1 = coords_pre;
+                    L2 = coords_post;
+                    c1 = (L1+L2)/2;
+                    L_vec = L2 - c1;
+                    L_vec(3) = L_vec(3)*zscale;
+                    pvec = p1 - c1;
+                    pvec(3) = pvec(3)*zscale;
+                    [Zdist, rdist] = vectordotproduct(L_vec,pvec);
+                    plotvals(:,cnt) = [rdist;Zdist];
+                end
+                %     joinchannels('rgb',abetaCOM,pre_imgsub,post_imgsub)
+                waitbar(aa/numel(obj.results.selectedROIs),wb);
+            end
+            close(wb);
+            obj.results.prepostdis_list = prepostdis_list;
+            obj.results.numabeta_aroundsynapse = numabeta_aroundsynapse;
+            obj.results.plotvals = plotvals;
         end
         
         function calculateDensities_abetaINch1(obj,bins)
