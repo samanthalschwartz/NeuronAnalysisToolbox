@@ -136,6 +136,9 @@ if tcl == 1 % simple image (no cell)
             end
             tiff.setDirectory(tfl);
             temp = tiff.read();
+            if size(temp,2) == size(oimg,1)
+                temp = temp';
+            end
             oimg(:,:,frame,ch) = temp; % Color image
         end
     else
