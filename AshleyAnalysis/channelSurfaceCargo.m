@@ -24,10 +24,13 @@ classdef channelSurfaceCargo < channelBase
            if nargin<2
                lsig = [1 1 0];
            end
-           img_m = medif(obj.image,4);
+           %            img_m = medif(obj.image,4);
+           %            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,lsig,gsig);
+           %            normim = img_laplcutoff./max(img_laplcutoff);
+           %            obj.mask = GeneralAnalysis.imgThreshold(normim*img_m);
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,lsig,gsig);
            normim = img_laplcutoff./max(img_laplcutoff);
-           obj.mask = GeneralAnalysis.imgThreshold(normim*img_m);
+           obj.mask = GeneralAnalysis.imgThreshold(normim);
        end
        function mask_img_highsens(obj,lsig,gsig)
            if nargin<3
@@ -49,7 +52,7 @@ classdef channelSurfaceCargo < channelBase
            maskws = mask;
            maskws(ll) = 0;
            
-           obj.mask = logical(maskws);
+           obj.mask = dip_image(logical(maskws));
 %            obj.mask = logical(mask);
            obj.backgroundvalue = threshval;
        end

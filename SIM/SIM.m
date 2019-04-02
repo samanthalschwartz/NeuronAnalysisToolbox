@@ -316,7 +316,7 @@ classdef SIM < handle
             end
             mask = premask;
         end
-        function selectPrePostROI(obj)  
+        function selectPrePostROI(obj,alternate)  
             ch1 = obj.ch1.mask.*(obj.abeta.distance_mask<20);
             ch2 = obj.ch2.mask.*(obj.abeta.distance_mask<20);
             ov = joinchannels('rgb',ch1.*0,ch1,ch2);
@@ -354,7 +354,11 @@ classdef SIM < handle
                 catch
                 end
             end
-            obj.results.selectedROIs = selectedROIs;
+            if nargin==2
+                obj.results.moreselectiveROIs = selectedROIs;
+            else
+                obj.results.selectedROIs = selectedROIs;
+            end
         end
         function abim = abetaCOM(obj)
             obj.measure_AB;

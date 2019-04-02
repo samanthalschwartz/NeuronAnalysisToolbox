@@ -13,6 +13,7 @@ classdef AshleyAnalysis < handle
     pxsize = 1/3.5;
     M = [];
     cleanedcargomask = [];
+    distmask = [];
     % first frame of baseline (ie: 1);
     % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
      % frame rate in min/frame (ie: 1, 1 minute interval between frames)
@@ -94,7 +95,7 @@ classdef AshleyAnalysis < handle
                maskimg = obj.surfaceCargo.mask;
            end
            
-           if ~isempty(obj.imagingparams.baselineframe_start)
+           if isfield(obj.imagingparams,'baselineframe_start') && ~isempty(obj.imagingparams.baselineframe_start)
                startfrm = obj.imagingparams.postrelease(1).frame_start;
                postrelease = obj.imagingparams.postrelease;
                endfrm = postrelease(end).frame_end;
@@ -182,11 +183,11 @@ classdef AshleyAnalysis < handle
            % make the distance mask
            
            if nargin<2
-               distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
+               distances = [18/obj.pxsize 200/obj.pxsize 400/obj.pxsize];
            end
            clear M;
            
-           distmask = obj.makeDistanceMask();
+          distmask = obj.makeDistanceMask();
            temp = distmask; temp(temp==Inf)=0;
            maxdist = max(temp);
            interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
@@ -277,8 +278,9 @@ classdef AshleyAnalysis < handle
            sums = bdilation(obj.cellFill.mask,1);
            geoframe = sum(sums,[],3);
            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
-           distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');    
-           distmask = dip_image(distmask);
+           distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');   
+           obj.distmask = distmask;
+           distmask = dip_image(distmask);  
        end
        function [h,lagim] = plot_cargo_minFrameMovie(obj,framelag,savename)
            %            cellperim is boolean for including cell perimeter in image
@@ -369,6 +371,11 @@ classdef AshleyAnalysis < handle
            obj.cleanedcargomask = cargomask;
        end
        
+       function cleanCellFillMask_Manual(obj)
+           overlayim = obj.cellFill.image;
+           mask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cellFill.mask);
+           obj.cellFill.mask = mask;
+       end
        function [h,overlayim] = viewCleanedSurfaceCargoMask(obj,cm,mskcol)
            if nargin<3
                mskcol = [1 1 1];

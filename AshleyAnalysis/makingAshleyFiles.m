@@ -1,23 +1,42 @@
-uiopen('F:\zapERtrap\AMB_previous\051318 NL1 insertion\2test_fullcell_merge.tif',1);
+filename = 'G:\zapERtrap\AMB_previous\051318 NL1 insertion\2test_fullcell_merge.tif';
+uiopen(filename,1);
 cellfill = image(:,:,:,1);
 tfr = image(:,:,:,2);
 cargo = image(:,:,:,3);
+
 %%
 
 aa = AshleyAnalysis();
-aa.path_3ch_datafile = 'F:\zapERtrap\AMB_previous\051318 NL1 insertion\2test_fullcell_merge.tif';
+aa.path_3ch_datafile = filename;
 aa.cellFill = channelCellFill();
 aa.surfaceCargo = channelSurfaceCargo();
 aa.TfR = channelTfR();
-aa.cellFill.setimage(cellfill);
+aa.cellFill.setimage(tfr);
 aa.surfaceCargo.setimage(cargo);
 % aa.TfR.setimage(im_array(:,:,:,2));
+aa.cellFill.trim_rawimage;
+aa.surfaceCargo.ROI_trim = aa.cellFill.ROI_trim;
+aa.maskImages;
 
-aa.cellFill.mask_img;
-aa.cellFill.viewMaskOverlayPerim;
-aa.surfaceCargo.lsig = [1 1 0];
-aa.surfaceCargo.gsig = [1 1 1];
-aa.surfaceCargo.mask_img_highsens
+aa.surfaceCargo.removeBoundaryMaskArtifact;
+
+aa.cleanCellFillMask_Manual;
+aa.cleanSurfaceCargoMask;
+aa.cleanSurfaceCargoMask_Manual;
+joinchannels('rgb',aa.cellFill.mask,aa.cleanedcargomask)
+
+aa.cellFill.selectSoma();
+M = aa.plotDensityperTime();
+dmap = aa.distmask;
+dmap(dmap==Inf) = 0;
+dipshow(dmap)
+save(filename(1:end-4),'aa');
+%%
+% aa.cellFill.mask_img;
+% aa.cellFill.viewMaskOverlayPerim;
+% aa.surfaceCargo.lsig = [1 1 0];
+% aa.surfaceCargo.gsig = [1 1 1];
+% aa.surfaceCargo.mask_img_highsens
 
 img_m = medif(obj.image,3);
            img_mg = gaussf(aa.surfaceCargo.image,aa.surfaceCargo.gsig);
