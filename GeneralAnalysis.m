@@ -139,7 +139,37 @@ methods (Static)
         end
         close(wb);
     end
-    
+    function [] = LibTiff(Vol,inputname)
+          %LibTiff wrote by Michael @ mic.muenter@uni-luebeck.de
+          % Input:uint8 Volume (x,y,z)
+          % INPUT: filepath
+          
+          % INPUT example: Vol = 255.*ones(300,100,200); LibTiff(Vol);
+          
+          Vol = uint32(Vol);
+          
+          t = Tiff([inputname,'.tiff'],'w'); % Filename by variable name
+          tagstruct.ImageLength = size(Vol,1); % image height
+          tagstruct.ImageWidth = size(Vol,2); % image width
+          tagstruct.Photometric = Tiff.Photometric.MinIsBlack; % https://de.mathworks.com/help/matlab/ref/tiff.html
+          tagstruct.BitsPerSample = 32;
+          tagstruct.SamplesPerPixel = 1;
+          tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+          tagstruct.Software = 'MATLAB';
+          
+          tic
+          setTag(t,tagstruct)
+          write(t,squeeze(Vol(:,:,1)));
+          for i=2:size(Vol,3) % Write image data to the file
+              writeDirectory(t);
+              setTag(t,tagstruct)
+              write(t,squeeze(Vol(:,:,i))); % Append
+          end
+          close(t);
+          toc
+          
+          disp('Tiff File saved')
+      end
     function im_array = loadtiff_3ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
         oimg = loadtiff(filepath);
@@ -240,6 +270,29 @@ methods (Static)
         mask = img_in>=threshval(1);
     end
     function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
+        if ~isa(img_in,'dip_image')
+            img_in = dip_image(img_in);
+        end
+        uiwait(msgbox('Select a representative background region','Title','modal'));
+        if nargin<2
+            image4selection = img_in;
+        end
+        h = dipshow(image4selection,'log');
+        diptruesize(h,25);
+        [~,C] = dipcrop(h);
+        if ndims(img_in)==3
+        reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
+        elseif ismatrix(img_in)
+            reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
+        end
+        threshval = max(reg);
+        mask = threshold(img_in,'fixed',threshval);
+        close(h);
+    end
+   function [mask,threshval] = imgThreshold_fixedUserInput_fromsingleframe(img_in,image4selection)
+        if ~isa(img_in,'dip_image')
+            img_in = dip_image(img_in);
+        end
         uiwait(msgbox('Select a representative background region','Title','modal'));
         if nargin<2
             image4selection = img_in;
@@ -248,7 +301,8 @@ methods (Static)
         diptruesize(h,125);
         [~,C] = dipcrop(h);
         if ndims(img_in)==3
-        reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
+            im = getframe(h);
+            reg = im(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
         elseif ismatrix(img_in)
             reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
         end
@@ -350,6 +404,48 @@ methods (Static)
       dipfig -unlink
       newmask = logical(lb);  
     end
+    function newmask = cleanUpMaskKeepers_manual_square(underimgin,mask_in,imviewsz)
+        if nargin<3
+            imviewsz = 50;
+        end
+        lb = label(logical(mask_in));
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        dipshow(ov,'log');
+        diptruesize(g,imviewsz);
+        clmp = bone(255);
+        clmp(1,:) = [1 0 0];
+        selectedROIs = [];
+        while(ishandle(g))
+            try
+                w = waitforbuttonpress;
+                a = gcf;
+                if strcmp(a.CurrentCharacter,'t')
+                    a = gcf;
+                    try
+                        [B,C] = dipcrop(a);
+                        selectedROIs = cat(1,selectedROIs, [C(1,1),C(1,2),C(1,1)+C(2,1),C(1,2)+C(2,1)]);
+                        rectangle('Position',[C(1,1),C(1,2),C(2,1),C(2,1)]);
+                        a.CurrentCharacter = 'f';
+                    catch
+                        break;
+                    end
+                end
+            catch
+            end
+        end
+        goodids = [];
+        for ii = 1:size(selectedROIs,1)
+            goodids = [goodids max(lb(selectedROIs(ii,1):selectedROIs(ii,3),selectedROIs(ii,2):selectedROIs(ii,4)))];
+        end
+        newmask = lb*0;
+        for gg=goodids
+            newmask = newmask + (lb == gg);
+        end
+    end
+    
+    
     function perim = maskperim(mask_in)
          perim = dt(mask_in);
          perim = (perim==1);     
@@ -483,6 +579,58 @@ methods (Static)
        sm(sm>0) = 1;
        sumproj_out = repmat(sm,[1 1 size(mask_in,3)]);
     end
+    function lbl_out = removeLabels(lbl_in,ids2remove)
+        if iscolumn(ids2remove)
+            ids2remove = ids2remove';
+        end
+        for ii = ids2remove
+        lbl_in(lbl_in == ii) = 0;
+        end
+        lbl_out = lbl_in;
+%         lbl_out = dip_image(lbl);
+    end
+    
+    function measure_structure = measureMaskTimeSeries(labeled,image,measurements)
+         if ~isa(image,'dip_image')
+            try
+                image = dip_image(image);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+        assert(isequal(size(labeled),size(image)));
+        if nargin<3
+           measurements = {'Size','Sum'};
+        end
+        if max(labeled) == 1
+            labeled = label(labeled);
+        end
+        maxframe = size(labeled,3);
+        msrarray = cell(1,maxframe);
+        wb = waitbar(0,'Calculating Intensities within Masks....');
+        for ll = 0:(maxframe-1)
+            msr = measure(labeled(:,:,ll),image(:,:,ll),measurements);
+            msrarray{ll+1} = msr;
+            try
+                waitbar((ll+1)/maxframe,wb);
+            catch
+                wb=  waitbar((ll+1)/maxframe,'Calculating Intensities within Masks....');
+            end
+        end
+        close(wb) 
+        for m = 1:numel(measurements)
+            measure_structure.(measurements{m}) = zeros(size(unique(labeled))-1,maxframe);            
+        end
+        %reshape array
+        for tt = 1:maxframe
+                currarr = msrarray{tt};
+                for m = 1:numel(measurements)
+                measure_structure.(measurements{m})(:,tt) = currarr.(measurements{m})';
+                end
+        end
+    end 
+        
     function lbl_out = findLabelsInMask(lbl_in,mask)
         % Excludes labels in a labeled image that are exclusively out of the bounds of an input mask.
         % or Includes labels in a labeled image if any part of the label is within the bounds of an input mask.
@@ -625,7 +773,10 @@ methods (Static)
         end
     end
     
-     function [img_out,sv_arr] = timedriftCorrect(img_in)
+     function [img_out,sv_arr] = timedriftCorrect(img_in,shiftmeth)
+         if nargin < 2
+             shiftmeth = 'iter';
+         end
          if ~isa(img_in,'dip_image')
             try
                 img_in = dip_image(img_in);
@@ -641,7 +792,7 @@ methods (Static)
         sv_arr = nan(2,size(img_in,3)-1);
         for ii = 1:(size(img_in,3)-1)
             imcurr= squeeze(img_in(:,:,ii));
-            sv1 = findshift(imref,imcurr,'iter',0);
+            sv1 = findshift(imref,imcurr,shiftmeth,0);
             shiftim = shift(imcurr,sv1,1);
             if size(sv1,1) == 2
                if sv1(1)>0
@@ -727,6 +878,14 @@ methods (Static)
      function [h,overlayim] = overlay(grey_im,bin_im,cm,mskcol)
          % this function overloads the dipimage overlay method but with a
          % better colormapping
+         if ~isa(grey_im,'dip_image')
+             try
+                 grey_im = dip_image(grey_im);
+             catch
+                 warning('input must be an image matrix');
+                 return;
+             end
+         end
          if nargin<4
              mskcol = [1 0 0]; %make mask perim red
          end
@@ -847,6 +1006,30 @@ methods (Static)
          bin_im = (perim==1);
          
          [h,overlayim] = GeneralAnalysis.overlay(image,bin_im,cm,mskcol);
+     end
+     function [h,overlayarr] = viewMaskOverlay(grayim,mask)
+         if ~isa(grayim,'dip_image')
+            try
+                grayim = dip_image(grayim);
+            catch
+                warning('input must be an image matrix');
+                    return;
+            end
+        end
+         assert(ndims(grayim) == ndims(mask));
+         grayim_minusmask = grayim.*~mask;
+         mskfrm = max(grayim)*10*mask + grayim_minusmask;
+         switch ndims(grayim)
+             case 2
+                 rch = cat(3,mskfrm,grayim);
+                 gch = cat(3,grayim_minusmask,grayim);
+             case 3
+                 rch = cat(4,mskfrm,grayim);
+                 gch = cat(4,grayim_minusmask,grayim);
+         end
+         bch = gch;
+         overlayarr = joinchannels('rgb',rch,gch,bch); 
+         h = dipshow(overlayarr,'log');
      end
 end
 end

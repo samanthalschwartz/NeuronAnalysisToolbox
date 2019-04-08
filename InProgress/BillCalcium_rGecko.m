@@ -5,7 +5,7 @@
 %  there will be an error.
 %% run this cell to test out thresholding parameter using 'Run Section' button.
 % then once you're happy with the parameter, 'Run' the entire script
-threshold_parameter = 1.3; % smaller number is more sensitive, larger number is less sensitive
+threshold_parameter = 1.1; % smaller number is more sensitive, larger number is less sensitive
 
 % Select the file you want to analyze: for now this is a 1 color time
 % series tif file

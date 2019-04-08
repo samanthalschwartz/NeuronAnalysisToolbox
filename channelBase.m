@@ -64,6 +64,33 @@ classdef channelBase < handle
        function cropimagefromtrimROI(obj)
           obj.image = obj.rawimage(obj.ROI_trim(1,1):obj.ROI_trim(1,1)+obj.ROI_trim(2,1),obj.ROI_trim(1,2):obj.ROI_trim(1,2)+obj.ROI_trim(2,2),obj.ROI_trim(1,3):obj.ROI_trim(1,3)+obj.ROI_trim(2,3));
        end
+       function clipmasks(obj)
+           clip = 20;
+           goodmask = obj.mask.*0';
+           goodmask(clip:(end-clip),clip:(end-clip),:) = 1;
+           obj.mask = obj.mask.*goodmask;
+       end
+       
+       function removeBoundaryMaskArtifact(obj)
+           a = sum(obj.mask,[],3);
+           g = dipfig('a');
+           while(ishandle(g))
+               try
+                   [B,C] = dipcrop(g);
+               catch
+                   break;
+               end
+               gcfinfo = get(g,'UserData');
+               a(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2)) = 0;
+           end
+           dipfig -unlink
+           newmask = logical(lb);
+       end
+    
+     
+       
+       
+       
        function [h,overlayim] = viewMaskOverlayPerim(obj,cm,mskcol)
            if nargin<3
                mskcol = [1 1 1];

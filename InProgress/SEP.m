@@ -11,11 +11,18 @@ properties
     max_msk_cellfill;
     sep_mask;
     sep_mask_fixed;
+    % old ROI mask    
+    oldROI1mask;
+    oldROI2mask;
     % labeled mask
     sep_mask_fixed_label;
     % labeled measured info
     sep_sums;
     sep_sizes;
+    oldROI1_sep_sums
+    oldROI1_sep_sizes
+    oldROI2_sep_sums
+    oldROI2_sep_sizes
     % full image measurements
     shaftmask;
     shafttrace_intensity_varsize;
@@ -76,27 +83,101 @@ methods
             msrarray{ll+1} = msr;
             waitbar((ll+1)/maxframe,wb);
         end
-        close(wb)
+        close(wb) 
         obj.sep_sums = zeros(max(spinelabel),maxframe);
         obj.sep_sizes = zeros(max(spinelabel),1);
         %reshape array
         for tt = 1:maxframe
                 currarr = msrarray{tt};
                 obj.sep_sums(:,tt) = currarr.sum;
-%             for ll = 1:max(spinelabel)
-%                 obj.sep_sums(ll,tt) = currarr(ll).sum;
-%             end
-%             obj.sep_sizes(ll) = msrarray{1}(ll).size;
         end
     end
     
+    function calculate_OldROIsintensities(obj)
+        % first make sure ROIs are defined
+        if isempty(obj.oldROIs1)
+            obj.loadIJROIs1();
+        end
+        if isempty(obj.oldROIs1)
+            obj.loadIJROIs1();
+        end
+        ROI1mask = zeros(size(obj.sep_mask_fixed));
+        ROI2mask = zeros(size(obj.sep_mask_fixed));
+
+        sepim_pre = dip_image(obj.sep);
+        bgmsk =  ~(bdilation(obj.sep_mask_fixed,3)| bdilation(obj.max_msk_cellfill,3));
+        bgpx = sum(bgmsk.*sepim_pre)./sum(bgmsk);
+        sepim = sepim_pre-bgpx;
+        
+        % now loop through each ROI and make mask
+        %          ROI1
+        if ~isempty(obj.oldROIs1)
+            for rr = 1:numel(obj.oldROIs1)
+                bnds = obj.oldROIs1{rr}.vnRectBounds;
+                if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
+                    continue;
+                end
+                ROI1mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
+            end
+            obj.oldROI1mask = logical(ROI1mask);
+            % measure ROI1
+            lbl1 = label(obj.oldROI1mask);
+            maxframe = size(obj.sep,3);
+            obj.oldROI1_sep_sums = zeros(max(lbl1),maxframe);
+            obj.oldROI1_sep_sizes = zeros(max(lbl1),1);
+            msrarray = cell(1,maxframe);
+            wb = waitbar(0,'Calculating Intensities within Old ROI 1....');
+            for ll = 0:(maxframe-1)
+                msr = measure(lbl1(:,:,ll),sepim(:,:,ll),{'size','sum'});
+                msrarray{ll+1} = msr;
+                waitbar((ll+1)/maxframe,wb);
+            end
+            close(wb)
+            %reshape array
+            for tt = 1:maxframe
+                currarr = msrarray{tt};
+                obj.oldROI1_sep_sums(:,tt) = currarr.sum;
+            end
+        end
+        %          ROI2
+        if ~isempty(obj.oldROIs2)
+            for rr = 1:numel(obj.oldROIs2)
+                bnds = obj.oldROIs2{rr}.vnRectBounds;
+                if abs(bnds(1)-bnds(3))>30 || abs(bnds(2)-bnds(4))>30
+                    continue;
+                end
+                ROI2mask(bnds(1):bnds(3),bnds(2):bnds(4),:) = 1;
+            end
+            obj.oldROI2mask = logical(ROI2mask);
+            % measure ROI2
+            lbl2 = label(obj.oldROI2mask);
+            maxframe = size(obj.sep,3);
+            msrarray = cell(1,maxframe);
+            wb = waitbar(0,'Calculating Intensities within Old ROI 2....');
+            for ll = 0:(maxframe-1)
+                msr = measure(lbl2(:,:,ll),sepim(:,:,ll),{'size','sum'});
+                msrarray{ll+1} = msr;
+                waitbar((ll+1)/maxframe,wb);
+            end
+            close(wb)
+            obj.oldROI2_sep_sums = zeros(max(lbl2),maxframe);
+            obj.oldROI2_sep_sizes = zeros(max(lbl2),1);
+            %reshape array
+            for tt = 1:maxframe
+                currarr = msrarray{tt};
+                obj.oldROI2_sep_sums(:,tt) = currarr.sum;
+            end
+        end
+    end
+    
+    
     function [f] = calculate_sepIHeatMap(obj)
         f = figure;
-        trace = obj.sep_sums./obj.sep_sums(:,1);
+        trace = obj.sep_sums./mean(obj.sep_sums(:,1:3),2);
         allsum = sum(trace,2);
         [~, ordx] = sort(allsum, 'descend');
-        ord_trace = trace(ordx,:);
-        obj.hm = heatmap(ord_trace);
+        obj.ord_trace = trace(ordx,:);
+        obj.hm = heatmap(obj.ord_trace);
         obj.hm.GridVisible = 'off';
         obj.hm.Colormap = jet(50);
         obj.hm.ColorLimits = [0 4];
@@ -136,6 +217,8 @@ methods
     end
         
     function calculateSpineShaftIntensities(obj)
+        % this calculated intensity within the entire mask region of the
+        % image (individual ROIs are not measured separately)
         sepim = dip_image(obj.sep);
         % ---- fixed mask sizes ----
         % create mask of shaft - area of spines/sep intensity
@@ -189,6 +272,20 @@ methods
     function h = viewHeatMap(obj)
        h = figure;
        obj.hm;
+    end
+end
+
+methods (Static)
+    function [f] = calculate_HeatMap(trace)
+        f = figure;
+%         trace = in_trace./mean(in_trace(:,1:3),2);
+        allsum = sum(trace,2);
+        [~, ordx] = sort(allsum, 'descend');
+        ord_trace = trace(ordx,:);
+        hm = heatmap(ord_trace);
+        hm.GridVisible = 'off';
+        hm.Colormap = jet(50);
+        hm.ColorLimits = [0 3.5];
     end
 end
 end
