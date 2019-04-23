@@ -222,7 +222,7 @@ classdef AshleyAnalysis < handle
                M.rawintensity(ii,:) = movmean(origvals,windowsize);
                M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
            end
-           
+           obj.M = M;
        end
        
        function M = plotAreaperTime(obj,distances)

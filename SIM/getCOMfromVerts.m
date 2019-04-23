@@ -11,6 +11,10 @@ else
     labeledmask = lbch1(:,:,vertices(1,3)).*out;
 end 
 test = labeledmask;
+if sum(test(:)) == 0
+    coords=[];
+    return;
+end
 test(test==0) = NaN;
 id = mode(single(test(:)));
 imtest = label(lbch1==id,1);

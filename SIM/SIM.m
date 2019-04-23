@@ -23,6 +23,7 @@ classdef SIM < handle
                         'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[]));
         measurements = {'size','sum','Gravity'};
         results = [];
+        results_moreselective = [];
         XYpxsize = 0.0321;
         XYpxsize_units = 'µm';
         Zpxsize = 0.2;
@@ -84,6 +85,11 @@ classdef SIM < handle
                 obj.ch1.image = obj.ch1.rawimage(:,:,bottom+1:top+1);
                 obj.ch2.image = obj.ch2.rawimage(:,:,bottom+1:top+1);
                 obj.abeta.image = obj.abeta.rawimage(:,:,bottom+1:top+1);
+            else
+                obj.ch1.image = obj.ch1.rawimage;
+                obj.ch2.image = obj.ch2.rawimage;
+                obj.abeta.image = obj.abeta.rawimage;
+                
             end
         end
         function make_laplacemasks(obj)
@@ -189,17 +195,23 @@ classdef SIM < handle
 %             obj.ch2.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch2.abetaSIM.image,zscale);
         end
         
-        function abetaDensityAlongPrePost(obj)
+        function abetaDensityAlongPrePost(obj,ROIstring)
+            switch ROIstring
+                case 'selectedROIs'
+                    regions = obj.results.selectedROIs;
+                case 'moreselectiveROIs'
+                    regions = obj.results.moreselectiveROIs;
+            end
             totab = sum(obj.abeta.COM_image);
             plotvals = zeros(2,totab);
-            prepostdis_list = zeros(1,numel(obj.results.selectedROIs));
-            numabeta_aroundsynapse = zeros(1,numel(obj.results.selectedROIs));
+            prepostdis_list = zeros(1,numel(regions));
+            numabeta_aroundsynapse = zeros(1,numel(regions));
             wb = waitbar(0);
             cnt = 0;
             prepostdis_cnt = 0;
-            for aa = 1:numel(obj.results.selectedROIs)
+            for aa = 1:numel(regions)
                 prepostdis_cnt = prepostdis_cnt+1;
-                vertices = obj.results.selectedROIs{aa};
+                vertices = regions{aa};
                 if size(vertices,1)<3
                     disp('Not enough vertices to make a region');
                     continue;
@@ -207,6 +219,9 @@ classdef SIM < handle
                 zscale = obj.Zpxsize/obj.XYpxsize;
                 coords_pre = getCOMfromVerts(vertices,obj.ch1.mask);
                 coords_post = getCOMfromVerts(vertices,obj.ch2.mask);
+                if isempty(coords_pre) || isempty(coords_post)
+                    continue;
+                end
                 
                 PrPo_vec = coords_post - coords_pre;
                 PrPo_vec(3) = PrPo_vec(3)*zscale;
@@ -244,14 +259,48 @@ classdef SIM < handle
                     plotvals(:,cnt) = [rdist;Zdist];
                 end
                 %     joinchannels('rgb',abetaCOM,pre_imgsub,post_imgsub)
-                waitbar(aa/numel(obj.results.selectedROIs),wb);
+                waitbar(aa/numel(regions),wb);
             end
             close(wb);
-            obj.results.prepostdis_list = prepostdis_list;
-            obj.results.numabeta_aroundsynapse = numabeta_aroundsynapse;
-            obj.results.plotvals = plotvals;
+            switch ROIstring
+                case 'selectedROIs'
+                    obj.results.prepostdis_list = prepostdis_list;
+                    obj.results.numabeta_aroundsynapse = numabeta_aroundsynapse;
+                    obj.results.plotvals = plotvals;
+                case 'moreselectiveROIs'
+                    obj.results_moreselective.selectedROIs = obj.results.moreselectiveROIs;
+                    obj.results_moreselective.prepostdis_list = prepostdis_list;
+                    obj.results_moreselective.numabeta_aroundsynapse = numabeta_aroundsynapse;
+                    obj.results_moreselective.plotvals = plotvals;
+            end
+            
         end
-        
+        function boolval = pre_postOverlap(obj,vertices,overlapcutoff)
+            assert(isequal(size(obj.ch1.mask),size(obj.ch2.mask)));
+            if nargin<3
+                overlapcutoff = 20;
+            end
+            out = poly2mask(vertices(:,1)',vertices(:,2)',size(obj.ch1.mask,1),size(obj.ch1.mask,2));
+            lbch1 = label(obj.ch1.mask,1);
+            lbch2 = label(obj.ch2.mask,1);
+            if size(vertices,1)<3
+                disp('Not enough vertices to make a region');
+                return;
+            end
+            if size(vertices,2) == 2
+                mask_ch1 = lbch1.*out;
+                mask_ch2 = lbch2.*out;
+            else
+                mask_ch1 = lbch1(:,:,vertices(1,3)).*out;
+                mask_ch2 = lbch2(:,:,vertices(1,3)).*out;
+            end
+            overlap = mask_ch1.*mask_ch2;
+            if sum(overlap(:))>overlapcutoff
+                boolval = 0;
+            else
+                boolval = 1;
+            end
+        end
         function calculateDensities_abetaINch1(obj,bins)
             if nargin<2
                 bins = 0:30;
@@ -280,6 +329,14 @@ classdef SIM < handle
             end
             obj.abeta.mask = premask;
             obj.abeta.labeled_mask = label(obj.abeta.mask,1);
+        end
+        function make_maskchX(obj)
+           inputim = obj.abeta.image;
+            premask_1  = SIM.make_maskSynapseMarker(inputim);
+            obj.abeta.mask = removeWeirdSIMartifact(obj,inputim,premask_1);
+            % second set of masks
+            premask_2  = SIM.make_maskSynapseMarkerI(inputim);
+            obj.abeta.mask_highsense = removeWeirdSIMartifact(obj,inputim,premask_2);  
         end
         function make_maskch1(obj)
             inputim = obj.ch1.image;
@@ -532,7 +589,7 @@ classdef SIM < handle
                     obj.savepath = inputsavedir;
                 end
             end
-            save(obj.savepath,'obj');
+            save(obj.savepath,'obj','-v7.3','-nocompression');
         end
         
         function [tempvals,msr] = mindistCh1tofirstAbeta(obj,redodistancebool)

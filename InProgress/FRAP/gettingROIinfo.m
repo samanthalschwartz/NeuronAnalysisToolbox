@@ -1,8 +1,8 @@
 clear all; close all;
 %% load datafile and drift correct
-datafolder = 'G:\FromMicroscopeComputer\190316 pHujiIntensityTesting\FRAP\488FRAP\cell1_488FRAP_pHujiGaba_Cry2OligGephIB__20190316_84852 PM';
-fileinfo = fullfile(datafolder,'cell1_488FRAP_pHujiGaba_Cry2OligGephIB__w0000_z.tiff');
-metafile = fullfile(datafolder,'cell1_488FRAP_pHujiGaba_Cry2OligGephIB_.txt');
+datafolder = 'G:\FromMicroscopeComputer\190410 pHujiGaba\GephIB\gephIB_pHujiGabaFRAP_cell2_20190410_120921 PM';
+fileinfo = fullfile(datafolder,'gephIB_pHujiGabaFRAP_cell2_w0001_z.tiff');
+metafile = fullfile(datafolder,'gephIB_pHujiGabaFRAP_cell2.txt');
 pre_shift = GeneralAnalysis.loadtiff_1ch(fileinfo);
 [dataim,sv_arr] = GeneralAnalysis.timedriftCorrect(pre_shift);
 GeneralAnalysis.LibTiff(dataim,[fileinfo(1:end-5) 'Shift' fileinfo(end-4:end)]);
