@@ -6,12 +6,12 @@ repeatlen_561_488 = 1;
 repeatlength_tot = repeatlen_561only+repeatlen_561_488;
 totlen = (num_base+num_repeats)*repeatlength_tot;
 real_totlen = num_base+repeatlength_tot*num_repeats;
-datadir = 'G:\FromMicroscopeComputer\190316 pHujiIntensityTesting\FRAP\Cry2Olig\cell1_pHujiGaba_Cry2OligGephIB_driftedoutoffocus_20190316_75529 PM';
+datadir = 'G:\FromMicroscopeComputer\190410 pHujiGaba\GephIB\gephIB_pHujiGabaFRAP_cell2_20190410_120921 PM';
 savedir = datadir;
 % cd([datadir '/..']);
 % savedir = pwd;
 %%
-ch561_filebase = 'cell1_pHujiGaba_Cry2OligGephIB_driftedoutoffocus_w0001_z*';
+ch561_filebase = 'gephIB_pHujiGabaFRAP_cell2_w0001_z*';
 ch561files = dir2cell(datadir,ch561_filebase);
 clear im_561;
 for ii = 1:numel(ch561files)
@@ -30,7 +30,7 @@ end
 image_561 = max(dip_image(im_561),[],4);
 GeneralAnalysis.LibTiff(image_561,fullfile(savedir,ch561_filebase(1:end-1)));
 %% this section is wrong!!!
-ch488_filebase = 'cell1_pHujiGaba_Cry2OligGephIB_driftedoutoffocus_w0000_z*';
+ch488_filebase = 'gephIB_pHujiGabaFRAP_cell2_w0000_z*';
 ch488files = dir2cell(datadir,ch488_filebase);
 clear im_488;
 % im_post488_b = dimage_488(:,:,(num_base+1)*repeatlength_tot:(repeatlength_tot):end); % this is weird crap image over and over

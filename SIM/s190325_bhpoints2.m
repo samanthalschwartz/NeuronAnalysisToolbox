@@ -85,15 +85,15 @@ filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','G:\Hannah Dro
 prepostdis_list_all = cell(1,numel(filepath));
 numabeta_aroundsynapse_all = cell(1,numel(filepath));
 plotvals_all = cell(1,numel(filepath));
-for ff= 1:numel(filepath)
+for ff= 4:numel(filepath)
     clear obj;
     load(filepath{ff});
-    obj.abetaDensityAlongPrePost();
+    obj.abetaDensityAlongPrePost('moreselectiveROIs');
     obj.save(filepath{ff});
 
-    prepostdis_list_all{ff} =  obj.results.prepostdis_list;
-    numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
-    plotvals_all{ff} = obj.results.plotvals;
+    prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
+    numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
+    plotvals_all{ff} = obj.results_moreselective.plotvals;
 end
 %- do this with 0 = center of pre/post alignment
 % - plot histgram of pre/post distance
@@ -108,9 +108,9 @@ wb = waitbar(0,'Looping Through Run Files');
 for ff= 1:numel(filepath)
     clear obj;
     load(filepath{ff});
-    prepostdis_list_all{ff} =  obj.results.prepostdis_list;
-    numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
-    plotvals_all{ff} = obj.results.plotvals;
+    prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
+    numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
+    plotvals_all{ff} = obj.results_moreselective.plotvals;
     waitbar(ff/numel(filepath),wb);
 end
 
@@ -132,7 +132,8 @@ xlim([0 20]); ylim([-20 20])
 hold on; plot([0:40],repmat(0,1,41),'w')
 
 plotsvals(plotsvals(:,1)==0,:) = [];
-[gca,N] = scatter2heatmap(plotsvals(:,1).*obj.XYpxsize,plotsvals(:,2).*obj.XYpxsize,30);
+[gca,N] = scatter2heatmap(plotsvals(:,1).*obj.XYpxsize,plotsvals(:,2).*obj.XYpxsize,25);
+% colormap('hot')
 
 xlim([0 1]); ylim([-1 1]); pbaspect([1 1 1])
 hold on; plot([0:40],repmat(0,1,41),'w','LineWidth',2)

@@ -1,34 +1,58 @@
-ids = [3 2 1];
-channelorderingstr = {'chABeta','NR1','PSD95'}; % channel abeta, channel 1, channel2
-filepath = 'G:\Hannah Dropbox SIM data\112117\NR1_PSD95_500 nM Abeta\NR1488_PSD95561_Abeta647_006_Reconstructed.nd2';
-
+ids = [2 1 3];
+channelorderingstr = {'chABeta','PSD95ib','Bassoon'}; % channel abeta, channel 1, channel2
+dirname = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\AB_Controls_040819';
+savedir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819';
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec',dirname);
+wb = waitbar(0);
+for ff= 1:numel(filepath)
 obj  = SIM();
 obj.channelordering = ids;
 obj.channelorderingstr = channelorderingstr;
-obj.loadNDfile(filepath);
-
-% -- this is in dipimage values! (one less than image j plane)
-opts.WindowStyle='normal';
-prompt = {'Bottom Plane','Top Plane'};
-title = 'select the planes';
-dims = [1 35];
-definput = {'',''};
-answer = inputdlg(prompt,title,dims,definput,opts);
-obj.planeBOTTOM = answer{1};
-obj.planeTOP = answer{2};
+obj.loadNDfile(filepath{ff});
+obj.save('C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
 obj.setimage();
-obj.save('G:\Hannah Dropbox SIM data\SIM_Files\112117');
+waitbar(ff/numel(filepath),wb);
+end
+close(wb)
+%%
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec',savedir);
+wb = waitbar(0);
+for ff= 1:numel(filepath)
+    load(filepath{ff});
+    % -- this is in dipimage values! (one less than image j plane)
+    g = dipshow(obj.ch1.rawimage,'log')
+    while(ishandle(g))
+        try
+                w = waitforbuttonpress;
+        catch
+        end
+    end
+    opts.WindowStyle='normal';
+    prompt = {'Bottom Plane','Top Plane'};
+    title = 'select the planes';
+    dims = [1 35];
+    definput = {'',''};
+    answer = inputdlg(prompt,title,dims,definput,opts);
+    obj.planeBOTTOM = answer{1};
+    obj.planeTOP = answer{2};
+    obj.setimage();
+    obj.save();
+    waitbar(ff/numel(filepath),wb);
+end
+close(wb)
 
 %% run all the masking, simulation etc
 close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','G:\Hannah Dropbox SIM data\SIM_Files');
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
 wb = waitbar(0);
 for ff= 1:numel(filepath)
+    tic
 load(filepath{ff});
 obj.make_cellmask;
-obj.make_maskchAB;
+obj.make_maskchX;
 obj.make_maskch1;
 obj.make_maskch2;
+disp('Finished Making Masks');
 obj.make_distancemasks;
 obj.measurements = [{'size'},   {'sum'}, {'Gravity'}];
 obj.measure_AB;
@@ -37,6 +61,8 @@ obj.calculateNumberDensityCOM;
 obj.calculateNumberDensityCOM(0,1);
 obj.save(filepath{ff});
 waitbar(ff/numel(filepath),wb);
+clear obj;
+toc
 end
 close(wb);
 %% stupid way of saving
