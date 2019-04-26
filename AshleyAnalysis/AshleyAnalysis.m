@@ -378,9 +378,9 @@ classdef AshleyAnalysis < handle
 %            overlayim(overlayim==0) = max(overlayim)*2;
            overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
-               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask);
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
            else
-               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask);
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
            end
            obj.cleanedcargomask = cargomask;
        end

@@ -41,7 +41,11 @@ classdef channelBase < handle
        function trim_rawimage(obj)
            if isempty(obj.ROI_trim) || size(obj.ROI_trim,1)==1
                h = dipshow(obj.rawimage);
-               dipmapping(h,'log');
+               try
+                   dipmapping(h,'log');
+               catch
+                   dipmapping(h,'percentile');
+               end
                diptruesize(h,100);
                answer = questdlg('Select the region to use as your image', ...
                    'Options', ...
@@ -84,7 +88,7 @@ classdef channelBase < handle
                a(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2)) = 0;
            end
            dipfig -unlink
-           newmask = logical(lb);
+%            newmask = logical(lb);
        end
     
      
