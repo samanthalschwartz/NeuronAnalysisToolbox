@@ -370,7 +370,11 @@ methods (Static)
         ov = underimgin;
         ov(lb~=0) = 0;
         g = dipfig('ov');
+        try
         dipshow(ov,'log');
+        catch
+            dipshow(ov,'percentile');
+        end
         diptruesize(g,imviewsz);
         clmp = bone(255);
         clmp(1,:) = [1 0 0];
@@ -398,7 +402,11 @@ methods (Static)
             ov = underimgin;
             ov(lb~=0) = 0
             diptruesize(gcf,imviewsz);
+            try
             dipmapping('log')
+            catch
+                dipmapping('percentile')
+            end
             dipmapping('colormap',clmp);
         end
       dipfig -unlink
@@ -989,10 +997,12 @@ methods (Static)
          % clean up the image
          fulltest = sum(stitchmovie,3);
          test1 = sum(fulltest,1);
+         yfirst = find(test1>0,1,'first');
          ylast = find(test1>0,1,'last');
          test2 = sum(fulltest,2);
+         xfirst = find(test2>0,1,'first');
          xlast = find(test2>0,1,'last');
-         stitchmovie = stitchmovie(1:xlast,1:ylast,:);
+         stitchmovie = stitchmovie(xfirst:xlast,yfirst:ylast,:);  
      end
      
      function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)

@@ -14,12 +14,13 @@ classdef AshleyAnalysis < handle
     M = [];
     cleanedcargomask = [];
     distmask = [];
+    cargo_heatmap = [];
     % first frame of baseline (ie: 1);
     % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
      % frame rate in min/frame (ie: 1, 1 minute interval between frames)
     imagingparams = struct(...
         'baseline', struct('frame_start',[],'frame_end',[], 'framerate',[]),... 
-        'releasetime',[],... % duration of 405 light in min (ie: 1, means 1 minute between end of baseline and first frame of post release-- this dictates the time at postreleaseframe_start 
+        'releaseframe',[],... % duration of 405 light in min (ie: 1, means 1 minute between end of baseline and first frame of post release-- this dictates the time at postreleaseframe_start 
         'postrelease', struct('frame_start',[],'frame_end',[], 'framerate',[])); % first frame of baseline (ie: 7, frame 7 is first frame of post release, occurs at time = releasetime
    end
    
@@ -87,7 +88,7 @@ classdef AshleyAnalysis < handle
            newsfmask(wshed==1) = 0;
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
-       function h = plot_cargo_minFrame(obj,maxtime,perimbool)
+       function h = calc_cargo_minFrame(obj,maxtime,perimbool)
            % cellperim is boolean for including cell perimeter in image
            if ~isempty(obj.cleanedcargomask)
                maskimg = obj.cleanedcargomask;
@@ -147,6 +148,15 @@ classdef AshleyAnalysis < handle
                dist = dt(cfmask(:,:,0));
                test(dist==1) = max(test)+1;
            end
+           obj.cargo_heatmap.image = test;
+           obj.cargo_heatmap.timerange = timerange;
+           
+       end
+       function h = plotCargoHeatMap(obj)
+           if isempty(obj.cargo_heatmap)
+               obj.plot_cargo_minFrame();
+           end
+           fixedtimerange = 162;
            %-- make colormap for plotting
            blackjet = flip(jet(255));
            blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
@@ -154,14 +164,15 @@ classdef AshleyAnalysis < handle
            
            % get colorbar tick info
            %            colorunit = size(labeledim,3)/255;
-           colorunit = timerange(end)/255;
+%            colorunit = obj.cargo_heatmap.timerange(end)/255;
+           colorunit = fixedtimerange/255;
            numofcolbarval = 4;
            colbarplace =[0:numofcolbarval]*255/4;
            colbarval = [floor(colbarplace * colorunit)];
            
            %-- now plot results
-           h = dipshow(test,blackjet);
-           dipmapping(h,[0 size(timerange,2)]);
+           h = dipshow(obj.cargo_heatmap.image,blackjet);
+           dipmapping(h,[obj.imagingparams.releaseframe size(obj.cargo_heatmap.timerange,2)]);
            diptruesize(h,100);
            
            
@@ -172,7 +183,7 @@ classdef AshleyAnalysis < handle
            c.FontSize = 16;
            c.Label.String = 'Time of First Appeareance After Release (min)';
            c.Label.FontSize = 16;
-           h.OuterPosition = h.OuterPosition + [0 0 400 50];
+           h.OuterPosition = h.OuterPosition + [0 0 400 50]; 
        end
        
        function M = plotDensityperTime(obj,distances)
@@ -284,12 +295,15 @@ classdef AshleyAnalysis < handle
            distmask = dip_image(distmask);  
            obj.distmask = distmask;
        end
-       function [h,lagim] = plot_cargo_minFrameMovie(obj,framelag,savename)
+       function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image
-           if nargin<2
+           if nargin<3
                framelag = 4;
            end
-           [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.surfaceCargo.mask);
+           if nargin<2
+               savename = fullfile(pwd,'movie');
+           end
+           [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.cleanedcargomask);
            labeledim = lbl_out.*obj.cellFill.mask;
            %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
            test = min(labeledim,labeledim>0,3);
@@ -303,7 +317,6 @@ classdef AshleyAnalysis < handle
                videoout(:,:,ff) = (test == (ff+1));
            end
            % now make arbitrary sliding windw
-           framelag = 4;
            lagim = 0*videoout;
            for ff = 1:size(videoout,3)
                if ff<=framelag
@@ -319,11 +332,10 @@ classdef AshleyAnalysis < handle
            tcm(1,:) = [0 0 0];
            h = dipshow(lagim,tcm);
            diptruesize(h,100);
-           if nargin==3
-               %save the movie
-               options.framerate = 18; %default
-               writeDipImageMovie(h,savename,options)
-           end
+           
+           %save the movie
+           options.framerate = 18; %default
+           writeDipImageMovie(h,savename,options)
        end
        
        function calculateSurfaceCargoDistances(obj,plotflag,savedir)
@@ -366,9 +378,9 @@ classdef AshleyAnalysis < handle
 %            overlayim(overlayim==0) = max(overlayim)*2;
            overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
-               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask);
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
            else
-               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.surfaceCargo.mask*obj.cellFill.mask);
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
            end
            obj.cleanedcargomask = cargomask;
        end
