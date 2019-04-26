@@ -1,0 +1,4 @@
+classdef channelmiscChannel < channelBase
+    
+    
+end

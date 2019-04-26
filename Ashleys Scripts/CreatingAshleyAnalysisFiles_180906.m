@@ -2,12 +2,12 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %-- set imaging parameters:
-baselineframe_start = 1; % first frame number that baseline acquisition begins
-baselineframe_end = 6; % last frame number of baseline
-baselineframerate = 2; % frame rate in minutes/frame 
-releasetime = 1; % time in minutes, after release, that first frame of post release starts
-postrelease(1).frame_start = 7; % first frame number of post release
-postrelease(1).frame_end = 20; % last frame number of post release - or 'end' if post release goes until end of series
+baselineframe_start = 2; % first frame number that baseline acquisition begins
+baselineframe_end = 7; % last frame number of baseline
+baselineframerate = 1; % frame rate in minutes/frame 
+releasetime = 6; % time in minutes, after release, that first frame of post release starts
+postrelease(1).frame_start = 8; % first frame number of post release
+postrelease(1).frame_end = 'end'; % last frame number of post release - or 'end' if post release goes until end of series
 postrelease(1).framerate = 2; % frame rate in minutes/frame
 postrelease(2).frame_start = 21;
 postrelease(2).frame_end = 'end';
