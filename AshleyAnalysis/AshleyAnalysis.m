@@ -154,7 +154,7 @@ classdef AshleyAnalysis < handle
        end
        function h = plotCargoHeatMap(obj)
            if isempty(obj.cargo_heatmap)
-               obj.plot_cargo_minFrame();
+               obj.calc_cargo_minFrame();
            end
            fixedtimerange = 162;
            %-- make colormap for plotting
