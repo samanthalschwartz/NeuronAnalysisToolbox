@@ -373,6 +373,13 @@ classdef SIM < handle
             end
             mask = premask;
         end
+        function viewpatches(obj)
+            joinchannels('rgb',obj.abeta.mask,obj.ch1.mask,obj.ch2.mask)
+            hold on;
+            for ii =1:numel(obj.results_moreselective.selectedROIs)
+                patch(obj.results_moreselective.selectedROIs{ii}(:,1)',obj.results_moreselective.selectedROIs{ii}(:,2),'white','EdgeColor','white','FaceColor','none','LineWidth',2)
+            end
+        end
         function selectPrePostROI(obj,alternate)  
             ch1 = obj.ch1.mask.*(obj.abeta.distance_mask<20);
             ch2 = obj.ch2.mask.*(obj.abeta.distance_mask<20);

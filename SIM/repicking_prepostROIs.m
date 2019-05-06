@@ -3,8 +3,8 @@ close all; clear all;
 filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
 for ff= 1:numel(filepath)
 load(filepath{ff});
-obj.selectPrePostROI;
-% obj.selectPrePostROI(1); %for saving new set of ROIs as moreselectiveROIs
+% obj.selectPrePostROI;
+obj.selectPrePostROI(1); %for saving new set of ROIs as moreselectiveROIs
 obj.save;
 end
 %% calculate results

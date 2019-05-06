@@ -107,12 +107,12 @@ figure;hold on;
 for ff= 1:numel(filepath)
     clear obj;
     load(filepath{ff});
-%     prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
-%     numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
-%     plotvals_all{ff} = obj.results_moreselective.plotvals;
-    prepostdis_list_all{ff} =  obj.results.prepostdis_list;
-    numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
-    plotvals_all{ff} = obj.results.plotvals;
+    prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
+    numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
+    plotvals_all{ff} = obj.results_moreselective.plotvals;
+%     prepostdis_list_all{ff} =  obj.results.prepostdis_list;
+%     numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
+%     plotvals_all{ff} = obj.results.plotvals;
 end
 
 cols = lines(numel(plotvals_all));

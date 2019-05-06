@@ -32,13 +32,10 @@ classdef viewer3D < handle
         
         function loadSIM(obj,filepath)
             ss = load(filepath);
-            obj.numchannels = 3;
-            obj.image{1} = dip_image(ss.obj.abeta.image);
-            obj.image{2} = dip_image(ss.obj.ch1.image);
-            obj.image{3} = dip_image(ss.obj.ch2.image);
-            for nn = 1:obj.numchannels
-                obj.scaleval{nn} = obj.default_scaleval;
-            end
+            for ii = 1:3
+               obj.image{ii} = 
+                
+            end 
         end
         
         function makepanel(obj)
@@ -65,8 +62,7 @@ classdef viewer3D < handle
             obj.h_figure = figure;
             obj.h_axes = gca;
             obj.makepatches();
-            axis 'vis3d'
-            set(gca,'color','k');
+            axis vis3d
         end
         function makepatches(obj)
             cla(obj.h_axes);
