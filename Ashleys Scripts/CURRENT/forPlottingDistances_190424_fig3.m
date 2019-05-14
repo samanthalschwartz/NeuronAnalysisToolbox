@@ -1,6 +1,7 @@
 close all;
 clear all;
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\051318\TIFF files\3_AshleyFile.mat';
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\050118\TIFF files\cell1_AshleyFile.mat';
+load(filename);
 pxsize = 0.114374*2;
 d1 = 5/pxsize;
 d2 = 40/pxsize;
@@ -36,4 +37,4 @@ M1 = aa.M.areanormintensity'./aa.M.areanormintensity(1,end)'
 % density for each distance
 figure;
 plot(aa.M.areanormintensity'./aa.M.areanormintensity(:,end)')
-M2 = aa.M.areanormintensity'./aa.M.areanormintensity(:,end)'
+M2 = aa.M.areanormintensity'./aa.M.areanormintensity(:,end)';

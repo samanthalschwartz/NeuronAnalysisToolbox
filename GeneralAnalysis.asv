@@ -354,12 +354,8 @@ methods (Static)
          if nargin<3
              imviewsz = 150;
          end
-         lb = [];
-         for ll = 1:size(mask_in,3)
-             labslice = label(mask_in(:,:,ll-1));
-             lb = cat(3,lb,labslice);
-         end
-%         lb = slice_op('label',logical(mask_in));
+        labslic = label(
+        lb = slice_op('label',logical(mask_in));
         ov = underimgin;
         ov(lb~=0) = 0;
         g = dipfig('ov');
