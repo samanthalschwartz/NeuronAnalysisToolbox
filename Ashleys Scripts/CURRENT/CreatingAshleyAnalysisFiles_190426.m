@@ -12,26 +12,26 @@ postrelease(1).framerate = 2; % frame rate in minutes/frame
 postrelease(2).frame_start = 21;
 postrelease(2).frame_end = 'end';
 postrelease(2).framerate = 1;
-
-
-
-
-%% select - in order - the pre and post files you want to concat
-files = uipickfiles('prompt','select the 2 images to concatenate',...
-    'FilterSpec','Z:\Sam\MJK_zapERtrap_for_sam\AMB_globalrelease\041718_DHFR-GFP-NL1_TfRmChSEP_antiHA');
-im_array1 = GeneralAnalysis.loadtiff_2ch(files{1});
-im_array2 = GeneralAnalysis.loadtiff_2ch(files{2});
-im_array = cat(3,im_array1,im_array2);
-[FILEPATH,NAME,EXT] = fileparts(files{1});
+%%
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\050118\TIFF files\cell1.tif';
+[FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_');
 savename = fullfile(FILEPATH,temp{1});
+
+uiopen(filename); close all;
+
+TfR = image(:,:,:,1); TfR = permute(TfR,[2 1 3]);
+cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
+cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
+
+
 
 %%
 % to view image series 'N' to go to next time slice 'P' for previous time
 % slice. Use 'Mapping' tool bar at top to change the look up table.
 % 'I' to zoom in or 'O' to zoom out.
 aa = AshleyAnalysis();
-aa.path_3ch_datafile = files;
+aa.path_3ch_datafile = filename;
 aa.cellFill = channelCellFill();
 aa.surfaceCargo = channelSurfaceCargo();
 aa.TfR = channelTfR();
@@ -44,8 +44,8 @@ aa.imagingparams.postrelease = postrelease;
 %%
 
 % use last index to represent which stack to use
-aa.cellFill.setimage(im_array(:,:,:,1));
-aa.surfaceCargo.setimage(im_array(:,:,:,2));
+aa.cellFill.setimage(cellfill);
+aa.surfaceCargo.setimage(cargo);
 % aa.TfR.setimage(im_array(:,:,:,2));
 
 [img_out_cf,sv_arr] = GeneralAnalysis.timedriftCorrect(aa.cellFill.image);
@@ -57,7 +57,7 @@ aa.surfaceCargo.setimage(img_out_sc);
 
 % trim the image 
 aa.cellFill.ROI_trim = [];
-aa.cellFill.trim_rawimage()
+aa.cellFill.trim_rawimage();
 aa.surfaceCargo.ROI_trim = aa.cellFill.ROI_trim;
 aa.surfaceCargo.trim_rawimage;
 % aa.TfR.ROI_trim = aa.cellFill.ROI_trim;
@@ -103,14 +103,15 @@ aa.cleanSurfaceCargoMask_Manual();
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
 
 
+
+% now make the min distance image
+% h = aa.plot_cargo_minFrame();
+close all;
+h = aa.plotCargoHeatMap;
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
 save(fullfile([savename '_AshleyFile.mat']), 'aa'); 
 
-% now make the min distance image
-% h = aa.plot_cargo_minFrame();
-
-h = aa.plotCargoHeatMap;
 saveas(h,fullfile([savename '_timeHeatMap']),'fig');
 saveas(h,fullfile([savename '_timeHeatMap']),'png');
 saveas(h,fullfile([savename '_timeHeatMap']),'eps');
