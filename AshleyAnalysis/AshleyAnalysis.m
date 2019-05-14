@@ -91,9 +91,9 @@ classdef AshleyAnalysis < handle
        function h = calc_cargo_minFrame(obj,maxtime,perimbool)
            % cellperim is boolean for including cell perimeter in image
            if ~isempty(obj.cleanedcargomask)
-               maskimg = obj.cleanedcargomask;
+               maskimg = dip_image(logical(obj.cleanedcargomask));
            else
-               maskimg = obj.surfaceCargo.mask;
+               maskimg =  dip_image(logical(obj.surfaceCargo.mask));
            end
            
            if isfield(obj.imagingparams,'baselineframe_start') && ~isempty(obj.imagingparams.baselineframe_start)
@@ -119,7 +119,7 @@ classdef AshleyAnalysis < handle
                else
                    cfmask = obj.cellFill.mask(:,:,startfrm:endfrm);
                end
-               firstfrmtime = obj.imagingparams.releasetime;
+               firstfrmtime = obj.imagingparams.releaseframe;
                
                currfirst = firstfrmtime;
                timerange = [];
@@ -392,7 +392,7 @@ classdef AshleyAnalysis < handle
            else
                cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
            end
-           obj.cleanedcargomask = cargomask;
+           obj.cleanedcargomask = dip_image(logical(cargomask));
        end
        function cleanCellFillMask_Manual(obj)
            overlayim = obj.cellFill.image;

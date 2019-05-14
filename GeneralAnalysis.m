@@ -429,7 +429,7 @@ methods (Static)
          if nargin<3
              imviewsz = 150;
          end
-         maskin = dip_image(mask_in);
+        maskin = dip_image(mask_in);
         lb = label(logical(maskin));
         ov = underimgin;
         ov(lb~=0) = 0;
@@ -467,7 +467,7 @@ methods (Static)
             dipmapping('colormap',clmp);
         end
       dipfig -unlink
-      newmask = maskin;  
+      newmask = logical(maskin);  
     end
     function newmask = cleanUpMaskKeepers_manual_square(underimgin,mask_in,imviewsz)
         if nargin<3
@@ -533,13 +533,19 @@ methods (Static)
                 end
             end
         end
-        labeledim = dip_image(zeros(size(mask_in)));
+        if isa(mask_in,'dip_image')
+            labeledim = dip_image(permute(zeros(size(mask_in)),[2 1 3]));
+        else
+            labeledim = dip_image(zeros(size(mask_in)));
+        end
+        
+        
         if numel(size(mask_in))<3
             disp('This method is not useful for 2D images, because it will just return the mask. Try with a 3D image series.')
             return;
         end
         for ii = 1:size(mask_in,3)
-            mask = dip_image(mask_in);
+            mask = mask_in;
             temp = GeneralAnalysis.labelmask(mask(:,:,ii-1),conn,minSize,maxSize);
             temp(temp>0) = ii;
             labeledim(:,:,ii-1) = temp;

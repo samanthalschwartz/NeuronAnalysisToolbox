@@ -54,7 +54,7 @@ img_out_sc = GeneralAnalysis.applydriftCorrect(aa.surfaceCargo.image,sv_arr);
 aa.surfaceCargo.setimage(img_out_sc);
 % img_out_tf = GeneralAnalysis.applydriftCorrect(aa.TfR.image,sv_arr);
 % aa.TfR.setimage(img_out_tf);
-
+%%
 % trim the image 
 aa.cellFill.ROI_trim = [];
 aa.cellFill.trim_rawimage();
@@ -100,13 +100,14 @@ aa.cellFill.selectSoma();
 
 % clean up the image:
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
-aa.cleanSurfaceCargoMask_Manual();
+%aa.cleanSurfaceCargoMask_Manual();
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
-
+%Call this line instead if you want to clean up by frame
+aa.cleanSurfaceCargoMaskbyFrame_Manual();
 
 
 % now make the min distance image
-% h = aa.plot_cargo_minFrame();
+%h = aa.plot_cargo_minFrame();
 close all;
 h = aa.plotCargoHeatMap;
 % now save the object

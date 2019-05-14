@@ -88,18 +88,12 @@ classdef AshleyAnalysis < handle
            newsfmask(wshed==1) = 0;
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
-       function crop_cleanedcargomask(obj)
-           if ~isempty(obj.cleanedcargomask)
-               obj.cleanedcargomask = obj.cleanedcargomask(obj.cellFill. ROI_trim(1,1):obj.ROI_trim(1,1)+obj.ROI_trim(2,1),obj.ROI_trim(1,2):obj.ROI_trim(1,2)+obj.ROI_trim(2,2),obj.ROI_trim(1,3):obj.ROI_trim(1,3)+obj.ROI_trim(2,3));
-           end
-       end
-       
        function h = calc_cargo_minFrame(obj,maxtime,perimbool)
            % cellperim is boolean for including cell perimeter in image
            if ~isempty(obj.cleanedcargomask)
-               maskimg = obj.cleanedcargomask;
+               maskimg = dip_image(logical(obj.cleanedcargomask));
            else
-               maskimg = obj.surfaceCargo.mask;
+               maskimg =  dip_image(logical(obj.surfaceCargo.mask));
            end
            
            if isfield(obj.imagingparams,'baselineframe_start') && ~isempty(obj.imagingparams.baselineframe_start)
@@ -125,7 +119,7 @@ classdef AshleyAnalysis < handle
                else
                    cfmask = obj.cellFill.mask(:,:,startfrm:endfrm);
                end
-               firstfrmtime = obj.imagingparams.releaseframe;
+               firstfrmtime = obj.imagingparams.releasetime;
                
                currfirst = firstfrmtime;
                timerange = [];
@@ -382,6 +376,7 @@ classdef AshleyAnalysis < handle
 %            [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
 %            close(h);
 %            overlayim(overlayim==0) = max(overlayim)*2;
+            % - for resetting image use 1
            overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
                cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
@@ -390,7 +385,15 @@ classdef AshleyAnalysis < handle
            end
            obj.cleanedcargomask = cargomask;
        end
-       
+       function cleanSurfaceCargoMaskbyFrame_Manual(obj,reset)
+           overlayim = obj.surfaceCargo.image;
+           if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
+               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
+           else
+               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
+           end
+           obj.cleanedcargomask = dip_image(logical(cargomask));
+       end
        function cleanCellFillMask_Manual(obj)
            overlayim = obj.cellFill.image;
            mask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cellFill.mask);
