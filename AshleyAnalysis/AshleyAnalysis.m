@@ -172,8 +172,8 @@ classdef AshleyAnalysis < handle
            colbarval = [floor(colbarplace * colorunit)];
            
            %-- now plot results
-           h = dipshow(obj.cargo_heatmap.image,blackjet);
-           dipmapping(h,[obj.imagingparams.releaseframe size(obj.cargo_heatmap.timerange,2)]);
+           h = dipshow(obj.cargo_heatmap.image-obj.imagingparams.releasetime,blackjet);
+           dipmapping(h,[obj.imagingparams.releasetime size(obj.cargo_heatmap.timerange,2)]);
            diptruesize(h,100);
            
            
@@ -385,6 +385,16 @@ classdef AshleyAnalysis < handle
            end
            obj.cleanedcargomask = cargomask;
        end
+       
+       function cleanSurfaceCargoSummedImage(obj)
+          if ~isempty(obj.cleanedcargomask)
+              currmask = obj.cleanedcargomask;
+          else
+              currmask = obj.surfaceCargo.mask;
+          end
+          
+       end
+       
        
        function cleanCellFillMask_Manual(obj)
            overlayim = obj.cellFill.image;

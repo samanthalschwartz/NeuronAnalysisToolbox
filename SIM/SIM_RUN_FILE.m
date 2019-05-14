@@ -71,8 +71,8 @@ close all; clear all;
 filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
 for ff= 1:numel(filepath)
 load(filepath{ff});
-% obj.selectPrePostROI;
-obj.selectPrePostROI; %for saving new set of ROIs as moreselectiveROIs
+obj.selectPrePostROI;
+% obj.selectPrePostROI(1); %for saving new set of ROIs as moreselectiveROIs
 obj.save;
 end
 %% calculate results
@@ -107,12 +107,12 @@ figure;hold on;
 for ff= 1:numel(filepath)
     clear obj;
     load(filepath{ff});
-%     prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
-%     numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
-%     plotvals_all{ff} = obj.results_moreselective.plotvals;
-    prepostdis_list_all{ff} =  obj.results.prepostdis_list;
-    numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
-    plotvals_all{ff} = obj.results.plotvals;
+    prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
+    numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
+    plotvals_all{ff} = obj.results_moreselective.plotvals;
+%     prepostdis_list_all{ff} =  obj.results.prepostdis_list;
+%     numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
+%     plotvals_all{ff} = obj.results.plotvals;
 end
 
 cols = lines(numel(plotvals_all));

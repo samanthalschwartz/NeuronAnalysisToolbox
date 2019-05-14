@@ -1,8 +1,8 @@
-filename = 'Y:\Lab Projects\zapERtrap\Raw Data\AISexpts\071618\NL1\TIFF files\071618_DHFR-GFP-NL1_AnkG-mCherry_antiGFP640_global_5_stitched.tif';
+filename = 'F:\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\051418\TIFF files\merges\4_stitch_merge_AshleyFile.tif';
 uiopen(filename); close all;
 
-ankG = image(:,:,:,1); ankG = permute(ankG,[2 1 3]);
-cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
+cellfill = image(:,:,:,1); cellfill = permute(cellfill,[2 1 3]);
+tfr = image(:,:,:,2); tfr = permute(tfr,[2 1 3]);
 cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
 
 aa = AshleyAnalysis();
