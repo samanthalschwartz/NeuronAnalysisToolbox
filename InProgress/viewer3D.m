@@ -8,12 +8,13 @@ classdef viewer3D < handle
         numchannels = 0;
         image = [];
         patch = [];
+        endpatch = [];
         scaleval = [];
         sliders = [];
         % vars to hide 
         rawtiff
         default_scaleval = 3;
-        colors = lines(10);
+        colors = [1 1 1; 0 1 0; 1 0 1; lines(10)];
         dimension = [1 1 2.5];
     end
     
@@ -71,7 +72,7 @@ classdef viewer3D < handle
         function makepatches(obj)
             cla(obj.h_axes);
             for nn = 1:obj.numchannels
-                obj.patch{nn} = obj.makepatch(obj.h_axes,obj.image{nn},obj.scaleval{nn},obj.colors(nn,:));
+                [obj.patch{nn},obj.endpatch{nn}] = obj.makepatch(obj.h_axes,obj.image{nn},obj.scaleval{nn},obj.colors(nn,:));
                 hold on;
             end
             pbaspect(obj.dimension);
@@ -84,12 +85,14 @@ classdef viewer3D < handle
     end
     
     methods(Static)
-        function p = makepatch(ax,data,scaleval,col)
+        function [p, pe]= makepatch(ax,data,scaleval,col)
             szd = size(data);
             colormatrix = ones(szd(2),szd(1),szd(3));
             value = (max(data)+min(data))/scaleval;
             p = patch(ax, isosurface(0:szd(1)-1,0:szd(2)-1,1:szd(3),double(data),value,colormatrix.*double(data)),'parent',ax...
                 ,'facelighting','phong','facecolor',col,'edgecolor','none','FaceAlpha',.5);
+            pe = patch(isocaps(0:szd(1)-1,0:szd(2)-1,1:szd(3),double(data),value),'parent',ax,...
+                'facecolor',col,'edgecolor','none','FaceAlpha',.5,'facelighting','phong') ;
         end
     end
 end

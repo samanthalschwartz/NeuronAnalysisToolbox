@@ -376,6 +376,7 @@ classdef AshleyAnalysis < handle
 %            [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
 %            close(h);
 %            overlayim(overlayim==0) = max(overlayim)*2;
+            % - for resetting image use 1
            overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
                cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
@@ -384,7 +385,15 @@ classdef AshleyAnalysis < handle
            end
            obj.cleanedcargomask = cargomask;
        end
-       
+       function cleanSurfaceCargoMaskbyFrame_Manual(obj,reset)
+           overlayim = obj.surfaceCargo.image;
+           if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
+               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
+           else
+               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
+           end
+           obj.cleanedcargomask = cargomask;
+       end
        function cleanCellFillMask_Manual(obj)
            overlayim = obj.cellFill.image;
            mask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cellFill.mask);

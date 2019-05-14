@@ -6,6 +6,7 @@ function writeDipImageMovie(h,filename,options)
 %          options.slices = allslices %default. also could do ex. [0:20]
 % vid = VideoWriter(filename,'MPEG-4');
 vid = VideoWriter(filename,'MPEG-4');
+vid.Quality = 100;
 seq = dipgetimage(h);
 nframes = size(seq{1},3);
 if nargin<3

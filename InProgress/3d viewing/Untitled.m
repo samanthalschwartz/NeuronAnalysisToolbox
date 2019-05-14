@@ -60,7 +60,7 @@ hold on;
 
 
 scaleval = 2.5;
-ab = gaussf(syn,[1 1 0]);
+ab = gaussf(geph,[1 1 0]);
 value = (max(ab)+min(ab))/scaleval;
 abmask = ab>value;
 lb = label(abmask);
@@ -162,7 +162,7 @@ for j = 1:loops1
     drawnow
     G(j) = getframe(gcf);
 end
-filesavename = 'Y:\Theresa\Images\0325slice_AAVSphHaloTent_gephIBgfp_tdTom_n3_pre_3drecon_movie'
+filesavename = 'Y:\Theresa\Images\0325slice_AAVSphHaloTent_gephIBgfp_tdTom_n3_pre_3drecon_movie_try1'
 myVideo = VideoWriter(filesavename,'MPEG-4');
 myVideo.FrameRate = 15;  % Default 30
 myVideo.Quality = 100;
