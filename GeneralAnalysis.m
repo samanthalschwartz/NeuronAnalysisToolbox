@@ -160,11 +160,25 @@ methods (Static)
           
           tic
           setTag(t,tagstruct)
-          write(t,squeeze(Vol(:,:,1)));
-          for i=2:size(Vol,3) % Write image data to the file
-              writeDirectory(t);
-              setTag(t,tagstruct)
-              write(t,squeeze(Vol(:,:,i))); % Append
+          if ndims(Vol) == 3
+              write(t,squeeze(Vol(:,:,1)));
+              for i=2:size(Vol,3) % Write image data to the file
+                  writeDirectory(t);
+                  setTag(t,tagstruct)
+                  write(t,squeeze(Vol(:,:,i))); % Append
+              end
+          elseif ndims(Vol) == 4
+              write(t,squeeze(Vol(:,:,1,1)));
+              for i=1:size(Vol,3) % Write image data to the file
+                  for j = 1:size(Vol,4)
+                      if i==1 && j==1
+                          continue
+                      end
+                  writeDirectory(t);
+                  setTag(t,tagstruct)
+                  write(t,squeeze(Vol(:,:,i,j))); % Append
+                  end
+              end
           end
           close(t);
           toc
