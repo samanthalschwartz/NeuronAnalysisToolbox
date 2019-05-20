@@ -18,13 +18,27 @@ classdef channelCellFill < channelBase
            %         img_g = GeneralAnalysis.imgGauss(img_m,obj.gsig);
            %         img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_m,obj.lsig,obj.gsig);
            img_g = GeneralAnalysis.imgGauss(obj.image,obj.gsig);
-           gmask =GeneralAnalysis.imgThreshold(img_g);
+           gmask = GeneralAnalysis.imgThreshold(img_g);
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,obj.lsig,obj.gsig);
            [lmask,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
            mask_out = gmask|lmask;
            obj.mask = mask_out;
            obj.backgroundvalue = threshval;
        end
+       function mask_img_II(obj)
+           %         img_m = medif(obj.image,3);
+           %         img_g = GeneralAnalysis.imgGauss(img_m,obj.gsig);
+           %         img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_m,obj.lsig,obj.gsig);
+%            img_g = GeneralAnalysis.imgGauss(obj.image,obj.gsig);
+%            gmask = GeneralAnalysis.imgThreshold(img_g);
+           img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,obj.lsig,obj.gsig);
+           [lmask,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
+           mask_out = lmask;
+           obj.mask = mask_out;
+           obj.backgroundvalue = threshval;
+       end
+       
+       
        function mask_img_other(obj)
            img_1 = medif(obj.image,3);
            img_2 = gaussf(img_1,obj.gsig);
