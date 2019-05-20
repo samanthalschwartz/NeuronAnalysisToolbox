@@ -1,12 +1,14 @@
 close all; clear all
-filename = 'G:\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\040318\TIFF files\1_merge.tif';
+filename = 'G:\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\060118\TIFF files\merges\slip1_2_merge.tif';
 uiopen(filename);
 soma = image;
 close all;
-uiopen('G:\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\040318\TIFF files\1_dendrites_merge.tif');
+uiopen('G:\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\060118\TIFF files\merges\slip1_2_dendrites_merge.tif');
 dendrites = image;
+
+
 close all;
-[ch1stitchimage, ccpeak] = GeneralAnalysis.stitch2movies(dendrites(:,:,:,2),soma(:,:,:,2),ccpeak);
+[ch1stitchimage, ccpeak] = GeneralAnalysis.stitch2movies(dendrites(:,:,:,2),soma(:,:,:,2));
 dipshow(ch1stitchimage,'log')
 
 [ch2stitchimage, ccpeak] = GeneralAnalysis.stitch2movies(dendrites(:,:,:,1),soma(:,:,:,1),ccpeak);
@@ -14,6 +16,7 @@ dipshow(ch1stitchimage,'log')
 [ch3stitchimage, ccpeak] = GeneralAnalysis.stitch2movies(dendrites(:,:,:,3),soma(:,:,:,3),ccpeak);
 
 stitchimage = cat(4,ch1stitchimage,ch2stitchimage,ch3stitchimage);
+save([filename(1:end-4) '_stitch'],'stitchimage');
 LibTiff(stitchimage,[filename(1:end-4) '_stitch']);
 
 aa = AshleyAnalysis();

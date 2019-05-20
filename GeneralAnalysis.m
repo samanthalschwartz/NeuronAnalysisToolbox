@@ -280,8 +280,14 @@ methods (Static)
         img_dggcutoff(img_dggcutoff<0) = 0;
     end
     function mask = imgThreshold(img_in)
-        threshval = multithresh(single(img_in),2);
+        threshval = multithresh(single(img_in),3);
         mask = img_in>=threshval(1);
+    end
+    function mask = laplacemask(img_in)
+        gch = gaussf(img_in);
+        out = GeneralAnalysis.imgLaplaceCutoff(gch);
+        thr = multithresh(single(out),3);
+        mask = out>thr(1);
     end
     function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
         if ~isa(img_in,'dip_image')
