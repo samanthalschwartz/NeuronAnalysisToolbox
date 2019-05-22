@@ -1,5 +1,6 @@
 %% Script to Identify CellFill and Recruitment Objects to make an 'AshleyFile' Object
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
+<<<<<<< HEAD
 %postrelease(2).frame_start = 21;
 %postrelease(2).frame_end = 'end';
 %postrelease(2).framerate = 1;
@@ -15,6 +16,32 @@
 % cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
 % cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
 % 
+=======
+close all; clear all;
+%-- set imaging parameters:
+baselineframe_start = 1; % first frame number that baseline acquisition begins
+baselineframe_end = 10; % last frame number of baseline
+baselineframerate = 1; % frame rate in minutes/frame 
+releasetime = 11; % time in minutes, after release, that first frame of post release starts
+postrelease(1).frame_start = 11; % first frame number of post release
+postrelease(1).frame_end = 'end'; % last frame number of post release - or 'end' if post release goes until end of series
+postrelease(1).framerate = 2; % frame rate in minutes/frame
+%postrelease(2).frame_start = 21;
+%postrelease(2).frame_end = 'end';
+%postrelease(2).framerate = 1;
+%%
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\040318\TIFF files\1_stitched.tif';
+[FILEPATH,NAME,EXT] = fileparts(filename);
+temp = strsplit(NAME,'_');
+savename = fullfile(FILEPATH,temp{1});
+
+uiopen(filename); close all;
+
+TfR = image(:,:,:,1); TfR = permute(TfR,[2 1 3]);
+cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
+cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
+
+>>>>>>> d8f20e53a948e5ac7407e0cc743f5dbf71613ebf
 
 
 %%
@@ -100,13 +127,20 @@ aa.cleanSurfaceCargoMask_Manual(); % call this line instead if you want to start
 %h = aa.plot_cargo_minFrame();
 savename = filename(1:end-11);
 close all;
+<<<<<<< HEAD
 aa.cargo_heatmap = [];
 h = aa.plotCargoHeatMap;
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
 save(fullfile([savename '-AshleyFile.mat']), 'aa','-v7.3'); 
+=======
+h = aa.plotCargoHeatMap(1); % put 1 as input to reset
+% now save the object
+% save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
+save(fullfile([savename '_AshleyFile.mat']), 'aa', '-v7.3'); 
+>>>>>>> d8f20e53a948e5ac7407e0cc743f5dbf71613ebf
 
 saveas(h,fullfile([savename '_timeHeatMap']),'fig');
 saveas(h,fullfile([savename '_timeHeatMap']),'png');
-saveas(h,fullfile([savename '_timeHeatMap']),'eps');
+saveFigure_eps(h, fullfile([savename '_timeHeatMap']),'Arial');
 close(h);

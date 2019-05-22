@@ -41,13 +41,13 @@ classdef AshleyAnalysis < handle
                obj.surfaceCargo.setfilepath(obj.path_channel_surfaceCargo);
                obj.TfR.setfilepath(obj.path_channel_TfR);
                if ~isempty(obj.path_channel_cellfill)
-               obj.cellFill.loadimage();
+                   obj.cellFill.loadimage();
                end
                if ~isempty(obj.path_channel_surfaceCargo)
-               obj.surfaceCargo.loadimage();
+                   obj.surfaceCargo.loadimage();
                end
                if ~isempty(obj.path_channel_TfR)
-               obj.TfR.loadimage();
+                   obj.TfR.loadimage();
                end
            end
        end
@@ -152,14 +152,14 @@ classdef AshleyAnalysis < handle
            obj.cargo_heatmap.timerange = timerange;
            
        end
-       function h = plotCargoHeatMap(obj)
-           if isempty(obj.cargo_heatmap)
+       function h = plotCargoHeatMap(obj,reset)
+           if isempty(obj.cargo_heatmap) || nargin>1
                obj.calc_cargo_minFrame();
            end
-           fixedtimerange = 162;
+           fixedtimerange = 160;
            %-- make colormap for plotting
            blackjet = flip(jet(255));
-           blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
+           blackjet(1,:) = [0 0 0];% blackjet(end,:) = [1 1 1];
            
            
            % get colorbar tick info
@@ -173,16 +173,23 @@ classdef AshleyAnalysis < handle
            %-- now plot results
            h = dipshow(obj.cargo_heatmap.image,blackjet);
            dipmapping(h,[obj.imagingparams.releaseframe size(obj.cargo_heatmap.timerange,2)]);
-           diptruesize(h,100);
+           diptruesize(h,120);
            
            
            c = colorbar;
            c.Location = 'WestOutside';
            c.Ticks = colbarplace;
            c.TickLabels = colbarval;
-           c.FontSize = 16;
-           c.Label.String = 'Time of First Appeareance After Release (min)';
-           c.Label.FontSize = 16;
+           c.TickLength = 0.02
+           
+         
+           c.FontSize = 18;
+           c.LineWidth = 1.5;
+           c.FontName = 'Arial';
+           %c.FontWeight = 'bold';
+           c.Label.String = 'time of first appeareance after release (min)';
+           c.Label.FontSize = 18;
+           c.Label.FontName = 'Arial';
            h.OuterPosition = h.OuterPosition + [0 0 400 50]; 
        end
        

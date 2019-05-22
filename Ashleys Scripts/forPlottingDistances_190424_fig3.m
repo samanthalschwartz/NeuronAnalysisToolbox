@@ -1,12 +1,14 @@
 close all;
 clear all;
-% filename = 'G:\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\051718\slip2_7_merge_stitch-AshleyFile.mat';
+
+% filename = 'Y:\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\022018\cell4_merge_AshleyFile';
+% load(filename);
 pxsize = 0.114374*2;
 d1 = 5/pxsize;
 d2 = 40/pxsize;
 d3 = 200/pxsize;
 distances = [d1 d2 d3];
-files = uipickfiles('FilterSpec','G:\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\051718');
+files = uipickfiles('FilterSpec','Y:\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\022018');
 for ff = 1:numel(files)
     try
         load(files{ff})

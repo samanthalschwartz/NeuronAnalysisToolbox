@@ -69,6 +69,7 @@ methods (Static)
             img(:,:,ii-1) = imgbefore{1,1}{ii};
         end
     end 
+    
     function ov = displaytiff(image)
         if ndims(image) > 3
             switch size(image,4)
