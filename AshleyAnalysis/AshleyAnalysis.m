@@ -14,6 +14,8 @@ classdef AshleyAnalysis < handle
     M = [];
     cleanedcargomask = [];
     distmask = [];
+    distmaskFull = [];
+    distmaskAIS = [];
     cargo_heatmap = [];
     % first frame of baseline (ie: 1);
     % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
@@ -292,15 +294,25 @@ classdef AshleyAnalysis < handle
            
        end
        
-       function makeDistanceMask(obj)
-           % make the distance mask
-           sums = bdilation(obj.cellFill.mask,1);
-           geoframe = sum(sums,[],3);
-           sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
-           distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');   
-           obj.distmask = distmask;
-           distmask = dip_image(distmask);  
-           obj.distmask = distmask;
+       function makeDistanceMasks(obj)
+           % make the distance mask for the full cellfill mask area (AIS included)
+           sumsFull = bdilation(obj.cellFill.mask,1);
+           geoframeFull = sum(sumsFull,[],3);
+           obj.distmaskFull = dip_image(bwdistgeodesic(logical(geoframeFull),logical(sinkframe),'quasi-euclidean'));
+           clear sumsFull geoframeFull;
+           if ~isempty(obj.cellFill.AIS_mask)
+               % make the distance mask (no AIS included if it is there)
+               sums = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
+               geoframe = sum(sums,[],3);
+               sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
+               obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
+               clear sums geoframe;
+               % make the distance mask for the AIS only
+               sumsAIS = bdilation(obj.cellFill.AIS_mask,1);
+               geoframeAIS = sum(sumsAIS,[],3);
+               obj.distmaskAIS = dip_image(bwdistgeodesic(logical(geoframeAIS),logical(sinkframe),'quasi-euclidean'));
+               clear sumsAIS geoframeAIS;
+           end
        end
        function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image
