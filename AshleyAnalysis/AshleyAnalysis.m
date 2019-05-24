@@ -207,43 +207,43 @@ classdef AshleyAnalysis < handle
            end
            clear M;
            if isempty(obj.distmask)
-               obj.makeDistanceMask();
+               obj.makeDistanceMasks();
            end
            if nargin<3
-               cargomask = obj.cleanedcargomask;
+               distance_mask = obj.distmask;
            else
                switch distmapstring
                    case 'Total'
-                       cargomask = obj.cleanedcargomask;
+                       distance_mask = obj.distmask;
                    case 'No AIS'
-                       cargomask = obj.cleanedcargomask.*~obj.cellFill.AIS_mask;
+                       distance_mask = obj.distmaskPart;
                    case 'AIS only'
-                       cargomask = obj.cleanedcargomask.*obj.cellFill.AIS_mask;
+                       distance_mask = obj.distmaskAIS;
                end
            end
                        
-           temp = obj.distmask; temp(temp==Inf)=0;
+           temp = distance_mask; temp(temp==Inf)=0;
            maxdist = max(temp);
-           interestmsk = cargomask.*obj.cellFill.mask;
+           interestmsk = obj.cleanedcargomask.*obj.cellFill.mask;
            sfim = obj.surfaceCargo.image*interestmsk;
            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
            M.maxintensity = mean(scsums(end-2:end));
-           scmask = sum(dip_image(cargomask),[],3);
+           scmask = sum(dip_image(obj.cleanedcargomask),[],3);
            % now go through for each time point and calculate densities.
-           bgmaskthin = isnan(obj.distmask) & ~scmask;
+           bgmaskthin = isnan(distance_mask) & ~scmask;
            bgmask = berosion(bgmaskthin,5);
            bgmask = repmat(bgmask,1,1,size(sfim,3));
            fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
-           backgroundimage = fullbackgroundimage.*interestmsk;
+           backgroundimage = fullbackgroundimage*interestmsk;
            M.distance = distances;
            M.rawintensity = zeros(numel(distances),size(sfim,3));
            M.areanormintensity = zeros(numel(distances),size(sfim,3));
            for ii = 1:numel(distances)
                
                if ii == 1
-                   currmask = obj.distmask<=distances(ii);
+                   currmask = distance_mask<=distances(ii);
                else
-                   currmask = obj.distmask>distances(ii-1) & obj.distmask<=distances(ii);
+                   currmask = distance_mask>distances(ii-1) & distance_mask<=distances(ii);
                end
                mskarea = sum(currmask(:));
                newsfmask = repmat(currmask,1, 1, size(sfim,3));
@@ -307,14 +307,29 @@ classdef AshleyAnalysis < handle
            
        end
        
-       function makeDistanceMask(obj)
+       function makeDistanceMasks(obj)
            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
            % make the distance mask for the full cellfill mask area (AIS included)
            sums = bdilation(obj.cellFill.mask,1);
            geoframe = sum(sums,[],3);
            obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
            clear sums geoframe;
-           
+           % then check if there is and AIS mask made. If there is, make
+           % both versions of the distance mask
+           if ~isempty(obj.cellFill.AIS_mask)
+               
+               % make the distance mask (no AIS included if it is there)
+               sumsPart = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
+               geoframePart = sum(sumsPart,[],3);
+               obj.distmaskPart = dip_image(bwdistgeodesic(logical(geoframePart),logical(sinkframe),'quasi-euclidean'));
+               clear sumsPart geoframePart;
+               
+               % make the distance mask for the AIS only
+               sumsAIS = bdilation(obj.cellFill.AIS_mask,1);
+               geoframeAIS = sum(sumsAIS,[],3);
+               obj.distmaskAIS = dip_image(bwdistgeodesic(logical(geoframeAIS),logical(sinkframe),'quasi-euclidean'));
+               clear sumsAIS geoframeAIS;
+           end
        end
        function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image
@@ -324,7 +339,7 @@ classdef AshleyAnalysis < handle
            if nargin<2
                savename = fullfile(pwd,'movie');
            end
-           [lbl_out] = GeneralAnalysis.labelmask_byframe(cargomask);
+           [lbl_out] = GeneralAnalysis.labelmask_byframe(obj.cleanedcargomask);
            labeledim = lbl_out.*obj.cellFill.mask;
            %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
            test = min(labeledim,labeledim>0,3);
@@ -359,9 +374,9 @@ classdef AshleyAnalysis < handle
            writeDipImageMovie(h,savename,options)
        end
        
-       function calculateSurfaceCargoDistances(obj,plotflag,savedir)
-           if isprop(obj,'cleanedcargomask') && ~isempty(cargomask) 
-               seed_mask = cargomask;
+       function calculateSurfaceCargoDistances(obj,plotf lag,savedir)
+           if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) 
+               seed_mask = obj.cleanedcargomask;
            else
                if isempty(obj.inCellSurfaceCargo)
                    obj.maskCargoInsideCell;
