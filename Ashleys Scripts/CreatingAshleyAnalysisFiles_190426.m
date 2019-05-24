@@ -41,7 +41,6 @@ TfR = image(:,:,:,1); TfR = permute(TfR,[2 1 3]);
 cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
 cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
 
->>>>>>> d8f20e53a948e5ac7407e0cc743f5dbf71613ebf
 
 
 %%

@@ -9,7 +9,8 @@ d2 = 40/pxsize;
 d3 = 200/pxsize;
 distances = [d1 d2 d3];
 files = uipickfiles('FilterSpec','Y:\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\022018');
-for ff = 1:numel(files)
+for ff = 2:numel(files)
+    clear aa;
     try
         load(files{ff})
         M = aa.plotDensityperTime([distances]);
@@ -36,7 +37,7 @@ end
 % figure;
 % %plot density as a function of time
 % plot(aa.M.areanormintensity')
-for ff = 2:numel(files)
+for ff = 1:numel(files)
 %plot intensity density as a function of time norm to the max somatic intensity
 %density
 % plot(aa.M.areanormintensity'./aa.M.areanormintensity(1,end)')
