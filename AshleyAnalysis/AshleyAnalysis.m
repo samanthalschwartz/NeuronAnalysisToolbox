@@ -374,7 +374,7 @@ classdef AshleyAnalysis < handle
            writeDipImageMovie(h,savename,options)
        end
        
-       function calculateSurfaceCargoDistances(obj,plotflag,savedir)
+       function calculateSurfaceCargoDistances(obj,plotf lag,savedir)
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) 
                seed_mask = obj.cleanedcargomask;
            else
