@@ -298,9 +298,7 @@ classdef AshleyAnalysis < handle
            geoframe = sum(sums,[],3);
            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
            distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');   
-           obj.distmask = distmask;
-           distmask = dip_image(distmask);  
-           obj.distmask = distmask;
+           obj.distmask = dip_image(distmask);
        end
        function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image

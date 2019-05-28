@@ -3,19 +3,19 @@
 close all; clear all;
 %-- set imaging parameters:
 baselineframe_start = 1; % first frame number that baseline acquisition begins
-baselineframe_end = 10; % last frame number of baseline
+baselineframe_end = 11; % last frame number of baseline
 baselineframerate = 1; % frame rate in minutes/frame 
 releasetime = 11; % time in minutes, after release, that first frame of post release starts
-postrelease(1).frame_start = 11; % first frame number of post release
+postrelease(1).frame_start = 12; % first frame number of post release
 postrelease(1).frame_end = 'end'; % last frame number of post release - or 'end' if post release goes until end of series
 postrelease(1).framerate = 2; % frame rate in minutes/frame
-%postrelease(2).frame_start = 21;
-%postrelease(2).frame_end = 'end';
-%postrelease(2).framerate = 1;
+%postrelease(2).frame_start = 25;
+%postrelease(2).frame_end = 43;
+%postrelease(2).framerate = 2;
 %%
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\040318\TIFF files\1_stitched.tif';
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\051718\TIFF files\merges\slip2_2_merge_stitch.tiff';
 [FILEPATH,NAME,EXT] = fileparts(filename);
-temp = strsplit(NAME,'_');
+temp = strsplit(NAME,'_,_');
 savename = fullfile(FILEPATH,temp{1});
 
 uiopen(filename); close all;
@@ -79,11 +79,12 @@ aa.cleanedcargomask = []; %just make sure to reset cleaned cargomask
 aa.cellFill.lsig = [1 1 1];
 aa.cellFill.gsig = [1 1 1];
 aa.cellFill.mask_img;
+aa.cellFill.mask_img_better; % use this is the cell mask fails
 aa.cellFill.viewMaskOverlayPerim;
 % mask surface Cargo -- change these to modify image smoothing
 aa.surfaceCargo.lsig = [1 1 0];
 aa.surfaceCargo.gsig = [1 1 1];
-aa.surfaceCargo.mask_img_highsens
+aa.surfaceCargo.mask_img_highsens;
 aa.surfaceCargo.viewMaskOverlayPerim;
 
 % --- run this to look at cell fill mask compared to surface cargo mask
@@ -100,7 +101,8 @@ aa.cellFill.selectSoma();
 
 % clean up the image:
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
-%aa.cleanSurfaceCargoMask_Manual();
+aa.cleanCellFillMask_Manual(); % use this to first clean up the cell fill mask if it is really messy
+aa.cleanSurfaceCargoMask_Manual();
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
 %Call this line instead if you want to clean up by frame
 aa.cleanSurfaceCargoMaskbyFrame_Manual();

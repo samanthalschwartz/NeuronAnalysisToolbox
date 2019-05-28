@@ -427,6 +427,57 @@ methods (Static)
       dipfig -unlink
       newmask = logical(lb);  
     end
+    
+     function newmask = cleanUpMaskSuper_byframe_square(underimgin,mask_in,imviewsz)
+         if nargin<3
+             imviewsz = 150;
+         end
+        maskin = dip_image(mask_in);
+        lb = label(logical(maskin));
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        try
+        dipshow(ov,'log');
+        catch
+            dipshow(ov,'percentile');
+        end
+        diptruesize(g,imviewsz);
+        clmp = bone(255);
+        clmp(1,:) = [1 0 0];
+        while(ishandle(g))
+            try
+                [B,C] = dipcrop(g);
+%                 v = dipgetcoords(g,1);
+            catch
+                break;
+            end
+            gcfinfo = get(g,'UserData');
+            if ndims(B)==3
+                currtime = gcfinfo.curslice;
+                prompt = 'Array of frames to remove: ';
+                dlgtitle = 'Extra Frames to Remove';
+                answer = inputdlg(prompt,dlgtitle,[1 40]);
+                maskin(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),currtime) = 0;
+                
+            elseif ismatrix(B)
+                maskin(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2)) = 0;  
+            end
+            ov = underimgin;
+            ov(maskin~=0) = 0
+            diptruesize(gcf,imviewsz);
+            try
+            dipmapping('log')
+            catch
+                dipmapping('percentile')
+            end
+            dipmapping('colormap',clmp);
+        end
+      dipfig -unlink
+      newmask = logical(maskin);  
+    end
+    
+    
     function newmask = cleanUpMask_byframe_square(underimgin,mask_in,imviewsz)
         %        lb = label(mask_in);
 %         ov = overlay(underimgin,mask_in);

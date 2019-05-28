@@ -1,6 +1,6 @@
 close all;
 clear all;
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\040318\TIFF files\1_AshleyFile.mat';
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\051718\TIFF files\merges\slip2_7_merge_stitch_AshleyFile.mat';
 load(filename);
 pxsize = 0.114374*2;
 d1 = 5/pxsize;
@@ -30,11 +30,11 @@ save(filename,'aa');
 figure;
 %plot intensity density as a function of time norm to the max somatic intensity
 %density
-plot(aa.M.areanormintensity'./aa.M.areanormintensity(1,end)')
-M1 = aa.M.areanormintensity'./aa.M.areanormintensity(1,end)'
+plot(aa.M.areanormintensity'./aa.M.areanormintensity(1,71)')
+M1 = aa.M.areanormintensity'./aa.M.areanormintensity(1,71)'
 
 % % plot the intensity density per time norm to the max intensity
 % density for each distance
 figure;
-plot(aa.M.areanormintensity'./aa.M.areanormintensity(:,end)')
-M2 = aa.M.areanormintensity'./aa.M.areanormintensity(:,end)'
+plot(aa.M.areanormintensity'./aa.M.areanormintensity(:,71)')
+M2 = aa.M.areanormintensity'./aa.M.areanormintensity(:,71)'
