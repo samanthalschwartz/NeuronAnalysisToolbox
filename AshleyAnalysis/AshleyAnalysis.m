@@ -12,6 +12,8 @@ classdef AshleyAnalysis < handle
     distancematrix = [];
     pxsize = 1/3.5;
     M = [];
+    M_AIS = [];
+    M_noAIS = [];
     cleanedcargomask = [];
     distmask = [];
     distmaskPart = [];
@@ -154,7 +156,7 @@ classdef AshleyAnalysis < handle
            h.OuterPosition = h.OuterPosition + [0 0 400 50]; 
        end
        
-       function M = plotDensityperTime(obj,distances,distmapstring)
+       function currM = plotDensityperTime(obj,distances,distmapstring)
            %input:  distances in microns as an 1 x n vector of max values, values between are used
            %    example: distances = [100,200,300, inf]; interval is
            %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
@@ -164,7 +166,7 @@ classdef AshleyAnalysis < handle
            if nargin<2
                distances = [5 40 200];
            end
-           clear M;
+           clear currM;
            if isempty(obj.distmask)
                obj.makeDistanceMasks();
            end
@@ -181,11 +183,10 @@ classdef AshleyAnalysis < handle
                end
            end       
            temp = obj.distmask; temp(temp==Inf)=0;
-           maxdist = max(temp);
            interestmsk = surfaceCargoMask.*obj.cellFill.mask;
            sfim = obj.surfaceCargo.image*interestmsk;
            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
-           M.maxintensity = mean(scsums(end-2:end));
+           currM.maxintensity = mean(scsums(end-2:end));
            scmask = sum(dip_image(surfaceCargoMask),[],3);
            % now go through for each time point and calculate densities.
            bgmaskthin = isnan(obj.distmask) & ~scmask;
@@ -193,9 +194,9 @@ classdef AshleyAnalysis < handle
            bgmask = repmat(bgmask,1,1,size(sfim,3));
            fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
            backgroundimage = fullbackgroundimage*interestmsk;
-           M.distance = distances;
-           M.rawintensity = zeros(numel(distances),size(sfim,3));
-           M.areanormintensity = zeros(numel(distances),size(sfim,3));
+           currM.distance = distances;
+           currM.rawintensity = zeros(numel(distances),size(sfim,3));
+           currM.areanormintensity = zeros(numel(distances),size(sfim,3));
            for ii = 1:numel(distances)
                
                if ii == 1
@@ -211,10 +212,18 @@ classdef AshleyAnalysis < handle
                % sliding window
                origvals = single(squeeze(thisplot));
                windowsize = 4;
-               M.rawintensity(ii,:) = movmean(origvals,windowsize);
-               M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
+               currM.rawintensity(ii,:) = movmean(origvals,windowsize);
+               currM.areanormintensity(ii,:) = currM.rawintensity(ii,:)/mskarea;
            end
-           obj.M = M;
+           
+           switch distmapstring
+               case 'Total'
+                   obj.M = currM;
+               case 'No AIS'
+                   obj.M_noAIS = currM;
+               case 'AIS only'
+                   obj.M_AIS = currM;
+           end
        end
        
 %        function M = plotAreaperTime(obj,distances)

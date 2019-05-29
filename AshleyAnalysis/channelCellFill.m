@@ -63,9 +63,14 @@ classdef channelCellFill < channelBase
            obj.soma_vertices = v;
            close(h);        
        end
-       function selectAIS(obj)
+       function selectAIS(obj,in_im)
+           if nargin>1
+               inputim = in_im;
+           else
+                inputim = gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]);
+           end
            uiwait(msgbox('Click >2 points to select a cell cell AIS','Draw AIS ROI','modal'));
-           h = dipshow(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]),'log');
+           h = dipshow(inputim,'log');
            diptruesize(h,150);
            [roi, v] = diproi(h);      
            obj.AIS_mask = repmat(roi,[1 1 size(obj.image,3)]);
