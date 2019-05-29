@@ -90,7 +90,7 @@ classdef AshleyAnalysis < handle
            newsfmask(wshed==1) = 0;
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
-       function h = calc_cargo_minFrame(obj,maxtime,perimbool)
+       function h = calc_cargo_minFrame(obj)
            % cellperim is boolean for including cell perimeter in image
            if ~isempty(obj.cleanedcargomask)
                maskimg = dip_image(logical(obj.cleanedcargomask));
@@ -98,50 +98,10 @@ classdef AshleyAnalysis < handle
                maskimg =  dip_image(logical(obj.surfaceCargo.mask));
            end
            
-           if isfield(obj.imagingparams,'baselineframe_start') && ~isempty(obj.imagingparams.baselineframe_start)
-               startfrm = obj.imagingparams.postrelease(1).frame_start;
-               postrelease = obj.imagingparams.postrelease;
-               endfrm = postrelease(end).frame_end;
-               if nargin>1
-                   endfrm = maxtime;
-               elseif ischar(endfrm)
-                   if strcmp(endfrm,'end')
-                       endfrm = size(obj.cellFill.image,3);
-                       postrelease(end).frame_end = endfrm;
-                   end
-               end
-               if isa(maskimg,'dip_image')
-                   [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg(:,:,startfrm-1:endfrm-1));
-               else
-                   [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg(:,:,startfrm:endfrm));
-               end
-               
-               if isa(obj.cellFill.mask,'dip_image')
-                   cfmask = obj.cellFill.mask(:,:,startfrm-1:endfrm-1);
-               else
-                   cfmask = obj.cellFill.mask(:,:,startfrm:endfrm);
-               end
-               firstfrmtime = obj.imagingparams.releaseframe;
-               
-               currfirst = firstfrmtime;
-               timerange = [];
-               for ff = 1:numel(postrelease)
-               duration = (postrelease(ff).frame_end - postrelease(ff).frame_start)*postrelease(ff).framerate;
-               newend = duration+currfirst;
-               timerange = [timerange, currfirst:postrelease(ff).framerate:newend];
-               currfirst = newend;
-               end
-               
-           else %no imaging params set
-               [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg);
-               if nargin>1
-                   endfrm = maxtime;
-               else
-                   endfrm = size(obj.cellFill.image,3);
-               end
-               cfmask = obj.cellFill.mask;
-               timerange  = 1:endfrm;
-           end
+           [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg);
+           
+           cfmask = obj.cellFill.mask;
+           
            labeledim = lbl_out.*cfmask;
            %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
            test = min(labeledim,labeledim>0,3);
@@ -151,7 +111,6 @@ classdef AshleyAnalysis < handle
                test(dist==1) = max(test)+1;
            end
            obj.cargo_heatmap.image = test;
-           obj.cargo_heatmap.timerange = timerange;
            
        end
        function h = plotCargoHeatMap(obj,reset)
@@ -174,7 +133,7 @@ classdef AshleyAnalysis < handle
            
            %-- now plot results
            h = dipshow(obj.cargo_heatmap.image,blackjet);
-           dipmapping(h,[obj.imagingparams.releaseframe size(obj.cargo_heatmap.timerange,2)]);
+           dipmapping(h,[obj.imagingparams.releaseframe size(obj.surfaceCargo.image,3)+1]);
            diptruesize(h,120);
            
            
