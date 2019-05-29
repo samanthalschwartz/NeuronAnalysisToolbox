@@ -14,6 +14,8 @@ classdef AshleyAnalysis < handle
     M = [];
     cleanedcargomask = [];
     distmask = [];
+    distmaskPart = [];
+    distmaskAIS = [];
     cargo_heatmap = [];
     % first frame of baseline (ie: 1);
     % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
@@ -41,13 +43,13 @@ classdef AshleyAnalysis < handle
                obj.surfaceCargo.setfilepath(obj.path_channel_surfaceCargo);
                obj.TfR.setfilepath(obj.path_channel_TfR);
                if ~isempty(obj.path_channel_cellfill)
-               obj.cellFill.loadimage();
+                   obj.cellFill.loadimage();
                end
                if ~isempty(obj.path_channel_surfaceCargo)
-               obj.surfaceCargo.loadimage();
+                   obj.surfaceCargo.loadimage();
                end
                if ~isempty(obj.path_channel_TfR)
-               obj.TfR.loadimage();
+                   obj.TfR.loadimage();
                end
            end
        end
@@ -193,7 +195,7 @@ classdef AshleyAnalysis < handle
            h.OuterPosition = h.OuterPosition + [0 0 400 50]; 
        end
        
-       function M = plotDensityperTime(obj,distances)
+       function M = plotDensityperTime(obj,distances,distmapstring)
            %input:  distances in microns as an 1 x n vector of max values, values between are used
            %    example: distances = [100,200,300, inf]; interval is
            %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
@@ -201,19 +203,31 @@ classdef AshleyAnalysis < handle
            % make the distance mask
            
            if nargin<2
-               distances = [18/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
+               distances = [5 40 200];
            end
            clear M;
            if isempty(obj.distmask)
-               obj.makeDistanceMask();
+               obj.makeDistanceMasks();
            end
+           if nargin<3
+               surfaceCargoMask = obj.cleanedcargomask;
+           else
+               switch distmapstring
+                   case 'Total'
+                       surfaceCargoMask = obj.cleanedcargomask;
+                   case 'No AIS'
+                       surfaceCargoMask = obj.cleanedcargomask-obj.cellFill.AIS_mask;
+                   case 'AIS only'
+                       surfaceCargoMask = obj.cellFill.AIS_mask;
+               end
+           end       
            temp = obj.distmask; temp(temp==Inf)=0;
            maxdist = max(temp);
-           interestmsk = obj.cleanedcargomask.*obj.cellFill.mask;
+           interestmsk = surfaceCargoMask.*obj.cellFill.mask;
            sfim = obj.surfaceCargo.image*interestmsk;
            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
            M.maxintensity = mean(scsums(end-2:end));
-           scmask = sum(dip_image(obj.cleanedcargomask),[],3);
+           scmask = sum(dip_image(surfaceCargoMask),[],3);
            % now go through for each time point and calculate densities.
            bgmaskthin = isnan(obj.distmask) & ~scmask;
            bgmask = berosion(bgmaskthin,5);
@@ -244,62 +258,88 @@ classdef AshleyAnalysis < handle
            obj.M = M;
        end
        
-       function M = plotAreaperTime(obj,distances)
-           %input:  distances in microns as an 1 x n vector of max values, values between are used 
-           %    example: distances = [100,200,300, inf]; interval is
-           %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
-           % Average intensity within the distance is 
-           % make the distance mask
-           
-           if nargin<2
-           distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
-           end
-           clear M;
-          
-           distmask = obj.makeDistanceMask();
-           interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
-           sfim = obj.surfaceCargo.image*interestmsk;
-           scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
-           M.maxintensity = mean(scsums(end-2:end));
-           scmask = sum(dip_image(obj.surfaceCargo.mask),[],3);
-           % now go through for each time point and calculate densities.
-           bgmaskthin = isnan(distmask) & ~scmask;
-           bgmask = berosion(bgmaskthin,5);
-           bgmask = repmat(bgmask,1,1,size(sfim,3));
-           fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
-           backgroundimage = fullbackgroundimage*interestmsk;
-           M.distance = distances;
-           M.rawintensity = zeros(numel(distances),size(sfim,3));
-           M.areanormintensity = zeros(numel(distances),size(sfim,3));
-           for ii = 1:numel(distances)
-               
-               if ii == 1
-                   currmask = distmask<=distances(ii);
-               else
-                   currmask = distmask>distances(ii-1) & distmask<=distances(ii);
-               end
-               mskarea = sum(currmask);
-               newsfmask = repmat(currmask,1, 1, size(sfim,3));
-               sumcargoinmask = sum(sfim,newsfmask,[1 2]);
-               sumbginmask = sum(backgroundimage,newsfmask,[1 2]);
-               thisplot = squeeze(sumcargoinmask) - squeeze(sumbginmask);
-               % sliding window
-               origvals = single(squeeze(thisplot));
-               windowsize = 4;
-               M.rawintensity(ii,:) = movmean(origvals,windowsize);
-               M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
-           end
-           
-       end
+%        function M = plotAreaperTime(obj,distances)
+%            %input:  distances in microns as an 1 x n vector of max values, values between are used 
+%            %    example: distances = [100,200,300, inf]; interval is
+%            %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
+%            % Average intensity within the distance is 
+%            % make the distance mask
+%            
+%            if nargin<2
+%            distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
+%            end
+%            clear M;
+%           
+%            distmask = obj.makeDistanceMask();
+%            interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
+%            sfim = obj.surfaceCargo.image*interestmsk;
+%            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
+%            M.maxintensity = mean(scsums(end-2:end));
+%            scmask = sum(dip_image(obj.surfaceCargo.mask),[],3);
+%            % now go through for each time point and calculate densities.
+%            bgmaskthin = isnan(distmask) & ~scmask;
+%            bgmask = berosion(bgmaskthin,5);
+%            bgmask = repmat(bgmask,1,1,size(sfim,3));
+%            fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
+%            backgroundimage = fullbackgroundimage*interestmsk;
+%            M.distance = distances;
+%            M.rawintensity = zeros(numel(distances),size(sfim,3));
+%            M.areanormintensity = zeros(numel(distances),size(sfim,3));
+%            for ii = 1:numel(distances)
+%                
+%                if ii == 1
+%                    currmask = distmask<=distances(ii);
+%                else
+%                    currmask = distmask>distances(ii-1) & distmask<=distances(ii);
+%                end
+%                mskarea = sum(currmask);
+%                newsfmask = repmat(currmask,1, 1, size(sfim,3));
+%                sumcargoinmask = sum(sfim,newsfmask,[1 2]);
+%                sumbginmask = sum(backgroundimage,newsfmask,[1 2]);
+%                thisplot = squeeze(sumcargoinmask) - squeeze(sumbginmask);
+%                % sliding window
+%                origvals = single(squeeze(thisplot));
+%                windowsize = 4;
+%                M.rawintensity(ii,:) = movmean(origvals,windowsize);
+%                M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
+%            end
+%            
+%        end
+       
+%        function makeDistanceMasks(obj)
+%            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
+%            % make the distance mask for the full cellfill mask area (AIS included)
+%            sums = bdilation(obj.cellFill.mask,1);
+%            geoframe = sum(sums,[],3);
+%            obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
+%            clear sums geoframe;
+%            % then check if there is and AIS mask made. If there is, make
+%            % both versions of the distance mask
+%            if ~isempty(obj.cellFill.AIS_mask)
+%                
+%                % make the distance mask (no AIS included if it is there)
+%                sumsPart = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
+%                geoframePart = sum(sumsPart,[],3);
+%                obj.distmaskPart = dip_image(bwdistgeodesic(logical(geoframePart),logical(sinkframe),'quasi-euclidean'));
+%                clear sumsPart geoframePart;
+%                
+%                % make the distance mask for the AIS only
+%                sumsAIS = bdilation(obj.cellFill.AIS_mask,1);
+%                geoframeAIS = sum(sumsAIS,[],3);
+%                obj.distmaskAIS = dip_image(bwdistgeodesic(logical(geoframeAIS),logical(sinkframe),'quasi-euclidean'));
+%                clear sumsAIS geoframeAIS;
+%            end
+%        end
        
        function makeDistanceMask(obj)
-           % make the distance mask
+           sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
+           % make the distance mask for the full cellfill mask area (AIS included)
            sums = bdilation(obj.cellFill.mask,1);
            geoframe = sum(sums,[],3);
-           sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
-           distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');   
-           obj.distmask = dip_image(distmask);
        end
+       
+       
+       
        function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image
            if nargin<3

@@ -1,10 +1,11 @@
 vd = viewer3D;
-filename = 'Y:\Theresa\Images\0325slice_AAVSphHaloTent_gephIBgfp_tdTom_n3_pre_3drecon.tif';
+filename = 'E:\SIM Worked and 3D\92217\092217SynpoTfRmChSIM\Fixed\fix092217_GFPSynpo_TfRHT_mCh_1_Reconstructed.nd2';
 % vd.filepath = filename;
-vd.loadimagefile(filename);
+vd.loadNDFile(filename);
+vd.dimension = [ 1 1 0.1];
 vd.initialize3Dimage();
 vd.makepanel();
-vd.dimension = [ 1 1 0.25];
+
 
 syn = vd.image{3};
 scaleval = 2.5;

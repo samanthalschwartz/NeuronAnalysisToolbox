@@ -45,7 +45,7 @@
 % Starting range is initialized to (-0.5 to 0.27).
 %>> [lowThreshold highThreshold] = threshold(-0.5, 0.27, doubleImage);
 
-function varargout = threshold(varargin)
+function varargout = threshold_app(varargin)
 % threshold Application M-file for threshold.fig
 %    FIG = FIGMAINWINDOW launch threshold GUI.
 %    FIGMAINWINDOW('callback_name', ...) invoke the named callback.

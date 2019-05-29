@@ -24,12 +24,23 @@ classdef viewer3D < handle
             obj.rawtiff = rawtiff;
             obj.numchannels = size(obj.rawtiff,4);
             for nn = 1:obj.numchannels
-               obj.image{nn} = gaussf(obj.rawtiff(:,:,:,nn),[1 1 0]); 
+               obj.image{nn} = gaussf(obj.rawtiff(200:600,200:600,:,nn),[1 1 0]); 
                obj.scaleval{nn} = obj.default_scaleval; 
             end
             obj.filepath  = filepath;
             close all;
         end 
+        function loadNDFile(obj,filepath)
+            [fullimage,~]=SIM.ndFileloader(filepath);
+            obj.rawtiff = fullimage;
+            obj.numchannels = size(obj.rawtiff,4);
+            for nn = 1:obj.numchannels
+               obj.image{nn} = gaussf(obj.rawtiff(200:600,200:600,:,nn),[1 1 0]); 
+               obj.scaleval{nn} = obj.default_scaleval; 
+            end
+            obj.filepath  = filepath;   
+        end
+
         
         function loadSIM(obj,filepath)
             ss = load(filepath);
@@ -53,9 +64,15 @@ classdef viewer3D < handle
    
         function update(obj,src,eventData)
             for nn = 1:obj.numchannels
-                obj.scaleval{nn} = get(obj.sliders{nn},'Value');
+                currval = obj.scaleval{nn};
+                if ~isequal(currval,get(obj.sliders{nn},'Value'))
+                    ch2change = nn;
+                    obj.scaleval{nn} = get(obj.sliders{nn},'Value');
+                else
+                    continue
+                end
             end
-            obj.makepatches;
+            obj.updatepatch(ch2change);
         end
         
         function slider_val = slidercallback(hObject)
@@ -77,6 +94,14 @@ classdef viewer3D < handle
             end
             pbaspect(obj.dimension);
         end
+        function updatepatch(obj,ch)
+            cla(obj.h_axes);
+            nn = ch;
+            [obj.patch{nn},obj.endpatch{nn}] = obj.makepatch(obj.h_axes,obj.image{nn},obj.scaleval{nn},obj.colors(nn,:));
+            hold on;
+            pbaspect(obj.dimension);
+        end
+        
 %         function sliderupdate(hObject) 
 %         end
 %         c = uicontrol('Parent',newfig,'Style','slider','Position',[121,150,410,23],...

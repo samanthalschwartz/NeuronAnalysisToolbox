@@ -39,7 +39,7 @@ switch ext
             cmap = {red,green,blue};
             % then it is a color image
             for ii = 1:size(obj,4)
-                if ~isempty(find(obj(:,:,:,ii),1))
+                if ~isempty(find(obj(:,:,:,ii),1)) && size(obj,4)<4
                     dipshow(obj(:,:,:,ii),'lin');
                     dipmapping(gcf,'Colormap',cmap{ii});
                 end
