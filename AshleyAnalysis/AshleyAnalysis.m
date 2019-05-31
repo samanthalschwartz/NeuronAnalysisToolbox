@@ -134,9 +134,9 @@ classdef AshleyAnalysis < handle
            colbarval = [floor(colbarplace * colorunit)];
            
            %-- now plot results
-           h = dipshow(obj.cargo_heatmap.image,blackjet);
+           h = dipshow(obj.cargo_heatmap.image-obj.imagingparams.releaseframe,blackjet);
            dipmapping(h,[obj.imagingparams.releaseframe size(obj.surfaceCargo.image,3)+1]);
-           diptruesize(h,120);
+           diptruesize(h,80);
            
            
            c = colorbar;
@@ -153,7 +153,7 @@ classdef AshleyAnalysis < handle
            c.Label.String = 'time of first appeareance after release (min)';
            c.Label.FontSize = 18;
            c.Label.FontName = 'Arial';
-           h.OuterPosition = h.OuterPosition + [0 0 400 50]; 
+           h.OuterPosition = h.OuterPosition + [588    43   500   500]; 
        end
        
        function currM = plotDensityperTime(obj,distances,distmapstring)
@@ -165,13 +165,15 @@ classdef AshleyAnalysis < handle
            
            if nargin<2
                distances = [5 40 200];
+               distmapstring = 'Total';
            end
            clear currM;
            if isempty(obj.distmask)
-               obj.makeDistanceMasks();
+               obj.makeDistanceMask();
            end
            if nargin<3
                surfaceCargoMask = obj.cleanedcargomask;
+               distmapstring = 'Total';
            else
                switch distmapstring
                    case 'Total'
@@ -274,40 +276,31 @@ classdef AshleyAnalysis < handle
 %            
 %        end
        
-%        function makeDistanceMasks(obj)
-%            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
-%            % make the distance mask for the full cellfill mask area (AIS included)
-%            sums = bdilation(obj.cellFill.mask,1);
-%            geoframe = sum(sums,[],3);
-%            obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
-%            clear sums geoframe;
-%            % then check if there is and AIS mask made. If there is, make
-%            % both versions of the distance mask
-%            if ~isempty(obj.cellFill.AIS_mask)
-%                
-%                % make the distance mask (no AIS included if it is there)
-%                sumsPart = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
-%                geoframePart = sum(sumsPart,[],3);
-%                obj.distmaskPart = dip_image(bwdistgeodesic(logical(geoframePart),logical(sinkframe),'quasi-euclidean'));
-%                clear sumsPart geoframePart;
-%                
-%                % make the distance mask for the AIS only
-%                sumsAIS = bdilation(obj.cellFill.AIS_mask,1);
-%                geoframeAIS = sum(sumsAIS,[],3);
-%                obj.distmaskAIS = dip_image(bwdistgeodesic(logical(geoframeAIS),logical(sinkframe),'quasi-euclidean'));
-%                clear sumsAIS geoframeAIS;
-%            end
-%        end
-       
        function makeDistanceMask(obj)
            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
            % make the distance mask for the full cellfill mask area (AIS included)
            sums = bdilation(obj.cellFill.mask,1);
            geoframe = sum(sums,[],3);
+           obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
+           clear sums geoframe;
+           % then check if there is and AIS mask made. If there is, make
+           % both versions of the distance mask
+           if ~isempty(obj.cellFill.AIS_mask)
+
+               % make the distance mask (no AIS included if it is there)
+               sumsPart = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
+               geoframePart = sum(sumsPart,[],3);
+               obj.distmaskPart = dip_image(bwdistgeodesic(logical(geoframePart),logical(sinkframe),'quasi-euclidean'));
+               clear sumsPart geoframePart;
+
+               % make the distance mask for the AIS only
+               sumsAIS = bdilation(obj.cellFill.AIS_mask,1);
+               geoframeAIS = sum(sumsAIS,[],3);
+               obj.distmaskAIS = dip_image(bwdistgeodesic(logical(geoframeAIS),logical(sinkframe),'quasi-euclidean'));
+               clear sumsAIS geoframeAIS;
+           end
        end
-       
-       
-       
+
        function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image
            if nargin<3
