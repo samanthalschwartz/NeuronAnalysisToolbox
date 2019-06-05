@@ -290,7 +290,7 @@ methods (Static)
         thr = multithresh(single(out),3);
         mask = out>thr(1);
     end
-    function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
+    function [mask,threshval,C] = imgThreshold_fixedUserInput(img_in,image4selection)
         if ~isa(img_in,'dip_image')
             img_in = dip_image(img_in);
         end
@@ -309,6 +309,13 @@ methods (Static)
         threshval = max(reg);
         mask = threshold(img_in,'fixed',threshval);
         close(h);
+    end
+    function reg = crop(img_in,C)
+       if ndims(img_in)==3
+        reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
+        elseif ismatrix(img_in)
+            reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
+        end 
     end
    function [mask,threshval] = imgThreshold_fixedUserInput_fromsingleframe(img_in,image4selection)
         if ~isa(img_in,'dip_image')
