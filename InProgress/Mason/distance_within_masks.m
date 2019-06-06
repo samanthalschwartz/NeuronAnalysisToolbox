@@ -6,10 +6,9 @@
         'Load Composite Image');
 uiopen(fullfile(pathname,filename)); close all;
 %%
-[cellfillid, golgiid] =  Mason_selectChannels(image)
+[cellfillid, golgiid] =  Mason_selectChannels(image);
 cellfill = image(:,:,:,cellfillid);
 golgi= image(:,:,:,golgiid);
-
 %%
 numslices= size(cellfill,3);
 % mask cellfill channel
@@ -28,29 +27,38 @@ cellfillmask = GeneralAnalysis.bwmorph_timeseries(cellfillmask,'bridge',20);
     % - calculate background filled image 
     % - subtract from golgi image
 golgi_g = gaussf(golgi);
-[golgi_gm ,threshval_golgi,C_golgi]= GeneralAnalysis.imgThreshold_fixedUserInput(golgi_g(:,:,ceil(numslices/2))); %user select
-golgibg = golgi.*~bdilation(golgi_gm,4);
-bgim_out = GeneralAnalysis.regionfill_timeseries(golgibg,dip_image(logical(golgi_gm)));
+[golgi_gm ,threshval_golgi,C_golgi]= GeneralAnalysis.imgThreshold_fixedUserInput(golgi_g); %user select
+golgi_gm = bdilation(golgi_gm,4);
+golgibg = golgi.*~golgi_gm;
+bgim_out = GeneralAnalysis.regionfill_timeseries(golgibg,golgi_gm);
+golgi_bgim = gaussf(bgim_out);
+golgi_bgsubtract = golgi - golgi_bgim;
+
 % select soma region
-    
+h = dipshow(cellfill(:,:,ceil(numslices/2)))
+diptruesize(h,50);
+[roi, v] = diproi(h);
+s_mask = repmat(roi,[1 1 size(cellfill,3)]);
+soma_vertices = v;
+close(h);
+soma_mask = s_mask.*cellfillmask;
 % calculate geo distance
-sinkdist = bwdistgeodesic(logical(mask_out),logical(soma_mask),'quasi-euclidean');
+sinkdist = bwdistgeodesic(logical(cellfillmask),logical(soma_mask),'quasi-euclidean');
+h = dipshow(sinkdist,jetblack,[0 max(sinkdist(sinkdist~=Inf))*4]);
+diptruesize(h,50);
+
+% save the distance mask
+savefilename = GeneralAnalysis.filename_addon(fullfile(pathname,filename),'_distancemask');
+GeneralAnalysis.LibTiff(sinkdist,savefilename);
 % make distance bins
 
 % calculate density per bin
-h = histogram(sinkdist,100);
-edges = h.BinEdges;
-density = zeros(size(edges,2),1);
+[density,edges] = GeneralAnalysis.calculate_DensityPerDistace(golgi_bgsubtract,sinkdist);
+f = figure; axe= axes(f);
+plot(edges',density,'Linewidth',2);
+axe.FontSize = 16;
+xlabel('Distance in pixels','FontSize',16);
+ylabel('Density (AUs)','FontSize',16);
 
-wb = waitbar(0);
-for ii = 1:size(edges,2)
-
-    testmask = sinkdist<edges(ii+1) & sinkdist>=edges(ii);
-    inmask = testmask.*corr_golgi;
-    ints = sum(inmask(:));
-    numpixels = sum(testmask(:));
-    density(ii) = ints/numpixels;
-    waitbar(ii/size(edges,2),wb);
-end
-close(wb)
-figure; plot(edges',density)
+savefilename = GeneralAnalysis.filename_addon(fullfile(pathname,filename),'_distanceValues');
+xlswrite(savefilename,[edges',density]);

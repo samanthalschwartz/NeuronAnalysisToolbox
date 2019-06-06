@@ -32,7 +32,7 @@ switch ext
 %     case '.mat'
 %         obj=SPData(filename);
 %         name=getObjName('spd');
-    case {'.tif','.TIF'}
+    case {'.tif','.TIF','.tiff','.TIFF'}
         obj = loadtiff(filename);
         name = 'image';
         if ndims(obj) == 4
@@ -65,7 +65,7 @@ switch ext
         return
 end
 assignin('base',name, obj);
-if ~strcmp(ext,'.tif') &&  ~strcmp(ext,'.TIF') 
+if ~strcmp(ext,'.tif') &&  ~strcmp(ext,'.TIF') &&  ~strcmp(ext,'.TIFF') && ~strcmp(ext,'.tiff')
     evalin('base',sprintf('disp(%s)',name));
 end
 % if strcmp(ext,'.tif')

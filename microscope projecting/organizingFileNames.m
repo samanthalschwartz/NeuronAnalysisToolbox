@@ -6,25 +6,7 @@ remainingfiles = dir(fullfile(topdir,'*.tif'));
 while ~isempty(remainingfiles)
     namestr = remainingfiles(1).name;
     % namestr = 'TfR-Halo_mChCellFill_6nMhalo660_longExp_timecourse_w1561_s4_t6';
-    chstr = '_w';
-    timestr = '_t';
-    stagestr = '_s';
-    % find if there are any channels, stage positions, timeseries
-    [matches] = regexp(namestr,'_w\d|_t\d|_s\d','match');
-    [out] = regexp(namestr,'_w\d|_t\d|_s\d');
-    if isempty(out) % if none of the key strings are part of the name, create folder of full filename
-        savefoldername = fullfile(topdir,namestr(1:end-4));
-    else %otherwise, folder name is just the portion of the name before the key strings
-        savefoldername = fullfile(topdir,namestr(1:min(out)-1));
-    end
-    if ~exist(savefoldername,'dir') % make the directory
-        mkdir(savefoldername)
-    end
-    
-    % find out if there are multiple channels
-    chid = cellfun(@(x) ~isempty(strfind(x,chstr)),matches);
-    chpos = out(chid);
-    % if there are multiple times, combine all into one image and move to
+    chstr = '_w  
     % different folder
     timeid = cellfun(@(x) ~isempty(strfind(x,timestr)),matches);
     timepos = out(timeid);

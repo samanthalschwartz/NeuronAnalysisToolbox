@@ -18,13 +18,6 @@ Dialog.create("RGB Batch Convert");
       dir = getDirectory("Choose Source Directory ");
       dir2 = getDirectory("Choose Target Directory ");
       list = getFileList(dir);
-
-     for (i=0; i<list.length; i++) {
-        if (endsWith(list[i], "/")){
-           Array.deleteIndex(list, i);
-        }
-     }
-
       setBatchMode(true);
       n = list.length;
       if ((n%3)!=0)
@@ -57,11 +50,23 @@ Dialog.create("RGB Batch Convert");
       list = getFileList(dir1);
       setBatchMode(true);
       n = list.length;
-      print("File Lenth: " + n);
-      if ((n%3)!=0)
-         exit("The number of files must be a multiple of 3");
-      stack = 0;
-      first = 0;
+      chstr = '_w';
+    timestr = '_t';
+    stagestr = '_s';  
+          
+		for (i=0; n; i++){
+		filename = list[i];
+        cid = indexOf(filename, chstr);
+        tid = indexOf(filename, timestr);
+		
+
+		}
+	substring(string, index)
+      
+      
+    % find if there are any channels, stage positions, timeseries
+    [matches] = regexp(namestr,'_w\d|_t\d|_s\d','match');
+    [out] = regexp(namestr,'_w\d|_t\d|_s\d');
       for (i=0; i<n/3; i++) {
           showProgress(i+1, n/3);
           red="?"; green="?"; blue="?";
