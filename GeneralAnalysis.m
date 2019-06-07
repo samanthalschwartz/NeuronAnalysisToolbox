@@ -731,7 +731,7 @@ methods (Static)
     function savename = filename_addon(filename,addstr)
         [FILEPATH,NAME,EXT] = fileparts(filename);
         newfilename = [NAME '_' addstr];
-        savename = fullfile(FILEPATH,[newfilename,EXT]);
+        savename = fullfile(FILEPATH,[newfilename]);
     end
     function [density,edges] = calculate_DensityPerDistace(image,distance_mask,edges)
         if nargin<3
