@@ -436,6 +436,29 @@ classdef AshleyAnalysis < handle
 %            [h,overlayim] = channelBase.viewMaskOverlayPerimStatic(cargomask,obj.surfaceCargo.image);
            
        end
+       function save(obj,savename)
+           if nargin < 2
+               disp('Need to add a savepath');
+               return;
+           end
+          % cast all dipimage objects back to singles
+          obj.cellFill.soma_mask = single(obj.cellFill.soma_mask);
+          obj.cellFill.image = single(obj.cellFill.image);
+          obj.cellFill.mask = single(obj.cellFill.mask);
+          obj.surfaceCargo.image = single(obj.surfaceCargo.image);
+          obj.surfaceCargo.mask = single(obj.surfaceCargo.mask);
+          obj.cargo_heatmap.image = single(obj.cargo_heatmap.image);
+          aa = obj;
+          save(savename,'aa');
+       end
+       function convertfromload(obj)
+          obj.cellFill.soma_mask = dip_image(obj.cellFill.soma_mask);
+          obj.cellFill.image = dip_image(obj.cellFill.image);
+          obj.cellFill.mask = dip_image(obj.cellFill.mask);
+          obj.surfaceCargo.image = dip_image(obj.surfaceCargo.image);
+          obj.surfaceCargo.mask = dip_image(obj.surfaceCargo.mask);
+          obj.cargo_heatmap.image = dip_image(obj.cargo_heatmap.image);
+       end
    end
    
 end
