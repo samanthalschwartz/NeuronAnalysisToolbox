@@ -12,8 +12,12 @@ classdef AshleyAnalysis < handle
     distancematrix = [];
     pxsize = 1/3.5;
     M = [];
+    M_AIS = [];
+    M_noAIS = [];
     cleanedcargomask = [];
     distmask = [];
+    distmaskPart = [];
+    distmaskAIS = [];
     cargo_heatmap = [];
     % first frame of baseline (ie: 1);
     % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
@@ -41,13 +45,13 @@ classdef AshleyAnalysis < handle
                obj.surfaceCargo.setfilepath(obj.path_channel_surfaceCargo);
                obj.TfR.setfilepath(obj.path_channel_TfR);
                if ~isempty(obj.path_channel_cellfill)
-               obj.cellFill.loadimage();
+                   obj.cellFill.loadimage();
                end
                if ~isempty(obj.path_channel_surfaceCargo)
-               obj.surfaceCargo.loadimage();
+                   obj.surfaceCargo.loadimage();
                end
                if ~isempty(obj.path_channel_TfR)
-               obj.TfR.loadimage();
+                   obj.TfR.loadimage();
                end
            end
        end
@@ -88,7 +92,7 @@ classdef AshleyAnalysis < handle
            newsfmask(wshed==1) = 0;
          ll =  label(berosion(newsfmask(:,:,end-3))*obj.cellFill.mask(:,:,end-3)) ;
        end
-       function h = calc_cargo_minFrame(obj,maxtime,perimbool)
+       function h = calc_cargo_minFrame(obj)
            % cellperim is boolean for including cell perimeter in image
            if ~isempty(obj.cleanedcargomask)
                maskimg = dip_image(logical(obj.cleanedcargomask));
@@ -96,50 +100,10 @@ classdef AshleyAnalysis < handle
                maskimg =  dip_image(logical(obj.surfaceCargo.mask));
            end
            
-           if isfield(obj.imagingparams,'baselineframe_start') && ~isempty(obj.imagingparams.baselineframe_start)
-               startfrm = obj.imagingparams.postrelease(1).frame_start;
-               postrelease = obj.imagingparams.postrelease;
-               endfrm = postrelease(end).frame_end;
-               if nargin>1
-                   endfrm = maxtime;
-               elseif ischar(endfrm)
-                   if strcmp(endfrm,'end')
-                       endfrm = size(obj.cellFill.image,3);
-                       postrelease(end).frame_end = endfrm;
-                   end
-               end
-               if isa(maskimg,'dip_image')
-                   [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg(:,:,startfrm-1:endfrm-1));
-               else
-                   [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg(:,:,startfrm:endfrm));
-               end
-               
-               if isa(obj.cellFill.mask,'dip_image')
-                   cfmask = obj.cellFill.mask(:,:,startfrm-1:endfrm-1);
-               else
-                   cfmask = obj.cellFill.mask(:,:,startfrm:endfrm);
-               end
-               firstfrmtime = obj.imagingparams.releaseframe;
-               
-               currfirst = firstfrmtime;
-               timerange = [];
-               for ff = 1:numel(postrelease)
-               duration = (postrelease(ff).frame_end - postrelease(ff).frame_start)*postrelease(ff).framerate;
-               newend = duration+currfirst;
-               timerange = [timerange, currfirst:postrelease(ff).framerate:newend];
-               currfirst = newend;
-               end
-               
-           else %no imaging params set
-               [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg);
-               if nargin>1
-                   endfrm = maxtime;
-               else
-                   endfrm = size(obj.cellFill.image,3);
-               end
-               cfmask = obj.cellFill.mask;
-               timerange  = 1:endfrm;
-           end
+           [lbl_out] = GeneralAnalysis.labelmask_byframe(maskimg);
+           
+           cfmask = obj.cellFill.mask;
+           
            labeledim = lbl_out.*cfmask;
            %          lbl_out = GeneralAnalysis.findLabelsInMask(labeledim,obj.cellFill.mask);
            test = min(labeledim,labeledim>0,3);
@@ -149,17 +113,16 @@ classdef AshleyAnalysis < handle
                test(dist==1) = max(test)+1;
            end
            obj.cargo_heatmap.image = test;
-           obj.cargo_heatmap.timerange = timerange;
            
        end
-       function h = plotCargoHeatMap(obj)
-           if isempty(obj.cargo_heatmap)
+       function h = plotCargoHeatMap(obj,reset)
+           if isempty(obj.cargo_heatmap) || nargin>1
                obj.calc_cargo_minFrame();
            end
-           fixedtimerange = 162;
+           fixedtimerange = 160;
            %-- make colormap for plotting
            blackjet = flip(jet(255));
-           blackjet(1,:) = [0 0 0]; blackjet(end,:) = [1 1 1];
+           blackjet(1,:) = [0 0 0];% blackjet(end,:) = [1 1 1];
            
            
            % get colorbar tick info
@@ -171,22 +134,29 @@ classdef AshleyAnalysis < handle
            colbarval = [floor(colbarplace * colorunit)];
            
            %-- now plot results
-           h = dipshow(obj.cargo_heatmap.image,blackjet);
-           dipmapping(h,[obj.imagingparams.releaseframe size(obj.cargo_heatmap.timerange,2)]);
-           diptruesize(h,100);
+           h = dipshow(obj.cargo_heatmap.image-obj.imagingparams.releaseframe,blackjet);
+           dipmapping(h,[obj.imagingparams.releaseframe size(obj.surfaceCargo.image,3)+1]);
+           diptruesize(h,80);
            
            
            c = colorbar;
            c.Location = 'WestOutside';
            c.Ticks = colbarplace;
            c.TickLabels = colbarval;
-           c.FontSize = 16;
-           c.Label.String = 'Time of First Appeareance After Release (min)';
-           c.Label.FontSize = 16;
-           h.OuterPosition = h.OuterPosition + [0 0 400 50]; 
+           c.TickLength = 0.02
+           
+         
+           c.FontSize = 18;
+           c.LineWidth = 1.5;
+           c.FontName = 'Arial';
+           %c.FontWeight = 'bold';
+           c.Label.String = 'time of first appeareance after release (min)';
+           c.Label.FontSize = 18;
+           c.Label.FontName = 'Arial';
+           h.OuterPosition = h.OuterPosition + [588    43   500   500]; 
        end
        
-       function M = plotDensityperTime(obj,distances)
+       function currM = plotDensityperTime(obj,distances,distmapstring)
            %input:  distances in microns as an 1 x n vector of max values, values between are used
            %    example: distances = [100,200,300, inf]; interval is
            %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
@@ -194,28 +164,41 @@ classdef AshleyAnalysis < handle
            % make the distance mask
            
            if nargin<2
-               distances = [18/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
+               distances = [5 40 200];
+               distmapstring = 'Total';
            end
-           clear M;
+           clear currM;
            if isempty(obj.distmask)
                obj.makeDistanceMask();
            end
+           if nargin<3
+               surfaceCargoMask = obj.cleanedcargomask;
+               distmapstring = 'Total';
+           else
+               switch distmapstring
+                   case 'Total'
+                       surfaceCargoMask = obj.cleanedcargomask;
+                   case 'No AIS'
+                       surfaceCargoMask = obj.cleanedcargomask-obj.cellFill.AIS_mask;
+                   case 'AIS only'
+                       surfaceCargoMask = obj.cellFill.AIS_mask;
+               end
+           end       
            temp = obj.distmask; temp(temp==Inf)=0;
-           maxdist = max(temp);
-           interestmsk = obj.cleanedcargomask.*obj.cellFill.mask;
+           interestmsk = surfaceCargoMask.*obj.cellFill.mask;
            sfim = obj.surfaceCargo.image*interestmsk;
            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
-           M.maxintensity = mean(scsums(end-2:end));
-           scmask = sum(dip_image(obj.cleanedcargomask),[],3);
+           currM.maxintensity = mean(scsums(end-2:end));
+           scmask = sum(dip_image(surfaceCargoMask),[],3);
            % now go through for each time point and calculate densities.
            bgmaskthin = isnan(obj.distmask) & ~scmask;
            bgmask = berosion(bgmaskthin,5);
            bgmask = repmat(bgmask,1,1,size(sfim,3));
            fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
            backgroundimage = fullbackgroundimage*interestmsk;
-           M.distance = distances;
-           M.rawintensity = zeros(numel(distances),size(sfim,3));
-           M.areanormintensity = zeros(numel(distances),size(sfim,3));
+           currM.distance = distances;
+           currM.rawintensity = zeros(numel(distances),size(sfim,3));
+           currM.areanormintensity = zeros(numel(distances),size(sfim,3));
            for ii = 1:numel(distances)
                
                if ii == 1
@@ -231,70 +214,93 @@ classdef AshleyAnalysis < handle
                % sliding window
                origvals = single(squeeze(thisplot));
                windowsize = 4;
-               M.rawintensity(ii,:) = movmean(origvals,windowsize);
-               M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
+               currM.rawintensity(ii,:) = movmean(origvals,windowsize);
+               currM.areanormintensity(ii,:) = currM.rawintensity(ii,:)/mskarea;
            end
-           obj.M = M;
+           
+           switch distmapstring
+               case 'Total'
+                   obj.M = currM;
+               case 'No AIS'
+                   obj.M_noAIS = currM;
+               case 'AIS only'
+                   obj.M_AIS = currM;
+           end
        end
        
-       function M = plotAreaperTime(obj,distances)
-           %input:  distances in microns as an 1 x n vector of max values, values between are used 
-           %    example: distances = [100,200,300, inf]; interval is
-           %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
-           % Average intensity within the distance is 
-           % make the distance mask
-           
-           if nargin<2
-           distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
-           end
-           clear M;
-          
-           distmask = obj.makeDistanceMask();
-           interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
-           sfim = obj.surfaceCargo.image*interestmsk;
-           scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
-           M.maxintensity = mean(scsums(end-2:end));
-           scmask = sum(dip_image(obj.surfaceCargo.mask),[],3);
-           % now go through for each time point and calculate densities.
-           bgmaskthin = isnan(distmask) & ~scmask;
-           bgmask = berosion(bgmaskthin,5);
-           bgmask = repmat(bgmask,1,1,size(sfim,3));
-           fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
-           backgroundimage = fullbackgroundimage*interestmsk;
-           M.distance = distances;
-           M.rawintensity = zeros(numel(distances),size(sfim,3));
-           M.areanormintensity = zeros(numel(distances),size(sfim,3));
-           for ii = 1:numel(distances)
-               
-               if ii == 1
-                   currmask = distmask<=distances(ii);
-               else
-                   currmask = distmask>distances(ii-1) & distmask<=distances(ii);
-               end
-               mskarea = sum(currmask);
-               newsfmask = repmat(currmask,1, 1, size(sfim,3));
-               sumcargoinmask = sum(sfim,newsfmask,[1 2]);
-               sumbginmask = sum(backgroundimage,newsfmask,[1 2]);
-               thisplot = squeeze(sumcargoinmask) - squeeze(sumbginmask);
-               % sliding window
-               origvals = single(squeeze(thisplot));
-               windowsize = 4;
-               M.rawintensity(ii,:) = movmean(origvals,windowsize);
-               M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
-           end
-           
-       end
+%        function M = plotAreaperTime(obj,distances)
+%            %input:  distances in microns as an 1 x n vector of max values, values between are used 
+%            %    example: distances = [100,200,300, inf]; interval is
+%            %    0<val<=100, 100<val<=200, 200<val<=300, val>300;
+%            % Average intensity within the distance is 
+%            % make the distance mask
+%            
+%            if nargin<2
+%            distances = [50/obj.pxsize 100/obj.pxsize 200/obj.pxsize];
+%            end
+%            clear M;
+%           
+%            distmask = obj.makeDistanceMask();
+%            interestmsk = obj.surfaceCargo.mask*obj.cellFill.mask;
+%            sfim = obj.surfaceCargo.image*interestmsk;
+%            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
+%            M.maxintensity = mean(scsums(end-2:end));
+%            scmask = sum(dip_image(obj.surfaceCargo.mask),[],3);
+%            % now go through for each time point and calculate densities.
+%            bgmaskthin = isnan(distmask) & ~scmask;
+%            bgmask = berosion(bgmaskthin,5);
+%            bgmask = repmat(bgmask,1,1,size(sfim,3));
+%            fullbackgroundimage = GeneralAnalysis.regionfill_timeseries(obj.surfaceCargo.image*bgmask,~bgmask);
+%            backgroundimage = fullbackgroundimage*interestmsk;
+%            M.distance = distances;
+%            M.rawintensity = zeros(numel(distances),size(sfim,3));
+%            M.areanormintensity = zeros(numel(distances),size(sfim,3));
+%            for ii = 1:numel(distances)
+%                
+%                if ii == 1
+%                    currmask = distmask<=distances(ii);
+%                else
+%                    currmask = distmask>distances(ii-1) & distmask<=distances(ii);
+%                end
+%                mskarea = sum(currmask);
+%                newsfmask = repmat(currmask,1, 1, size(sfim,3));
+%                sumcargoinmask = sum(sfim,newsfmask,[1 2]);
+%                sumbginmask = sum(backgroundimage,newsfmask,[1 2]);
+%                thisplot = squeeze(sumcargoinmask) - squeeze(sumbginmask);
+%                % sliding window
+%                origvals = single(squeeze(thisplot));
+%                windowsize = 4;
+%                M.rawintensity(ii,:) = movmean(origvals,windowsize);
+%                M.areanormintensity(ii,:) = M.rawintensity(ii,:)/mskarea;
+%            end
+%            
+%        end
        
        function makeDistanceMask(obj)
-           % make the distance mask
+           sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
+           % make the distance mask for the full cellfill mask area (AIS included)
            sums = bdilation(obj.cellFill.mask,1);
            geoframe = sum(sums,[],3);
-           sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
-           distmask = bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean');   
-           obj.distmask = distmask;
-           distmask = dip_image(distmask);  
-           obj.distmask = distmask;
+           obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
+           clear sums geoframe;
+           % then check if there is and AIS mask made. If there is, make
+           % both versions of the distance mask
+           if ~isempty(obj.cellFill.AIS_mask)
+
+               % make the distance mask (no AIS included if it is there)
+               sumsPart = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
+               geoframePart = sum(sumsPart,[],3);
+               obj.distmaskPart = dip_image(bwdistgeodesic(logical(geoframePart),logical(sinkframe),'quasi-euclidean'));
+               clear sumsPart geoframePart;
+
+               % make the distance mask for the AIS only
+               sumsAIS = bdilation(obj.cellFill.AIS_mask,1);
+               geoframeAIS = sum(sumsAIS,[],3);
+               obj.distmaskAIS = dip_image(bwdistgeodesic(logical(geoframeAIS),logical(sinkframe),'quasi-euclidean'));
+               clear sumsAIS geoframeAIS;
+           end
        end
+
        function [h,lagim] = plot_cargo_minFrameMovie(obj,savename, framelag)
            %            cellperim is boolean for including cell perimeter in image
            if nargin<3

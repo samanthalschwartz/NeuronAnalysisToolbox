@@ -5,6 +5,8 @@ classdef channelCellFill < channelBase
         gsig = [1 1 0];
         soma_mask = [];
         soma_vertices = [];
+        AIS_mask = [];
+        AIS_vertices = [];
         fullsoma_mask = [];
         fullsoma_vertices = [];
     end
@@ -18,14 +20,13 @@ classdef channelCellFill < channelBase
            %         img_g = GeneralAnalysis.imgGauss(img_m,obj.gsig);
            %         img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_m,obj.lsig,obj.gsig);
            img_g = GeneralAnalysis.imgGauss(obj.image,obj.gsig);
-           gmask =GeneralAnalysis.imgThreshold(img_g);
+           gmask = GeneralAnalysis.imgThreshold(img_g);
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,obj.lsig,obj.gsig);
            [lmask,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
            mask_out = gmask|lmask;
            obj.mask = mask_out;
            obj.backgroundvalue = threshval;
-       end
-       function mask_img_other(obj)
+       end       function mask_img_other(obj)
            img_1 = medif(obj.image,3);
            img_2 = gaussf(img_1,obj.gsig);
            imglcutoff = img_2;
@@ -60,6 +61,20 @@ classdef channelCellFill < channelBase
            [roi, v] = diproi(h);      
            obj.soma_mask = repmat(roi,[1 1 size(obj.image,3)]);
            obj.soma_vertices = v;
+           close(h);        
+       end
+       function selectAIS(obj,in_im)
+           if nargin>1
+               inputim = in_im;
+           else
+                inputim = gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]);
+           end
+           uiwait(msgbox('Click >2 points to select a cell cell AIS','Draw AIS ROI','modal'));
+           h = dipshow(inputim,'log');
+           diptruesize(h,150);
+           [roi, v] = diproi(h);      
+           obj.AIS_mask = repmat(roi,[1 1 size(obj.image,3)]);
+           obj.AIS_vertices = v;
            close(h);        
        end
        function selectFullSoma(obj)

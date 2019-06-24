@@ -69,6 +69,7 @@ methods (Static)
             img(:,:,ii-1) = imgbefore{1,1}{ii};
         end
     end 
+    
     function ov = displaytiff(image)
         if ndims(image) > 3
             switch size(image,4)
@@ -280,8 +281,14 @@ methods (Static)
         img_dggcutoff(img_dggcutoff<0) = 0;
     end
     function mask = imgThreshold(img_in)
-        threshval = multithresh(single(img_in),2);
+        threshval = multithresh(single(img_in),3);
         mask = img_in>=threshval(1);
+    end
+    function mask = laplacemask(img_in)
+        gch = gaussf(img_in);
+        out = GeneralAnalysis.imgLaplaceCutoff(gch);
+        thr = multithresh(single(out),3);
+        mask = out>thr(1);
     end
     function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
         if ~isa(img_in,'dip_image')
@@ -426,20 +433,58 @@ methods (Static)
       dipfig -unlink
       newmask = logical(lb);  
     end
+    
+     function newmask = cleanUpMaskSuper_byframe_square(underimgin,mask_in,imviewsz)
+         if nargin<3
+             imviewsz = 150;
+         end
+        maskin = dip_image(mask_in);
+        lb = label(logical(maskin));
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        try
+        dipshow(ov,'log');
+        catch
+            dipshow(ov,'percentile');
+        end
+        diptruesize(g,imviewsz);
+        clmp = bone(255);
+        clmp(1,:) = [1 0 0];
+        while(ishandle(g))
+            try
+                [B,C] = dipcrop(g);
+%                 v = dipgetcoords(g,1);
+            catch
+                break;
+            end
+            gcfinfo = get(g,'UserData');
+            if ndims(B)==3
+                currtime = gcfinfo.curslice;
+                prompt = 'Array of frames to remove: ';
+                dlgtitle = 'Extra Frames to Remove';
+                answer = inputdlg(prompt,dlgtitle,[1 40]);
+                maskin(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),currtime) = 0;
+                
+            elseif ismatrix(B)
+                maskin(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2)) = 0;  
+            end
+            ov = underimgin;
+            ov(maskin~=0) = 0
+            diptruesize(gcf,imviewsz);
+            try
+            dipmapping('log')
+            catch
+                dipmapping('percentile')
+            end
+            dipmapping('colormap',clmp);
+        end
+      dipfig -unlink
+      newmask = logical(maskin);  
+    end
+    
+    
     function newmask = cleanUpMask_byframe_square(underimgin,mask_in,imviewsz)
-        %        lb = label(mask_in);
-%         ov = overlay(underimgin,mask_in);
-%         h = dipshow(ov,'log');
-%         dipmapping(h,'global')
-        %       h = dipshow(lb,'labels');
-%         while(ishandle(h))
-%             [a b] = dipcrop(h);
-%             mask_in(b(1,1):b(1,1)+b(2,1),b(1,2):b(1,2)+b(2,2),:) = 0;
-%             close(h);
-%             ov = overlay(underimgin,mask_in);
-%             h = dipshow(ov,'log');
-%             dipmapping(h,'global');
-%         end
          if nargin<3
              imviewsz = 150;
          end
@@ -483,6 +528,56 @@ methods (Static)
       dipfig -unlink
       newmask = logical(maskin);  
     end
+    
+    function newmask = cleanUpMask_byframe_square_withInput(underimgin,mask_in,imviewsz)
+         if nargin<3
+             imviewsz = 150;
+         end
+        maskin = dip_image(mask_in);
+        lb = label(logical(maskin));
+        ov = underimgin;
+        ov(lb~=0) = 0;
+        g = dipfig('ov');
+        try
+        dipshow(ov,'log');
+        catch
+            dipshow(ov,'percentile');
+        end
+        diptruesize(g,imviewsz);
+        clmp = bone(255);
+        clmp(1,:) = [1 0 0];
+        while(ishandle(g))
+            try
+                [B,C] = dipcrop(g);
+%                 v = dipgetcoords(g,1);
+            catch
+                break;
+            end
+            gcfinfo = get(g,'UserData');
+            if ndims(B)==3
+                currtime = gcfinfo.curslice;
+                outputdlg = inputdlg('Enter the frames to remove mask in region from (ImageJ format)');
+                frames = [str2num(outputdlg{1})-1];
+                maskin(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),frames) = 0;     
+            elseif ismatrix(B)
+                maskin(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2)) = 0;  
+            end
+            ov = underimgin;
+            ov(maskin~=0) = 0
+            diptruesize(gcf,imviewsz);
+            try
+            dipmapping('log')
+            catch
+                dipmapping('percentile')
+            end
+            dipmapping('colormap',clmp);
+        end
+      dipfig -unlink
+      newmask = logical(maskin);  
+    end
+    
+    
+    
     function newmask = cleanUpMaskKeepers_manual_square(underimgin,mask_in,imviewsz)
         if nargin<3
             imviewsz = 50;
