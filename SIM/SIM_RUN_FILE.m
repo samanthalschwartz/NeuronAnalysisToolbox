@@ -1,18 +1,35 @@
 %% setup the SIM files
-ids = [2 1 3];
-channelorderingstr = {'chABeta','PSD95ib','Bassoon'}; % channel abeta, channel 1, channel2
-dirname = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\AB_Controls_040819';
-savedir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819';
+ids = [3 1 2];
+channelorderingstr = {'chABeta','Bungaro','VGlut'}; % channel abeta, channel 1, channel2
+dirname = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\071_062819';
+savedir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071_062819';
 filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec',dirname);
 wb = waitbar(0);
 for ff= 1:numel(filepath)
-obj  = SIM();
-obj.channelordering = ids;
-obj.channelorderingstr = channelorderingstr;
-obj.loadNDfile(filepath{ff});
-obj.save('C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
-obj.setimage();
-waitbar(ff/numel(filepath),wb);
+    obj  = SIM();
+    obj.channelordering = ids;
+    obj.channelorderingstr = channelorderingstr;
+    obj.filepath = filepath{ff};
+    [FILEPATH,NAME,EXT] = fileparts(filepath{ff});
+    switch EXT
+        case '.nd2'
+            obj.loadNDfile();
+            if isempty(obj.ch2.rawimage) % this is to handle only 2 channel data
+                obj.ch2.rawimage = 0.*obj.ch1.rawimage;
+            end
+        case {'.tiff','.tif','.TIF','.TIFF'}
+            obj.loadtiff; close all;
+            obj.XYpxsize = 0.0321;           % returns value in default unit
+            obj.XYpxsize_units = 'µm';
+            obj.Zpxsize = 0.2000;           % returns value in default unit
+            obj.Zpxsize_units = 'µm';
+    end
+    obj.planeBOTTOM = '3';
+    obj.planeTOP = '10';
+    obj.setimage();
+    disp(['File ' num2str(ff)]);
+    obj.save(savedir);
+    waitbar(ff/numel(filepath),wb);
 end
 close(wb)
 %% identify top/bottom planes to use
@@ -44,11 +61,12 @@ close(wb)
 
 %% run all the masking, simulation etc
 close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\061019');
 wb = waitbar(0);
 for ff= 1:numel(filepath)
     tic
 load(filepath{ff});
+disp('Masking channels...');
 obj.make_cellmask;
 obj.make_maskchX;
 obj.make_maskch1;
@@ -58,7 +76,7 @@ obj.make_distancemasks;
 obj.measurements = [{'size'},   {'sum'}, {'Gravity'}];
 obj.measure_AB;
 obj.simulationAbeta(20);
-obj.calculateNumberDensityCOM;
+% obj.calculateNumberDensityCOM;
 obj.calculateNumberDensityCOM(0,1);
 obj.save(filepath{ff});
 waitbar(ff/numel(filepath),wb);

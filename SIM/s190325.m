@@ -24,7 +24,6 @@ plot(obj.ch1.abetaSIM.results.bins,obj.ch1.abetaSIM.results.numabeta./obj.ch1.ab
 
 figure; hold on;
 plot(obj.ch2.results.bins,obj.ch2.results.numabeta./obj.ch2.results.volume)
-<<<<<<< HEAD
 plot(obj.ch2.abetaSIM.results.bins,obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume)
 
 %%
@@ -64,8 +63,9 @@ xlswrite('G:\Hannah Dropbox SIM data\SIM_Files\071117\data.xlsx',matdata);
 
 %% ch2
 close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','G:\Hannah Dropbox SIM data\SIM_Files');
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\061019');
 wb = waitbar(0)
+savename = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071_062819\Bungaro488_ch2';
 for ff= 1:numel(filepath)
 load(filepath{ff});
 ch2dat = movmean(obj.ch2.results.numabeta./obj.ch2.results.volume,3);
@@ -83,12 +83,13 @@ end
 waitbar(ff/numel(filepath),wb);
 end
 close(wb)
-xlswrite('G:\Hannah Dropbox SIM data\SIM_Files\071117\PSD95ch2_112117.xlsx',matdata);
+xlswrite(savename,matdata);
 
 %%
 %% ch1
 close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','G:\Hannah Dropbox SIM data\SIM_Files');
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071_062819');
+savename = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071_062819\Bungaro488_ch1';
 wb = waitbar(0)
 for ff= 1:numel(filepath)
 load(filepath{ff});
@@ -107,12 +108,8 @@ end
 waitbar(ff/numel(filepath),wb);
 end
 close(wb)
-xlswrite('G:\Hannah Dropbox SIM data\SIM_Files\071117\PSD95all_112117.xlsx',matdata);
+xlswrite(savename,matdata);
 
-
-=======
-<<<<<<< HEAD
-plot(obj.ch2.abetaSIM.results.bins,obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume)
 
 %%
 ch1data = obj.ch1.results.numabeta./obj.ch1.results.volume;
@@ -131,13 +128,3 @@ figure; hold on;
 plot(ch2bins,movmean(ch2data,3)./movmean(ch2sim,10),'Color',[0 0 1]);
 % plot(ch2bins,movmean(ch2sim,10),'Color',[1 0 0]);
 title('Ch2');
-
-
-
-
-
-
-=======
-plot(obj.ch2.abetaSIM.results.bins,obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume)
->>>>>>> 93d2c173a4d9a88af665503ae3ae71da30d1509e
->>>>>>> 54eccdd3bcfc5769ac787e20ccb9a27f424c5e57

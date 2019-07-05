@@ -42,8 +42,8 @@ classdef SIM < handle
                     obj.filepath = filepath;
                 end
             end
-            if iscell(filepath)
-                filepath = filepath{1};
+            if iscell(obj.filepath)
+                filepath = obj.filepath{1};
             end
             try
             [image,obj.metadata] = obj.ndFileloader(obj.filepath); % load file
@@ -64,7 +64,37 @@ classdef SIM < handle
             obj.Zpxsize = double(obj.metadata.getPixelsPhysicalSizeZ(0).value());           % returns value in default unit
             obj.Zpxsize_units = char(obj.metadata.getPixelsPhysicalSizeZ(0).unit().getSymbol());
         end
-        
+        function loadtiff(obj)
+            if nargin>1
+                obj.filepath = filepath;
+            else
+                if isempty(obj.filepath)
+                    filepath = uipickfiles('Prompt','Pick a .nd File');
+                    obj.filepath = filepath;
+                end
+            end
+            if iscell(obj.filepath)
+                filepath = obj.filepath{1};
+            end
+            try
+            image = loadtiff(obj.filepath);
+            catch
+            disp('File did not load - make sure it is an ND file?');
+            end
+            if size(image,4)<3  % assign channels
+                obj.abeta.rawimage = image(:,:,:,obj.channelordering(1));
+                obj.ch1.rawimage = image(:,:,:,obj.channelordering(2));
+            else
+                obj.abeta.rawimage = image(:,:,:,obj.channelordering(1));
+                obj.ch1.rawimage = image(:,:,:,obj.channelordering(2));
+                obj.ch2.rawimage = image(:,:,:,obj.channelordering(3));
+            end
+            %-- get some meta data info
+%             obj.XYpxsize = double(obj.metadata.getPixelsPhysicalSizeX(0).value());           % returns value in default unit
+%             obj.XYpxsize_units = char(obj.metadata.getPixelsPhysicalSizeX(0).unit().getSymbol());
+%             obj.Zpxsize = double(obj.metadata.getPixelsPhysicalSizeZ(0).value());           % returns value in default unit
+%             obj.Zpxsize_units = char(obj.metadata.getPixelsPhysicalSizeZ(0).unit().getSymbol());            
+        end
         function setimage(obj) 
             % sets obj.ch1.image etc to only include the selected frames (if obj.planeBOTTOM/obj.planeTOP are set)
             % obj.rawimage is unaltered
@@ -149,22 +179,17 @@ classdef SIM < handle
                 sz_x = size(goodmask,1);
                 sz_y = size(goodmask,2);
                 % simulation
-                simvals = zeros(numabeta,2);
-                cnt = 0;
-                while cnt < numabeta
-                    xval = round(rand(1,1)*(sz_x-1)) + 1;
-                    yval = round(rand(1,1)*(sz_y-1)) + 1;
-                    if goodmask(xval,yval)
-                        cnt=cnt+1;
-                        simvals(cnt,:) = [xval,yval];
-                        testim(xval,yval,zz) = 1;
-                    end
-                end
+                ids = find(goodmask);
+                simframemask = goodmask.*0;
+                randids = ids(1+round((numel(ids)-1).*rand(1,numabeta)));
+                simframemask(randids) = 1;
+                testim(:,:,zz) = simframemask;
             end
             obj.ch1.abetaSIM.COMimage = testim;
             obj.ch1.abetaSIM.image = bdilation(logical(testim),3);
             obj.ch1.abetaSIM.dist = distance;
             clear testim;
+            % channnel 2
             testim = 0.*obj.ch2.distance_mask;
             for zz = 1:size(obj.abeta.image,3)
                 %
@@ -172,27 +197,16 @@ classdef SIM < handle
                 % find how many abeta COM in this frame
                 currmask = obj.abeta.COM_image(:,:,zz-1).*goodmask;
                 numabeta = sum(currmask(:));
-                sz_x = size(goodmask,1);
-                sz_y = size(goodmask,2);
                 % simulation
-                simvals = zeros(numabeta,2);
-                cnt = 0;
-                while cnt < numabeta
-                    xval = round(rand(1,1)*(sz_x-1)) + 1;
-                    yval = round(rand(1,1)*(sz_y-1)) + 1;
-                    if goodmask(xval,yval)
-                        cnt=cnt+1;
-                        simvals(cnt,:) = [xval,yval];
-                        testim(xval,yval,zz) = 1;
-                    end
-                end
+                ids = find(goodmask);
+                simframemask = goodmask.*0;
+                randids = ids(1+round((numel(ids)-1).*rand(1,numabeta)));
+                simframemask(randids) = 1;
+                testim(:,:,zz) = simframemask;
             end
             obj.ch2.abetaSIM.COMimage = testim;
             obj.ch2.abetaSIM.image = bdilation(logical(testim),3);
-            obj.ch2.abetaSIM.dist = distance;
-            zscale = obj.Zpxsize/obj.XYpxsize;
-%             obj.ch1.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch1.abetaSIM.image,zscale);
-%             obj.ch2.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch2.abetaSIM.image,zscale);
+            obj.ch2.abetaSIM.dist = distance; 
         end
         
         function abetaDensityAlongPrePost(obj,ROIstring)
@@ -324,6 +338,7 @@ classdef SIM < handle
                 currframe = image(:,:,ii);
                 currcellmask = ~obj.cellmask(:,:,ii);
                 currcellmask = bdilation(currcellmask,2);
+                % only take abeta that is above average background
                 m(ii+1) = single(sum(currframe,currcellmask,[1 2]))./sum(currcellmask);
                 premask(:,:,ii) = premask(:,:,ii).*~(currframe<m(ii+1));
             end
@@ -465,8 +480,8 @@ classdef SIM < handle
             ch2_numobj = max(ch2_lb(:));
 %             ch1_maxdist = max(obj.ch1.distance_mask(:));
 %             ch2_maxdist = max(obj.ch2.distance_mask(:));
-            ch1_maxdist = 20;
-            ch2_maxdist = 20;
+            ch1_maxdist = obj.ch1.abetaSIM.dist;
+            ch2_maxdist = obj.ch2.abetaSIM.dist;
             % make com mask from lb
             if ~isfield(obj.abeta,'COM_image') || isempty(obj.abeta.COM_image) || resetbool
                 obj.abetaCOM();
@@ -511,7 +526,7 @@ classdef SIM < handle
                 end
             end
             close(wb);
-            if ~simbool
+           
                 obj.ch1.results.bins = bins;
                 obj.ch1.results.numabeta = ch1_numabeta;
                 obj.ch1.results.numobj = ch1_numobj;
@@ -521,17 +536,17 @@ classdef SIM < handle
                 obj.ch2.results.numabeta = ch2_numabeta;
                 obj.ch2.results.numobj = ch2_numobj;
                 obj.ch2.results.volume = ch2_volume;
-            else
-                obj.ch1.abetaSIM.results.bins = bins;
-                obj.ch1.abetaSIM.results.numabeta = ch1_numabeta;
-                obj.ch1.abetaSIM.results.numobj = ch1_numobj;
-                obj.ch1.abetaSIM.results.volume = ch1_volume;
-                
-                obj.ch2.abetaSIM.results.bins = bins;
-                obj.ch2.abetaSIM.results.numabeta = ch2_numabeta;
-                obj.ch2.abetaSIM.results.numobj = ch2_numobj;
-                obj.ch2.abetaSIM.results.volume = ch2_volume;
-            end
+                if simbool
+                    obj.ch1.abetaSIM.results.bins = bins;
+                    obj.ch1.abetaSIM.results.numabeta = ch1_numabeta;
+                    obj.ch1.abetaSIM.results.numobj = ch1_numobj;
+                    obj.ch1.abetaSIM.results.volume = ch1_volume;
+                    
+                    obj.ch2.abetaSIM.results.bins = bins;
+                    obj.ch2.abetaSIM.results.numabeta = ch2_numabeta;
+                    obj.ch2.abetaSIM.results.numobj = ch2_numobj;
+                    obj.ch2.abetaSIM.results.volume = ch2_volume;
+                end
         end
 
         %----
@@ -644,7 +659,7 @@ classdef SIM < handle
     end
     
     methods(Static)
-        function mask = make_maskABeta(image,params)
+        function mask = make_maskABeta(image)
             ab = gaussf(image);
             %             out = GeneralAnalysis.imgLaplaceCutoff(ab,[1 1 1],[1 1 1]);
             out = GeneralAnalysis.imgLaplaceCutoff(ab);
