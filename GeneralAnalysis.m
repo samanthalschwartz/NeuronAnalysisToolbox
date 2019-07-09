@@ -290,7 +290,7 @@ methods (Static)
         thr = multithresh(single(out),3);
         mask = out>thr(1);
     end
-    function [mask,threshval] = imgThreshold_fixedUserInput(img_in,image4selection)
+    function [mask,threshval,C] = imgThreshold_fixedUserInput(img_in,image4selection)
         if ~isa(img_in,'dip_image')
             img_in = dip_image(img_in);
         end
@@ -309,6 +309,13 @@ methods (Static)
         threshval = max(reg);
         mask = threshold(img_in,'fixed',threshval);
         close(h);
+    end
+    function reg = crop(img_in,C)
+        if ndims(img_in)==3
+        reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2),:);
+        elseif ismatrix(img_in)
+            reg = img_in(C(1,1):C(1,1)+C(2,1),C(1,2):C(1,2)+C(2,2));
+        end
     end
    function [mask,threshval] = imgThreshold_fixedUserInput_fromsingleframe(img_in,image4selection)
         if ~isa(img_in,'dip_image')
@@ -721,9 +728,32 @@ methods (Static)
             mask_out(:,:,ii-1) = bwmframe;
         end
     end
+    function savename = filename_addon(filename,addstr)
+        [FILEPATH,NAME,EXT] = fileparts(filename);
+        newfilename = [NAME '_' addstr];
+        savename = fullfile(FILEPATH,[newfilename]);
+    end
+    function [density,edges] = calculate_DensityPerDistace(image,distance_mask,edges)
+        if nargin<3
+            h = histogram(distance_mask,100);
+            edges = h.BinEdges;
+            close(gcf)
+        end
+        density = zeros(size(edges,2),1);
+        wb = waitbar(0,'Calculating Densities...');
+        for ii = 2:size(edges,2)
+            testmask = distance_mask<edges(ii) & distance_mask>=edges(ii-1);
+            inmask = testmask.*image;
+            ints = sum(inmask(:));
+            numpixels = sum(testmask(:));
+            density(ii-1) = ints/numpixels;
+            waitbar((ii-1)/size(edges,2),wb);
+        end
+        close(wb)
+    end
     function bgim_out = regionfill_timeseries(image_in,mask_in)
-       % image_in: image with holes (0 values) where values are
-       % interpolated from
+        % image_in: image with holes (0 values) where values are
+        % interpolated from
        % mask_in: mask over which the values need to be interpolated 
        maxframe = size(image_in,3);
        
