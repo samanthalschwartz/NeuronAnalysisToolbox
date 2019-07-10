@@ -1,4 +1,4 @@
-classdef AshleyAnalysis < handle
+ classdef AshleyAnalysis < handle
    properties
     path_channel_cellfill = []; %'F:\Sam\050118 NL1 insertion\cell4-C2.tif'
     path_channel_surfaceCargo = []; %'F:\Sam\050118 NL1 insertion\cell4-C3.tif';
@@ -19,6 +19,8 @@ classdef AshleyAnalysis < handle
     distmaskPart = [];
     distmaskAIS = [];
     cargo_heatmap = [];
+     % release frame is first frame post release (so surface cargo in
+           % this frame counts)
     % first frame of baseline (ie: 1);
     % last frame of baseline (ie: 6, frame 6 counted as baseline - occurs at t=0)
      % frame rate in min/frame (ie: 1, 1 minute interval between frames)
@@ -115,27 +117,54 @@ classdef AshleyAnalysis < handle
            obj.cargo_heatmap.image = test;
            
        end
-       function h = plotCargoHeatMap(obj,reset)
-           if isempty(obj.cargo_heatmap) || nargin>1
+       function h = plotCargoHeatMap(obj,reset,imgparams)
+% input params:
+% -- reset: boolean 0 or 1 to recalculate with cal_cargo_minFrame
+% -- imgparams: structure with
+%           imgparams.maxtime - maxtime range for the colomap
+%           imgparams.colmap - input colormap
+
+           if isempty(obj.cargo_heatmap)
                obj.calc_cargo_minFrame();
            end
-           fixedtimerange = 160;
+           if  nargin>1 && reset
+               obj.calc_cargo_minFrame();
+           end
+                   
+           % release frame is first frame post release (so surface cargo in
+           % this frame counts)
+           working_image = obj.cargo_heatmap.image - (obj.imagingparams.releaseframe - 1);
+           working_image(working_image<0) = 0;
+               blackjet = flip(jet(255));
+               blackjet(1,:) = [0 0 0];% blackjet(end,:) = [1 1 1];
+               colmap = blackjet;
+               if nargin<3
+                   maxtime = 160;
+               else
+                   if isfield(imgparams,'maxtime')
+                       maxtime  = imgparams.maxtime;
+                   end
+                   if isfield(imgparams,'colmap')
+                       colmap = imgparams.colmap;
+                   end
+               end
+               
+         
            %-- make colormap for plotting
-           blackjet = flip(jet(255));
-           blackjet(1,:) = [0 0 0];% blackjet(end,:) = [1 1 1];
-           
+         
            
            % get colorbar tick info
            %            colorunit = size(labeledim,3)/255;
 %            colorunit = obj.cargo_heatmap.timerange(end)/255;
-           colorunit = fixedtimerange/255;
+           colorunit = maxtime/255;
            numofcolbarval = 4;
            colbarplace =[0:numofcolbarval]*255/4;
            colbarval = [floor(colbarplace * colorunit)];
-           
            %-- now plot results
-           h = dipshow(obj.cargo_heatmap.image-obj.imagingparams.releaseframe,blackjet);
-           dipmapping(h,[obj.imagingparams.releaseframe size(obj.surfaceCargo.image,3)+1]);
+           h = dipshow(working_image,blackjet);
+           top_diprange = maxtime ./ obj.imagingparams.postrelease.framerate;
+           dipmapping(h,[0 top_diprange]);
+%            dipmapping(h,[0 max(working_image(:))]);
            diptruesize(h,80);
            
            
@@ -275,11 +304,25 @@ classdef AshleyAnalysis < handle
 %            end
 %            
 %        end
-       
+       function save(obj,savename)
+           if nargin < 2
+               disp('Need to add a savepath');
+               return;
+           end
+          % cast all dipimage objects back to singles
+          obj.cellFill.soma_mask = single(obj.cellFill.soma_mask);
+          obj.cellFill.image = single(obj.cellFill.image);
+          obj.cellFill.mask = single(obj.cellFill.mask);
+          obj.surfaceCargo.image = single(obj.surfaceCargo.image);
+          obj.surfaceCargo.mask = single(obj.surfaceCargo.mask);
+          obj.cargo_heatmap.image = single(obj.cargo_heatmap.image);
+          aa = obj;
+          save(savename,'aa');
+       end
        function makeDistanceMask(obj)
            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
            % make the distance mask for the full cellfill mask area (AIS included)
-           sums = bdilation(obj.cellFill.mask,1);
+           sums = bdilation(logical(obj.cellFill.mask),1);
            geoframe = sum(sums,[],3);
            obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
            clear sums geoframe;
@@ -288,7 +331,7 @@ classdef AshleyAnalysis < handle
            if ~isempty(obj.cellFill.AIS_mask)
 
                % make the distance mask (no AIS included if it is there)
-               sumsPart = bdilation(obj.cellFill.mask-obj.cellFill.AIS_mask,1);
+               sumsPart = bdilation(logical(obj.cellFill.mask-obj.cellFill.AIS_mask),1);
                geoframePart = sum(sumsPart,[],3);
                obj.distmaskPart = dip_image(bwdistgeodesic(logical(geoframePart),logical(sinkframe),'quasi-euclidean'));
                clear sumsPart geoframePart;
