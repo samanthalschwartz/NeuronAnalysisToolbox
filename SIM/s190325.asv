@@ -90,9 +90,9 @@ xlswrite(savename,matdata);
 close all; clear all;
 filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071_062819');
 savestr = inputdlg('File Save Name');
-[FILEPATH,NAME,EXT] = fileparts(filepath{1});
-savenameCh1 = fullfile(FILEPATH,[NAME,savestr{1},'_ch1']);
-savenameCh2 = fullfile(FILEPATH,[NAME,savestr{1},'_ch2']);
+[FILEPATH,NAME,EXT] = fileparts(filepath{ff});
+savenameCh1 = fullfile(FILEPATH,[NAME,'_savestr_ch1']);
+savenameCh2 = fullfile(FILEPATH,[NAME,'_savestr_ch2']);
 
 wb = waitbar(0)
 for ff= 1:numel(filepath)
@@ -107,7 +107,7 @@ ch1bins = obj.ch1.abetaSIM.results.bins;
 ch1out_bins = [[obj.filepath ' Bins']; num2cell(ch1bins)'];
 ch1out_data = [[obj.filepath ' ch1']; num2cell(ch1norm)];
 if ff == 1
-    ch1matdata = [ch1out_bins,ch1out_data];
+    ch1matdata = [ch1out_bins,out_data];
 else
     ch1matdata = [ch1matdata,ch1out_data];
 end
@@ -129,7 +129,7 @@ end
 waitbar(ff/numel(filepath),wb);
 end
 close(wb)
-xlswrite(savenameCh1,ch1matdata);
+xlswrite(savenameCh1,matdata);
 xlswrite(savenameCh2,ch2matdata);
 
 

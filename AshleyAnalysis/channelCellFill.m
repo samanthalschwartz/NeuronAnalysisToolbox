@@ -57,7 +57,7 @@ classdef channelCellFill < channelBase
        end
        function selectSoma(obj)
            uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));
-           h = dipshow(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]),'log');
+           h = dipshow(squeeze(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)))),'log');
            diptruesize(h,150);
            [roi, v] = diproi(h);      
            obj.soma_mask = repmat(roi,[1 1 size(obj.image,3)]);

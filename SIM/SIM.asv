@@ -179,17 +179,22 @@ classdef SIM < handle
                 sz_x = size(goodmask,1);
                 sz_y = size(goodmask,2);
                 % simulation
-                ids = find(goodmask);
-                simframemask = goodmask.*0;
-                randids = ids(1+round((numel(ids)-1).*rand(1,numabeta)));
-                simframemask(randids) = 1;
-                testim(:,:,zz) = simframemask;
+                simvals = zeros(numabeta,2);
+                cnt = 0;
+                while cnt < numabeta
+                    xval = round(rand(1,1)*(sz_x-1)) + 1;
+                    yval = round(rand(1,1)*(sz_y-1)) + 1;
+                    if goodmask(xval,yval)
+                        cnt=cnt+1;
+                        simvals(cnt,:) = [xval,yval];
+                        testim(xval,yval,zz) = 1;
+                    end
+                end
             end
             obj.ch1.abetaSIM.COMimage = testim;
             obj.ch1.abetaSIM.image = bdilation(logical(testim),3);
             obj.ch1.abetaSIM.dist = distance;
             clear testim;
-            % channnel 2
             testim = 0.*obj.ch2.distance_mask;
             for zz = 1:size(obj.abeta.image,3)
                 %
@@ -197,16 +202,32 @@ classdef SIM < handle
                 % find how many abeta COM in this frame
                 currmask = obj.abeta.COM_image(:,:,zz-1).*goodmask;
                 numabeta = sum(currmask(:));
+                sz_x = size(goodmask,1);
+                sz_y = size(goodmask,2);
                 % simulation
+                simvals = zeros(numabeta,2);
+                cnt = 0;
                 ids = find(goodmask);
                 simframemask = goodmask.*0;
-                randids = ids(1+round((numel(ids)-1).*rand(1,numabeta)));
+                randids = ids(1+round(numel(ids)-1).*rand(1,numabeta)));
                 simframemask(randids) = 1;
-                testim(:,:,zz) = simframemask;
+               
+                while cnt < numabeta
+                    xval = round(rand(1,1)*(sz_x-1)) + 1;
+                    yval = round(rand(1,1)*(sz_y-1)) + 1;
+                    if goodmask(xval,yval)
+                        cnt=cnt+1;
+                        simvals(cnt,:) = [xval,yval];
+                        testim(xval,yval,zz) = 1;
+                    end
+                end
             end
             obj.ch2.abetaSIM.COMimage = testim;
             obj.ch2.abetaSIM.image = bdilation(logical(testim),3);
-            obj.ch2.abetaSIM.dist = distance; 
+            obj.ch2.abetaSIM.dist = distance;
+            zscale = obj.Zpxsize/obj.XYpxsize;
+%             obj.ch1.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch1.abetaSIM.image,zscale);
+%             obj.ch2.abetaSIM.distance_mask = obj.static_make_distancemasks(obj.ch2.abetaSIM.image,zscale);
         end
         
         function abetaDensityAlongPrePost(obj,ROIstring)
@@ -480,8 +501,8 @@ classdef SIM < handle
             ch2_numobj = max(ch2_lb(:));
 %             ch1_maxdist = max(obj.ch1.distance_mask(:));
 %             ch2_maxdist = max(obj.ch2.distance_mask(:));
-            ch1_maxdist = obj.ch1.abetaSIM.dist;
-            ch2_maxdist = obj.ch2.abetaSIM.dist;
+            ch1_maxdist = 20;
+            ch2_maxdist = 20;
             % make com mask from lb
             if ~isfield(obj.abeta,'COM_image') || isempty(obj.abeta.COM_image) || resetbool
                 obj.abetaCOM();

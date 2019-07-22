@@ -1,9 +1,9 @@
-filename = 'G:\zapERtrap\AMB_previous\051318 NL1 insertion\2test_fullcell_merge.tif';
+filename = 'G:\zapERtrap\Raw Data\LOCAL RELEASE\031318_localexpt_NL1\cell1_dendrite.tif';
 uiopen(filename,1);
 cellfill = image(:,:,:,1);
 tfr = image(:,:,:,2);
 cargo = image(:,:,:,3);
-
+close all;
 %%
 
 aa = AshleyAnalysis();
