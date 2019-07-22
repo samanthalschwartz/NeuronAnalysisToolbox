@@ -1,14 +1,18 @@
 % load images
+startdir = 'C:\Users\sammy\Dropbox\Sam Kennedy Lab\Mason';
 
 [filename, pathname] = uigetfile( ...
        {'*.tiff;*.tif;*.TIFF;*.TIF', 'All TIF Files (*..tiff, *.tif, *.TIFF, *.TIF)'; ...
         '*.*',                   'All Files (*.*)'}, ...
-        'Load Composite Image');
+        'Load CellFill Image',startdir);
 uiopen(fullfile(pathname,filename)); close all;
-%%
-[cellfillid, golgiid] =  Mason_selectChannels(image)
-cellfill = image(:,:,:,cellfillid);
-golgi= image(:,:,:,golgiid);
+cellfill = image;
+[filename, pathname] = uigetfile( ...
+       {'*.tiff;*.tif;*.TIFF;*.TIF', 'All TIF Files (*..tiff, *.tif, *.TIFF, *.TIF)'; ...
+        '*.*',                   'All Files (*.*)'}, ...
+        'Load Golgi Image',startdir);
+uiopen(fullfile(pathname,filename)); close all;
+golgi = image;
 
 %%
 numslices= size(cellfill,3);
@@ -18,39 +22,66 @@ cellfill_l = GeneralAnalysis.imgLaplaceCutoff(cellfill); %laplace cuttoff filter
 cellfill_g = gaussf(cellfill); % gaussfilter
 reg = GeneralAnalysis.crop(cellfill_g,C); %apply gaussfilter cuttoff in region selected above
 threshval_g = max(reg);
+%%
 cellfill_gm = threshold(cellfill_g,'fixed',threshval_g);
 cellfillmask = cellfill_lm | cellfill_gm; % or both laplace and gauss masks
-cellfillmask = bdilation(cellfillmask,3);
-cellfillmask = GeneralAnalysis.bwmorph_timeseries(cellfillmask,'bridge',20);
-
+% this is where you can increase the dilation and bridge parameter to make
+% sure mask is connected
+cellfillmask = bdilation(cellfillmask,5);
+cellfillmask = GeneralAnalysis.bwmorph_timeseries(cellfillmask,'bridge',50);
+dipshow(cellfillmask,'log')
+%%
 % make background corrected golgi image
     % - mask golgi (everything)
     % - calculate background filled image 
     % - subtract from golgi image
 golgi_g = gaussf(golgi);
-[golgi_gm ,threshval_golgi,C_golgi]= GeneralAnalysis.imgThreshold_fixedUserInput(golgi_g(:,:,ceil(numslices/2))); %user select
-golgibg = golgi.*~bdilation(golgi_gm,4);
-bgim_out = GeneralAnalysis.regionfill_timeseries(golgibg,dip_image(logical(golgi_gm)));
+[golgi_gm ,threshval_golgi,C_golgi]= GeneralAnalysis.imgThreshold_fixedUserInput(golgi_g); %user select
+golgi_gm = bdilation(golgi_gm,4);
+golgibg = golgi.*~golgi_gm;
+bgim_out = GeneralAnalysis.regionfill_timeseries(golgibg,golgi_gm);
+golgi_bgim = gaussf(bgim_out);
+golgi_bgsubtract = golgi - golgi_bgim;
+
 % select soma region
-    
+uiwait(msgbox(['Select a region to represent the soma'],'Title','modal'));
+
+h = dipshow(cellfill(:,:,ceil(numslices/2)))
+diptruesize(h,50);
+[roi, v] = diproi(h);
+s_mask = repmat(roi,[1 1 size(cellfill,3)]);
+soma_vertices = v;
+close(h);
+soma_mask = s_mask.*cellfillmask;
 % calculate geo distance
-sinkdist = bwdistgeodesic(logical(mask_out),logical(soma_mask),'quasi-euclidean');
+sinkdist = bwdistgeodesic(logical(cellfillmask),logical(soma_mask),'quasi-euclidean');
+h = dipshow(sinkdist,jetblack,[0 max(sinkdist(sinkdist~=Inf))*4]);
+diptruesize(h,50);
+
+% save the distance mask, soma mask, golgi mask
+savefilename = GeneralAnalysis.filename_addon(fullfile(pathname,filename),'_distancemask');
+GeneralAnalysis.LibTiff(sinkdist,savefilename);
+
+somafilename = GeneralAnalysis.filename_addon(fullfile(pathname,filename),'_somamask');
+GeneralAnalysis.LibTiff(sinkdist,somafilename);
+
+golgibgfilename = GeneralAnalysis.filename_addon(fullfile(pathname,filename),'_golgiBgSubtract');
+GeneralAnalysis.LibTiff(golgi_bgsubtract,golgibgfilename);
+
+golgimaskfilename = GeneralAnalysis.filename_addon(fullfile(pathname,filename),'_golgiMASK');
+GeneralAnalysis.LibTiff(golgi_gm,golgimaskfilename);
+
+
 % make distance bins
 
 % calculate density per bin
-h = histogram(sinkdist,100);
-edges = h.BinEdges;
-density = zeros(size(edges,2),1);
+[density,edges] = GeneralAnalysis.calculate_DensityPerDistace(golgi_bgsubtract,sinkdist);
+f = figure; axe= axes(f);
+plot(edges',density,'Linewidth',2);
+axe.FontSize = 16;
+xlabel('Distance in pixels','FontSize',16);
+ylabel('Density (AUs)','FontSize',16);
 
-wb = waitbar(0);
-for ii = 1:size(edges,2)
-
-    testmask = sinkdist<edges(ii+1) & sinkdist>=edges(ii);
-    inmask = testmask.*corr_golgi;
-    ints = sum(inmask(:));
-    numpixels = sum(testmask(:));
-    density(ii) = ints/numpixels;
-    waitbar(ii/size(edges,2),wb);
-end
-close(wb)
-figure; plot(edges',density)
+% save excel
+[FILEPATH,newfilename,EXT] = fileparts(filename);
+xlswrite(fullfile(FILEPATH,newfilename),[edges',density]);

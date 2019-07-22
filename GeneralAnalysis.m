@@ -737,12 +737,13 @@ methods (Static)
     function savename = filename_addon(filename,addstr)
         [FILEPATH,NAME,EXT] = fileparts(filename);
         newfilename = [NAME '_' addstr];
-        savename = fullfile(FILEPATH,[newfilename,EXT]);
+        savename = fullfile(FILEPATH,[newfilename]);
     end
     function [density,edges] = calculate_DensityPerDistace(image,distance_mask,edges)
         if nargin<3
             h = histogram(distance_mask,100);
             edges = h.BinEdges;
+            close(gcf)
         end
         density = zeros(size(edges,2),1);
         wb = waitbar(0,'Calculating Densities...');
@@ -751,8 +752,8 @@ methods (Static)
             inmask = testmask.*image;
             ints = sum(inmask(:));
             numpixels = sum(testmask(:));
-            density(ii) = ints/numpixels;
-            waitbar(ii/size(edges,2),wb);
+            density(ii-1) = ints/numpixels;
+            waitbar((ii-1)/size(edges,2),wb);
         end
         close(wb)
     end

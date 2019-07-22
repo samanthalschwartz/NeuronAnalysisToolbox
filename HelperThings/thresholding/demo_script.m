@@ -95,7 +95,7 @@ end
 
 %====================== KEY PART RIGHT HERE!!!! ===================================================
 % Threshold with starting range startingLowThreshold to startingHighThreshold.
-[lowThreshold, highThreshold] = threshold(startingLowThreshold, startingHighThreshold, imageToThreshold);
+[lowThreshold, highThreshold] = threshold_demo(startingLowThreshold, startingHighThreshold, imageToThreshold);
 %====================== KEY PART RIGHT HERE!!!! ===================================================
 
 

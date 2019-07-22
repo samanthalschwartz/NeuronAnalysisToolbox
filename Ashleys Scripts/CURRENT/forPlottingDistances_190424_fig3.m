@@ -21,6 +21,7 @@ maskd2 = dipshow(currmask)
 % show distance 3 area
 currmask = aa.distmask>d2 & aa.distmask<=d3;
 maskd3 = dipshow(currmask)
+save(fullfile([savename '_AshleyFile.mat']), 'aa'); 
 
 save(filename,'aa');
 %% can just run this section if you've already calculated everything and just want to plot

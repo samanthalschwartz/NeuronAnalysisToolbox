@@ -26,6 +26,7 @@ classdef AshleyAnalysis < handle
         'baseline', struct('frame_start',[],'frame_end',[], 'framerate',[]),... 
         'releaseframe',[],... % duration of 405 light in min (ie: 1, means 1 minute between end of baseline and first frame of post release-- this dictates the time at postreleaseframe_start 
         'postrelease', struct('frame_start',[],'frame_end',[], 'framerate',[])); % first frame of baseline (ie: 7, frame 7 is first frame of post release, occurs at time = releasetime
+   guiFig;
    end
    
    methods
