@@ -30,7 +30,7 @@ classdef channelSurfaceCargo < channelBase
            %            obj.mask = GeneralAnalysis.imgThreshold(normim*img_m);
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,lsig,gsig);
            normim = img_laplcutoff./max(img_laplcutoff);
-           obj.mask = GeneralAnalysis.imgThreshold(normim);
+           obj.mask = GeneralAnalysis.imgThreshold_fixedUserInput(normim);
        end
        function mask_img_highsens(obj,lsig,gsig)
            if nargin<3

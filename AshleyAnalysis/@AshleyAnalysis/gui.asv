@@ -1079,21 +1079,21 @@ function guiFig = gui(obj)
         % now make some things or save some things
         if nargin>0
             if tableval
-                if app.RawResultsVal_CheckBox.Value %if raw values are checked
+                if app.RawResultsVal_CheckBox %if raw values are checked
                     [intensvals, areas] = getImageRegionDropDown();
                     f_table = figure('Position', [20 20 600 500]);
                     
-                    areas_table = uitable(f_table,'Position', [20 20 560 460]);
-                    areas_table.Data = areas;
-                    areas_table.ColumnName = dist_strs;
-                    areas_table.RowName = 'MaskArea_(pixels)';
-                    areas_table.ColumnEditable = false;
-                    areas_table.Parent.Name = 'Total Intensity in Region (AUs)';
+                    areas_table = uitable(f_table,'Position', [20 20 500 400]);
+                    areas_table.Data = [timevals',intensvals];
+                    results_table.ColumnName = ['Time (mins)',dist_strs];
+                    results_table.ColumnEditable = false;
+                    results_table.Parent.Name = 'Surface Signal Density';
                     
                     results_table = uitable(f_table,'Position', [20 20 500 400]);
                     results_table.Data = [timevals',intensvals];
                     results_table.ColumnName = ['Time (mins)',dist_strs];
                     results_table.ColumnEditable = false;
+                    results_table.Parent.Name = 'Surface Signal Density';
                 else
                 f_table = figure('Position', [20 20 600 500]);
                 results_table = uitable(f_table,'Position', [20 20 500 400]);

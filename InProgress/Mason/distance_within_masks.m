@@ -1,4 +1,7 @@
-% load images
+%%
+zscale = 4.2
+4.2*50
+%% load images
 startdir = 'C:\Users\sammy\Dropbox\Sam Kennedy Lab\Mason';
 
 [filename, pathname] = uigetfile( ...

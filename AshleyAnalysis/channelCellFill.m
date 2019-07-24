@@ -26,7 +26,17 @@ classdef channelCellFill < channelBase
            mask_out = gmask|lmask;
            obj.mask = mask_out;
            obj.backgroundvalue = threshval;
-       end       function mask_img_other(obj)
+       end
+       function resetCellFill(obj)
+           obj.resetImage;
+           obj.AIS_mask = [];
+           obj.AIS_vertices = [];
+           obj.soma_mask = [];
+           obj.soma_vertices = [];
+           obj.fullsoma_mask = [];
+           obj.fullsoma_vertices = [];
+       end
+       function mask_img_other(obj)
            img_1 = medif(obj.image,3);
            img_2 = gaussf(img_1,obj.gsig);
            imglcutoff = img_2;
@@ -55,10 +65,14 @@ classdef channelCellFill < channelBase
            obj.mask_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out_thick,'bridge');
        end
        function selectSoma(obj)
-           uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));
+           uiwait(msgbox('Click >2 points to define an ROI for the Soma Area','Draw Soma ROI','modal'));
            h = dipshow(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]),'log');
            diptruesize(h,150);
-           [roi, v] = diproi(h);      
+           try
+           [roi, v] = diproi(h);    
+           catch
+               return
+           end
            obj.soma_mask = repmat(roi,[1 1 size(obj.image,3)]);
            obj.soma_vertices = v;
            close(h);        
@@ -69,13 +83,17 @@ classdef channelCellFill < channelBase
            else
                 inputim = gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]);
            end
-           uiwait(msgbox('Click >2 points to select a cell cell AIS','Draw AIS ROI','modal'));
+           uiwait(msgbox('Click >2 points to define an ROI for the Axon Initial Segment (AIS)','Draw AIS ROI','modal'));
            h = dipshow(inputim,'log');
            diptruesize(h,150);
-           [roi, v] = diproi(h);      
+           try
+           [roi, v] = diproi(h);  
+           catch
+               return;
+           end
            obj.AIS_mask = repmat(roi,[1 1 size(obj.image,3)]);
            obj.AIS_vertices = v;
-           close(h);        
+           close(h);
        end
        function selectFullSoma(obj)
            uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));

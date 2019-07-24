@@ -1,6 +1,6 @@
 close all;
 clear all;
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\050118\TIFF files\cell1_AshleyFile.mat';
+% filename = 'C:\Users\sammy\Dropbox\Sam Kennedy Lab\Projects\ZapERTrap\somaticrelease_slip1\cell3.tif'
 load(filename);
 pxsize = 0.114374*2;
 d1 = 5/pxsize;
