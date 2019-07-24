@@ -214,8 +214,8 @@
                end
            end       
            temp = obj.distmask; temp(temp==Inf)=0;
-           interestmsk = dip_image(surfaceCargoMask.*obj.cellFill.mask);
-           sfim = obj.surfaceCargo.image.*interestmsk;
+           interestmsk = surfaceCargoMask.*obj.cellFill.mask;
+           sfim = obj.surfaceCargo.image*interestmsk;
            scsums = sort(single(squeeze(sum(sfim,[],[1 2]))));
            currM.maxintensity = mean(scsums(end-2:end));
            scmask = sum(dip_image(surfaceCargoMask),[],3);
