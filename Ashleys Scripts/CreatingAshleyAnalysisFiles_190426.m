@@ -1,6 +1,6 @@
 %% Script to Identify CellFill and Recruitment Objects to make an 'AshleyFile' Object
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
-<<<<<<< HEAD
+
 %postrelease(2).frame_start = 21;
 %postrelease(2).frame_end = 'end';
 %postrelease(2).framerate = 1;
@@ -12,65 +12,51 @@
 % 
 % uiopen(filename); close all;
 % 
-% TfR = image(:,:,:,1); TfR = permute(TfR,[2 1 3]);
-% cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
+% TfR = image(:,:,:,2); TfR = permute(TfR,[2 1 3]);
+% cellfill = image(:,:,:,1); cellfill = permute(cellfill,[2 1 3]);
 % cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
 % 
-=======
 close all; clear all;
 %-- set imaging parameters:
-baselineframe_start = 1; % first frame number that baseline acquisition begins
-baselineframe_end = 11; % last frame number of baseline
-baselineframerate = 1; % frame rate in minutes/frame 
-releasetime = 11; % time in minutes, after release, that first frame of post release starts
-postrelease(1).frame_start = 12; % first frame number of post release
-postrelease(1).frame_end = 'end'; % last frame number of post release - or 'end' if post release goes until end of series
-postrelease(1).framerate = 2; % frame rate in minutes/frame
-%postrelease(2).frame_start = 25;
-%postrelease(2).frame_end = 43;
-%postrelease(2).framerate = 2;
+releaseframe = 12;
+postrelease.framerate =2; %in min/frame
 %%
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\GluA1\051718\TIFF files\merges\slip2_2_merge_stitch.tiff';
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\050118\TIFF files\cell3_stitched.tif';
 [FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_,_');
 savename = fullfile(FILEPATH,temp{1});
 
 uiopen(filename); close all;
 
-TfR = image(:,:,:,1); TfR = permute(TfR,[2 1 3]);
-cellfill = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
+TfR = image(:,:,:,2); TfR = permute(TfR,[2 1 3]);
+cellfill = image(:,:,:,1); cellfill = permute(cellfill,[2 1 3]);
 cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
-
-
 
 %%
 % to view image series 'N' to go to next time slice 'P' for previous time
 % slice. Use 'Mapping' tool bar at top to change the look up table.
 % 'I' to zoom in or 'O' to zoom out.
-% aa = AshleyAnalysis();
-% aa.path_3ch_datafile = filename;
-% aa.cellFill = channelCellFill();
-% aa.surfaceCargo = channelSurfaceCargo();
-% aa.TfR = channelTfR();
+aa = AshleyAnalysis();
+aa.path_3ch_datafile = filename;
+aa.cellFill = channelCellFill();
+aa.surfaceCargo = channelSurfaceCargo();
+aa.TfR = channelTfR();
 %%
-aa.imagingparams.baselineframe_start =baselineframe_start;
-aa.imagingparams.baselineframe_end =baselineframe_end;
-aa.imagingparams.baselineframerate =baselineframerate;
 aa.imagingparams.releaseframe = releaseframe;
-aa.imagingparams.postrelease = postrelease;
+aa.imagingparams.postrelease.framerate = postrelease.framerate;
 %%
 
 % use last index to represent which stack to use
-% aa.cellFill.setimage(cellfill);
-% aa.surfaceCargo.setimage(cargo);
-% aa.TfR.setimage(im_array(:,:,:,2));
+aa.cellFill.setimage(cellfill);
+aa.surfaceCargo.setimage(cargo);
+aa.TfR.setimage(TfR);
 % 
-% [img_out_cf,sv_arr] = GeneralAnalysis.timedriftCorrect(aa.cellFill.image);
-% aa.cellFill.setimage(img_out_cf);
-% img_out_sc = GeneralAnalysis.applydriftCorrect(aa.surfaceCargo.image,sv_arr);
-% aa.surfaceCargo.setimage(img_out_sc);
-% img_out_tf = GeneralAnalysis.applydriftCorrect(aa.TfR.image,sv_arr);
-% aa.TfR.setimage(img_out_tf);
+[img_out_cf,sv_arr] = GeneralAnalysis.timedriftCorrect_parfor(aa.cellFill.image);
+aa.cellFill.setimage(img_out_cf);
+img_out_sc = GeneralAnalysis.applydriftCorrect(aa.surfaceCargo.image,sv_arr);
+aa.surfaceCargo.setimage(img_out_sc);
+img_out_tf = GeneralAnalysis.applydriftCorrect(aa.TfR.image,sv_arr);
+aa.TfR.setimage(img_out_tf);
 %%
 % trim the image 
 aa.cellFill.ROI_trim = [];
@@ -116,25 +102,24 @@ aa.cellFill.selectSoma();
 
 % clean up the image:
 %Call this line instead if you want to clean up by frame
-% aa.cleanSurfaceCargoMaskbyFrame_Manual();
+aa.cleanSurfaceCargoMaskbyFrame_Manual();
+%aa.cleanSurfaceCargoMask_Manual();
 
 
 % now make the min distance image
 %h = aa.plot_cargo_minFrame();
-savename = filename(1:end-11);
+savename = filename(1:end-4);
 close all;
-<<<<<<< HEAD
+
 aa.cargo_heatmap = [];
-h = aa.plotCargoHeatMap;
+% h = aa.plotCargoHeatMap;
 % now save the object
-% save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
-save(fullfile([savename '-AshleyFile.mat']), 'aa','-v7.3'); 
-=======
-h = aa.plotCargoHeatMap(1); % put 1 as input to reset
+imgparam.maxtime = 120;
+% imgparam.colormap = '';
+h = aa.plotCargoHeatMap(1,imgparam); % put 1 as input to reset
 % now save the object
-% save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
-save(fullfile([savename '_AshleyFile.mat']), 'aa', '-v7.3'); 
->>>>>>> d8f20e53a948e5ac7407e0cc743f5dbf71613ebf
+fullsavename = fullfile([savename '_AshleyFile.mat']);
+aa.save(fullsavename); 
 
 saveas(h,fullfile([savename '_timeHeatMap']),'fig');
 saveas(h,fullfile([savename '_timeHeatMap']),'png');
