@@ -6,6 +6,7 @@ classdef channelBase < handle
       sigG = 1;
       sigL = 1;
       backgroundvalue = 0;
+       bgsub_image = [];
    end
    properties (GetAccess = 'public', SetAccess = 'private')
        filepath = [];
@@ -38,8 +39,8 @@ classdef channelBase < handle
                obj.image = obj.rawimage;
            end 
        end
-       function trim_rawimage(obj)
-           if isempty(obj.ROI_trim) || size(obj.ROI_trim,1)==1
+       function trim_rawimage(obj,a)
+           if isempty(obj.ROI_trim) || nargin>1
                h = dipshow(obj.rawimage);
                try
                    dipmapping(h,'log');
@@ -67,6 +68,16 @@ classdef channelBase < handle
        end
        function cropimagefromtrimROI(obj)
           obj.image = obj.rawimage(obj.ROI_trim(1,1):obj.ROI_trim(1,1)+obj.ROI_trim(2,1),obj.ROI_trim(1,2):obj.ROI_trim(1,2)+obj.ROI_trim(2,2),obj.ROI_trim(1,3):obj.ROI_trim(1,3)+obj.ROI_trim(2,3));
+       end
+       function resetImage(obj)
+          obj.image = obj.rawimage; 
+          obj.ROI_trim = [];
+          obj.mask = [];
+          obj.bgsub_image = [];
+       end
+       function clearImage(obj)
+          obj.resetImage;
+          obj.rawimage = [];
        end
        function clipmasks(obj)
            clip = 20;

@@ -1,0 +1,1 @@
+list = getList("image.titles");

@@ -1170,7 +1170,7 @@ methods (Static)
          % this functions uses matlab's normxcorr2 function to combine
          % images at the maximum cross correlation position. the larger of
          % the two images serves as the base 'image' and then the smaller
-         % image is 'template'd around --> the base image is used in regions of overlap 
+         % image is 'template'd around --> the base image is used in regions of overlap
          
          % this can also take in a shift input ccpeak. this is a cell array
          % with an xpeak and ypeak. this is assumed to represent the peak
@@ -1190,23 +1190,23 @@ methods (Static)
          % make template image that's image with template sized perimeter (template size -1)
          newimage = zeros((size(dendrite,1)-1)+size(soma,1),(size(dendrite,2)-1)+size(soma,2));
          % switch the order of these 2 lines to put the template in the
-         % region of overlap instead of the image 
+         % region of overlap instead of the image
          newimage(xpeak:xpeak+size(dendrite,1)-1,ypeak:ypeak+size(dendrite,2)-1) = dendrite;
          newimage(size(dendrite,1)+1:size(dendrite,1)+size(soma,1),size(dendrite,2)+1:size(dendrite,2)+size(soma,2)) = soma;
-          % clean up the image
+         % clean up the image
          if nargin>3 && cleanbool
-         test1 = sum(newimage,1);
-         yfirst = find(test1>0,1,'first');
-         ylast = find(test1>0,1,'last');
-         test2 = sum(newimage,2);  
-         xfirst = find(test2>0,1,'first');
-         xlast = find(test2>0,1,'last');
-         stitchimage = newimage(xfirst:xlast,yfirst:ylast,:);  
+             test1 = sum(newimage,1);
+             yfirst = find(test1>0,1,'first');
+             ylast = find(test1>0,1,'last');
+             test2 = sum(newimage,2);
+             xfirst = find(test2>0,1,'first');
+             xlast = find(test2>0,1,'last');
+             stitchimage = newimage(xfirst:xlast,yfirst:ylast,:);
          else
              stitchimage = newimage;
          end
      end
-             
+     
      function [stitchmovie,ccpeak_out] = stitch2movies(mov1,mov2,ccpeak_in)
          if isa(mov1,'dip_image')
              try
@@ -1223,27 +1223,27 @@ methods (Static)
                  warning('input must be an image matrix');
                  return;
              end
-         end 
+         end
          assert(size(mov1,3) == size(mov2,3));
          if nargin>2
-         % make sure that there is a ccpeak for each frame
+             % make sure that there is a ccpeak for each frame
              assert(size(ccpeak_in,1) == size(mov1,3));
          end
          ccpeak_out = cell(size(mov1,3),1);
          lastframe = size(mov1,3);
-         stitchmovie = zeros(size(mov1,1)*2,size(mov2,2)*2,lastframe);   
+         stitchmovie = zeros(size(mov1,1)*2,size(mov2,2)*2,lastframe);
          if nargin>2
              wb = waitbar(0,'Stitching based on input...');
          else
-         wb = waitbar(0,'Computing stitching...');
+             wb = waitbar(0,'Computing stitching...');
          end
          for ff = 1:lastframe
              im1 = squeeze(mov1(:,:,ff));
              im2 = squeeze(mov2(:,:,ff));
              if nargin>2
-             [stitchimage,ccpeak_out{ff}] = GeneralAnalysis.stitch2images(im1,im2,ccpeak_in{ff});
+                 [stitchimage,ccpeak_out{ff}] = GeneralAnalysis.stitch2images(im1,im2,ccpeak_in{ff});
              else
-             [stitchimage,ccpeak_out{ff}] = GeneralAnalysis.stitch2images(im1,im2);
+                 [stitchimage,ccpeak_out{ff}] = GeneralAnalysis.stitch2images(im1,im2);
              end
              stitchmovie(1:size(stitchimage,1),1:size(stitchimage,2),ff) = stitchimage;
              waitbar(ff/lastframe,wb);
@@ -1257,7 +1257,7 @@ methods (Static)
          test2 = sum(fulltest,2);
          xfirst = find(test2>0,1,'first');
          xlast = find(test2>0,1,'last');
-         stitchmovie = stitchmovie(xfirst:xlast,yfirst:ylast,:);  
+         stitchmovie = stitchmovie(xfirst:xlast,yfirst:ylast,:);
      end
      
      function [h,overlayim] = viewMaskOverlayPerimStatic(image,mask,cm,mskcol)
@@ -1274,13 +1274,13 @@ methods (Static)
      end
      function [h,overlayarr] = viewMaskOverlay(grayim,mask)
          if ~isa(grayim,'dip_image')
-            try
-                grayim = dip_image(grayim);
-            catch
-                warning('input must be an image matrix');
-                    return;
-            end
-        end
+             try
+                 grayim = dip_image(grayim);
+             catch
+                 warning('input must be an image matrix');
+                 return;
+             end
+         end
          assert(ndims(grayim) == ndims(mask));
          grayim_minusmask = grayim.*~mask;
          mskfrm = max(grayim)*10*mask + grayim_minusmask;
@@ -1293,8 +1293,17 @@ methods (Static)
                  gch = cat(4,grayim_minusmask,grayim);
          end
          bch = gch;
-         overlayarr = joinchannels('rgb',rch,gch,bch); 
+         overlayarr = joinchannels('rgb',rch,gch,bch);
          h = dipshow(overlayarr,'log');
      end
+     function image_out = imlognorm(image_in)
+         % take logarithm of image.
+         imLog = log(image_in);
+         % normalize
+         minLog = min(imLog(:));
+         maxLog = max(imLog(:));
+         image_out = 255 * (imLog - minLog)./(maxLog-minLog);
+     end
+     
 end
 end

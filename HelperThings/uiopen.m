@@ -34,16 +34,17 @@ switch ext
 %         name=getObjName('spd');
     case {'.tif','.TIF','.tiff','.TIFF'}
         obj = loadtiff(filename);
-        name = 'image';
+        [FILEPATH,NAME,EXT] = fileparts(filename);
+        name = NAME;
         if ndims(obj) == 4
             cmap = {red,green,blue};
             % then it is a color image
-            for ii = 1:size(obj,4)
-                if ~isempty(find(obj(:,:,:,ii),1))
-                    dipshow(obj(:,:,:,ii),'lin');
-                    dipmapping(gcf,'Colormap',cmap{ii});
-                end
-            end
+%             for ii = 1:size(obj,4)
+%                 if ~isempty(find(obj(:,:,:,ii),1))
+%                     dipshow(obj(:,:,:,ii),'lin');
+%                     dipmapping(gcf,'Colormap',cmap{ii});
+%                 end
+%             end
         end
     case '.reganalysis'
         obj = RegistrationAnalysis(filename);
@@ -64,10 +65,13 @@ switch ext
         cd(orig_dir);
         return
 end
-assignin('base',name, obj);
-if ~strcmp(ext,'.tif') &&  ~strcmp(ext,'.TIF') &&  ~strcmp(ext,'.TIFF') && ~strcmp(ext,'.tiff')
-    evalin('base',sprintf('disp(%s)',name));
-end
+name = strrep(name,' ','_');
+% assignin('base',name, obj);
+assignin('base','image', obj);
+
+% if ~strcmp(ext,'.tif') &&  ~strcmp(ext,'.TIF') &&  ~strcmp(ext,'.TIFF') && ~strcmp(ext,'.tiff')
+%     evalin('base',sprintf('disp(%s)',name));
+% end
 % if strcmp(ext,'.tif')
 %     GeneralAnalysis.displaytiff(obj);
 % else

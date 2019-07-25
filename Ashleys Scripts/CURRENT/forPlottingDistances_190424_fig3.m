@@ -1,6 +1,6 @@
 close all;
 clear all;
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\050118\TIFF files\cell1_AshleyFile.mat';
+% filename = 'C:\Users\sammy\Dropbox\Sam Kennedy Lab\Projects\ZapERTrap\somaticrelease_slip1\cell3.tif'
 load(filename);
 pxsize = 0.114374*2;
 d1 = 5/pxsize;
@@ -21,6 +21,7 @@ maskd2 = dipshow(currmask)
 % show distance 3 area
 currmask = aa.distmask>d2 & aa.distmask<=d3;
 maskd3 = dipshow(currmask)
+save(fullfile([savename '_AshleyFile.mat']), 'aa'); 
 
 save(filename,'aa');
 %% can just run this section if you've already calculated everything and just want to plot
