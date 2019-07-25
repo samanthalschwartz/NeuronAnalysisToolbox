@@ -1019,21 +1019,21 @@ function guiFig = gui(obj)
                 if isempty(obj.M)
                     intensvals = [];
                 else
-                intensvals = obj.M.rawintensity';  
+                intensvals = obj.M.areanormintensity';  
                 areas = obj.M.mask_area;
                 end
            case 'AIS'
                if isempty(obj.M_AIS)
                    intensvals = [];
                else
-                   intensvals = obj.M_AIS.rawintensity';
+                   intensvals = obj.M_AIS.areanormintensity';
                    areas = obj.M_AIS.mask_area;
                end
            case 'no AIS'
                if isempty(obj.M_noAIS)
                    intensvals = [];
                else
-                   intensvals = obj.M_noAIS.rawintensity';
+                   intensvals = obj.M_noAIS.areanormintensity';
                    areas = obj.M_noAIS.mask_area;
                end
         end 
@@ -1152,6 +1152,7 @@ function guiFig = gui(obj)
         else
             [h,im] = obj.plotCargoHeatMap(0,imgparams);
         end
+        
     end
     function callback_TempHeatMapButton()
         try
@@ -1161,20 +1162,18 @@ function guiFig = gui(obj)
         end
     end
     function imlayerimage = makedistancefigure(dists)
+        distim = obj.distmask;
         switch app.ImageRegionDropDown.Value
             case 'Total'
-                distim = obj.distmask;
             case 'no AIS'
                 if isempty(obj.cellFill.AIS_mask)
                     obj.cellFill.selectAIS();
                 end
-                distim = obj.distmask;
                 distim(obj.cellFill.AIS_mask(:,:,1)) = nan;
             case 'AIS'
                 if isempty(obj.cellFill.AIS_mask)
                     obj.cellFill.selectAIS();
                 end
-                distim = obj.distmask;
                 distim(~obj.cellFill.AIS_mask(:,:,1))= nan;
         end
         imlayerimage = zeros([size(distim,2),size(distim,1),size(dists,2)]);
@@ -1268,12 +1267,12 @@ function guiFig = gui(obj)
     function distmask = getDistanceMask()
         if isstruct(obj.distmask)
             distmask = obj.distmask.data;
-            distmask(isinf(distmask)) = 0;
         else
             distmask=obj.distmask;
-            distmask(isinf(distmask)) = 0;
-            distmask = uint16(distmask);
         end
+            distmask(isinf(distmask)) = 0;
+            distmask = distmask*obj.pxsize;%convert values to microns
+            distmask = uint16(distmask);
     end
     function [image,imagename] = checkViewInput(TreeNodeText)
         image = [];
