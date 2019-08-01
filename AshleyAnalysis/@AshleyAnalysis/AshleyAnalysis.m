@@ -375,21 +375,25 @@ classdef AshleyAnalysis < handle
            obj.surfaceCargo.bgsub_image(obj.surfaceCargo.bgsub_image<0) = 0;
        end
        function save(obj,savename)
-           if nargin < 2
+           if isempty(obj.savename) && nargin < 2
                disp('Need to add a savepath');
                return;
            end
-          % cast all dipimage objects back to singles
-          obj.cellFill.soma_mask = single(obj.cellFill.soma_mask);
-          obj.cellFill.image = single(obj.cellFill.image);
-          obj.cellFill.mask = single(obj.cellFill.mask);
-          obj.surfaceCargo.image = single(obj.surfaceCargo.image);
-          obj.surfaceCargo.mask = single(obj.surfaceCargo.mask);
-%           obj.cargo_heatmap = single(obj.cargo_heatmap);
+           if nargin<2
+               savename = obj.savename;
+           end
+           % cast all dipimage objects back to singles
+           obj.cellFill.soma_mask = single(obj.cellFill.soma_mask);
+           obj.cellFill.image = single(obj.cellFill.image);
+           obj.cellFill.mask = single(obj.cellFill.mask);
+           obj.surfaceCargo.image = single(obj.surfaceCargo.image);
+           obj.surfaceCargo.mask = single(obj.surfaceCargo.mask);
+           %           obj.cargo_heatmap = single(obj.cargo_heatmap);
            obj.guiFig =[];
-          aa = obj;
-          
-          save(savename,'aa');
+           aa = obj;
+           display(['Saving File As ' savename]);
+           save(savename,'aa');
+           display('Finished Saving File');
        end
        function makeDistanceMask(obj)
            if isempty(obj.cellFill.mask)

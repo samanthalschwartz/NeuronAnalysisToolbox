@@ -281,11 +281,11 @@ function guiFig = gui(obj)
         app.Tree.SelectionChangedFcn =  @(btn,event) callback_TreeNodeChange();
         app.Tree.Interruptible = 'on';
         app.MaskingButton.ButtonPushedFcn = @(btn,event) callback_MaskingButton();
-        app.PixelSizeDropDown.Items = {'Bin 1x1 = 0.114 um','Bin 2x2 = 0.228 um'};
+        app.PixelSizeDropDown.Items = {'Bin 2x2 = 0.228 um','Bin 1x1 = 0.114 um'};
         initializePixelSize();
         app.PixelSizeumEditField.ValueChangedFcn = @(btn,event) callback_PixelFieldChange();
         app.PixelSizeDropDown.ValueChangedFcn = @(btn,event) callback_PixelSizeDropdownChange();
-        app.DistancespixelsEditField.Value = '18,140,700';
+        app.DistancespixelsEditField.Value = '4,10,200';
         app.DistancespixelsEditField.ValueChangedFcn =  @(btn,event) callback_DistancesChanged();
         app.ViewDistancesButton.ButtonPushedFcn = @(btn,event) callback_ViewDistancesButton();
         app.NormalizationDropDown.Items = {'Per Distance Region','Compare to First Region'};
@@ -435,7 +435,7 @@ function guiFig = gui(obj)
         
         % Create DriftCorrectImageCheckBox
         imloader.DriftCorrectImageCheckBox = uicheckbox(imloader.SetPanel,'ValueChangedFcn',@(btn,event) callback_DriftCorrectBoxChanged());
-        imloader.DriftCorrectImageCheckBox.Text = 'Drift Correct Image';
+        imloader.DriftCorrectImageCheckBox.Text = 'Drift Correct Images';
         imloader.DriftCorrectImageCheckBox.Position = [150 30 124 23];
         imloader.DriftCorrectImageCheckBox.Enable = 'off';
         
@@ -616,18 +616,20 @@ function guiFig = gui(obj)
         Masking.Surface_MaskDropDown.Value = 'Medium';
         Masking.Surface_CleanUpMethodDropDown.Items = {'Manual','By Frame'};
         Masking.Surface_CleanUpMethodDropDown.Value = 'Manual';
-        
+        Masking.UseCellmaskCheckBox.Value = 1;
     end
 % ----------- call backs for Masking
     function callback_CellMaskButton()
         switch Masking.Cell_MaskDropDown.Value
             case 'Medium'
                 obj.cellFill.mask_img();
+                obj.distmask = [];
         end
         app.Tree.SelectedNodes = [app.CellMarker_MaskNode,app.CellMarker_ImageNode];
         callback_TreeNodeChange();
         %callback_ViewSelectedButton();
         maskchangebool = 1;
+         obj.distmask = [];
     end
     function callback_CellMaskCleanUpButton()
         app.Tree.SelectedNodes = [app.CellMarker_MaskNode,app.CellMarker_ImageNode];
@@ -698,9 +700,9 @@ function guiFig = gui(obj)
     end
     function imp = ImageLoader_viewImage(channelstr)
         if strcmp(imloader.(channelstr).ChannelSpinner.Enable,'on')
-            imp = matIJ.showImage(imloader.(channelstr).image(:,:,:,imloader.(channelstr).ChannelSpinner.Value));
+            imp = MatIJ.showImage(imloader.(channelstr).image(:,:,:,imloader.(channelstr).ChannelSpinner.Value));
         else
-            imp = matIJ.showImage(imloader.(channelstr).image);
+            imp = MatIJ.showImage(imloader.(channelstr).image);
         end
     end
     function callback_SurfaceSignal_LoadImageDropDown()
@@ -732,7 +734,7 @@ function guiFig = gui(obj)
             [image,name] = loadFile();
         else
             try
-                image = squeeze(matIJ.pullimage(ijname));
+                image = squeeze(MatIJ.pullimage(ijname));
                 name = ijname;
             catch
             end
@@ -867,7 +869,7 @@ function guiFig = gui(obj)
             [image,imagename] = checkViewInput(app.Tree.SelectedNodes.Text);
         end
         if ~isempty(image)
-        imp = matIJ.showImage(image,'YXTCZ');
+        imp = MatIJ.showImage(image,'YXTCZ');
         imp.setTitle(imagename);
         end
     end
@@ -1124,10 +1126,12 @@ function guiFig = gui(obj)
         end
     end
     function callback_UpdatePlot()
+        disp('Updating Plot.....');
         genPlotValues();
         makePlot();
         maskchangebool = 0;
         initializePlottingComponents();
+        disp('Finished Updating Plot.....');
     end
     function callback_CheckPlotButtonState()
         if maskchangebool %if the mask has been changed then need to update plot and remove heatmap node until it is remade with button
@@ -1149,7 +1153,7 @@ function guiFig = gui(obj)
         dist_um = getDistances_fromstring(); %these are in microns
         dists = dist_um/obj.pxsize;
         distanceim = makedistancefigure(dists);
-        imp = matIJ.showImage(distanceim,'YXTCZ');
+        imp = MatIJ.showImage(distanceim,'YXTCZ');
         imp.setTitle(['Distances: ' app.DistancespixelsEditField.Value]);
 %         catch
 %             errordlg('Enter distances as a list of comma separated values, ie: 18,70,200');
@@ -1236,12 +1240,21 @@ function guiFig = gui(obj)
     function callback_selectSaveName()
         if isempty(app.SaveNameEditField.Value) %no info from gui
             if isempty(obj.savename) %check if obj has info
-                [file,path] = uiputfile('AshleyFile.m'); %no info from object just prompt
+                try
+                    [file,path] = uiputfile('AshleyFile.m'); %no info from object just prompt
+                catch
+                end
             else % there is a savename so start with this
-                [file,path] = uiputfile(obj.savename);
+                try
+                    [file,path] = uiputfile(obj.savename);
+                catch
+                end
             end
         else %new text in the gui textbox - use this for saving
-            [file,path] = uiputfile(app.SaveNameEditField.Value);
+            try
+                [file,path] = uiputfile(app.SaveNameEditField.Value);
+            catch
+            end
         end
         obj.savename = fullfile(path,file);
         app.SaveNameEditField.Value = obj.savename;

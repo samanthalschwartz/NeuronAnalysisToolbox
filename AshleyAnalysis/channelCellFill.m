@@ -16,6 +16,7 @@ classdef channelCellFill < channelBase
            obj = obj@channelBase();
        end
        function mask_img(obj)
+           obj.resetCellFill();
            %         img_m = medif(obj.image,3);
            %         img_g = GeneralAnalysis.imgGauss(img_m,obj.gsig);
            %         img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_m,obj.lsig,obj.gsig);
@@ -35,6 +36,7 @@ classdef channelCellFill < channelBase
            obj.soma_vertices = [];
            obj.fullsoma_mask = [];
            obj.fullsoma_vertices = [];
+           obj.mask_thick = [];
        end
        function mask_img_other(obj)
            img_1 = medif(obj.image,3);
