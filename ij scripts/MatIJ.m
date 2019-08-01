@@ -57,7 +57,9 @@ classdef matIJ < handle
                         test = stack.getProcessor(stckid); % this is the 2d image
                         vals = test.getPixels();
                         currframe(:) = vals(:);
+                        currframe = permute(currframe,[2 1]);
                         img(:,:,zz,tt,cc) = currframe;
+                        
                     end
                 end
             end

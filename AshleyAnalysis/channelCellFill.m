@@ -24,7 +24,7 @@ classdef channelCellFill < channelBase
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,obj.lsig,obj.gsig);
            [lmask,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
            mask_out = gmask|lmask;
-           obj.mask = mask_out;
+           obj.mask = bdilation(mask_out,6);
            obj.backgroundvalue = threshval;
        end
        function resetCellFill(obj)

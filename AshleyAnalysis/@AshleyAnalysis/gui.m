@@ -769,7 +769,7 @@ function guiFig = gui(obj)
         % ---- then drift correct
         if imloader.DriftCorrectImageCheckBox.Value
             [cfim,sv_arr] = GeneralAnalysis.timedriftCorrect(obj.cellFill.rawimage);
-            sfim = GeneralAnalysis.timedriftCorrect_parfor(cfim,sv_arr);
+            sfim = GeneralAnalysis.applydriftCorrect(obj.surfaceCargo.rawimage,sv_arr);
             obj.cellFill.setimage(cfim);
             obj.surfaceCargo.setimage(sfim);
         end
