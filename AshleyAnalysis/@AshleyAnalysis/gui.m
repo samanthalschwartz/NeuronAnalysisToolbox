@@ -540,13 +540,14 @@ function guiFig = gui(obj)
         Masking.Surface_Tab = uitab(Masking.TabGroup);
         Masking.Surface_Tab.Title = 'Surface Signal Mask';
         
+        
         % Create Surface_MaskPanel
         Masking.Surface_MaskPanel = uipanel(Masking.Surface_Tab);
         Masking.Surface_MaskPanel.Position = [20 158 218 99];
         
         % Create Surface_MaskButton
         Masking.Surface_MaskButton = uibutton(Masking.Surface_MaskPanel, 'push');
-        Masking.Surface_MaskButton.Position = [42 17 130 42];
+        Masking.Surface_MaskButton.Position = [34 14 130 42];
         Masking.Surface_MaskButton.Text = 'Mask Image';
         
         % Create MaskingMethodDropDownLabel
@@ -561,32 +562,42 @@ function guiFig = gui(obj)
         
         % Create Surface_CleanPanel
         Masking.Surface_CleanPanel = uipanel(Masking.Surface_Tab);
-        Masking.Surface_CleanPanel.Position = [20 40 218 99];
+        Masking.Surface_CleanPanel.Position = [20 10 218 139];
         
         % Create CleanUpMethodDropDownLabel
         Masking.CleanUpMethodDropDownLabel = uilabel(Masking.Surface_CleanPanel);
         Masking.CleanUpMethodDropDownLabel.HorizontalAlignment = 'right';
-        Masking.CleanUpMethodDropDownLabel.Position = [6 69 99 22];
+        Masking.CleanUpMethodDropDownLabel.Position = [6 109 99 22];
         Masking.CleanUpMethodDropDownLabel.Text = 'Clean Up-Method';
         
         % Create Surface_CleanUpMethodDropDown
         Masking.Surface_CleanUpMethodDropDown = uidropdown(Masking.Surface_CleanPanel);
-        Masking.Surface_CleanUpMethodDropDown.Position = [112 69 100 22];
+        Masking.Surface_CleanUpMethodDropDown.Position = [112 109 100 22];
         
         % Create Surface_CleanUpMaskButton
         Masking.Surface_CleanUpMaskButton = uibutton(Masking.Surface_CleanPanel, 'push');
-        Masking.Surface_CleanUpMaskButton.Position = [44 14 130 44];
+        Masking.Surface_CleanUpMaskButton.Position = [34 50 130 44];
         Masking.Surface_CleanUpMaskButton.Text = 'Clean Up Mask';
         
         % Create Surface_ResetCheckBox
         Masking.Surface_ResetCheckBox = uicheckbox(Masking.Surface_CleanPanel);
         Masking.Surface_ResetCheckBox.Text = '';
-        Masking.Surface_ResetCheckBox.Position = [16 20 25 22];
+        Masking.Surface_ResetCheckBox.Position = [48 9 25 21];
         
         % Create Surface_ResetLabel
         Masking.Surface_ResetLabel = uilabel(Masking.Surface_CleanPanel);
-        Masking.Surface_ResetLabel.Position = [6 36 37 22];
+        Masking.Surface_ResetLabel.Position = [38 26 37 21];
         Masking.Surface_ResetLabel.Text = 'Reset';
+        
+        % Create Surface_UseCellMaskLabel
+        Masking.Surface_UseCellMaskLabel = uilabel(Masking.Surface_CleanPanel);
+        Masking.Surface_UseCellMaskLabel.Position = [99 24 83 24];
+        Masking.Surface_UseCellMaskLabel.Text = 'Use Cell Mask';
+        
+        % Create UseCellmaskCheckBox
+        Masking.UseCellmaskCheckBox = uicheckbox(Masking.Surface_CleanPanel);
+        Masking.UseCellmaskCheckBox.Text = '';
+        Masking.UseCellmaskCheckBox.Position = [127 8 25 22];
         
         % Show the figure after all components are created
         Masking.UIFigure.Visible = 'on';
@@ -645,11 +656,16 @@ function guiFig = gui(obj)
         else
             reset = 0;
         end
+        if Masking.UseCellmaskCheckBox.Value
+            cellmaskbool = 1;
+        else
+            cellmaskbool = 0;
+        end
         switch Masking.Surface_CleanUpMethodDropDown.Value
             case 'Manual'
-                obj.cleanSurfaceCargoMask_Manual(reset);
+                obj.cleanSurfaceCargoMask_Manual(reset,cellmaskbool);
             case 'By Frame'
-                obj.cleanSurfaceCargoMaskbyFrame_Manual(reset);
+                obj.cleanSurfaceCargoMaskbyFrame_Manual(reset,cellmaskbool);
         end
         app.Tree.SelectedNodes = [app.SurfSign_MaskNode,app.SurfSign_ImageNode];
         callback_TreeNodeChange();
