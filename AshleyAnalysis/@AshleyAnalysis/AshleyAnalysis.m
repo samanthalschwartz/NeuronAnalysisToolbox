@@ -396,12 +396,15 @@ classdef AshleyAnalysis < handle
                errordlg('Need to make a Cell Region Mask');
                return
            end
+           if isempty(obj.cellFill.mask_thick)
+              obj.cellFill.make_thickMask(); 
+           end
            if isempty(obj.cellFill.soma_mask)
                obj.cellFill.selectSoma;
            end
            sinkframe = squeeze(obj.cellFill.soma_mask(:,:,1));
            % make the distance mask for the full cellfill mask area (AIS included)
-           sums = bdilation(logical(obj.cellFill.mask),1);
+           sums = bdilation(logical(obj.cellFill.mask_thick),1);
            geoframe = sum(sums,[],3);
            obj.distmask = dip_image(bwdistgeodesic(logical(geoframe),logical(sinkframe),'quasi-euclidean'));
            clear sums geoframe;
@@ -474,35 +477,53 @@ classdef AshleyAnalysis < handle
            obj.distancematrix = distMat;
        end
        
-       function cleanSurfaceCargoMask(obj)
+       function cleanSurfaceCargoMask(obj,cellmaskbool)
+           % cellmaskbool is boolean for if you want to limit surface cargo
+           % mask to only within the cellmask region
            img4wtsd = gaussf(obj.surfaceCargo.image);
            wshed = GeneralAnalysis.watershed_timeseries(-img4wtsd,1);
            newsfmask = obj.surfaceCargo.mask;
            newsfmask(wshed==1) = 0;
-           cargomask = newsfmask*obj.cellFill.mask;
+           if nargin>1 && ~cellmaskbool
+               cargomask = newsfmask;
+           else
+               cargomask = newsfmask*obj.cellFill.mask;
+           end
            obj.cleanedcargomask = cargomask;
        end
-       function cleanSurfaceCargoMask_Manual(obj,reset)
+       function cleanSurfaceCargoMask_Manual(obj,reset,cellmaskbool)
            % uses current cleaned surface mask to start with if it exists
            % any input in the function call acts as a reset
 %            [h,overlayim] = GeneralAnalysis.viewMaskOverlayPerimStatic(obj.surfaceCargo.image,obj.cellFill.mask);
 %            close(h);
 %            overlayim(overlayim==0) = max(overlayim)*2;
             % - for resetting image use 1
+            % cellmaskbool is boolean for if you want to limit surface cargo
+                        % mask to only within the cellmask region
+           if nargin>1 && ~cellmaskbool
+               cellmask = 0;
+           else
+               cellmask = obj.cellFill.mask;
+           end
            overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2 || ~reset
-               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,obj.cleanedcargomask.*cellmask,100);
            else
-               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
+               cargomask = GeneralAnalysis.cleanUpMask_manual_square(overlayim,single(obj.surfaceCargo.mask).*cellmask,100);
            end
            obj.cleanedcargomask = cargomask;
        end
-       function cleanSurfaceCargoMaskbyFrame_Manual(obj,reset)
+       function cleanSurfaceCargoMaskbyFrame_Manual(obj,reset,cellmaskbool)
+           if nargin>1 && ~cellmaskbool
+               cellmask = 0;
+           else
+               cellmask = obj.cellFill.mask;
+           end
            overlayim = obj.surfaceCargo.image;
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2 || ~reset
-               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
+               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,obj.cleanedcargomask.*cellmask,100);
            else
-               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,single(obj.surfaceCargo.mask).*obj.cellFill.mask,100);
+               cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,single(obj.surfaceCargo.mask).*cellmask,100);
            end
            obj.cleanedcargomask = dip_image(logical(cargomask));
        end

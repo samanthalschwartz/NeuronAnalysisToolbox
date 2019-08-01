@@ -61,7 +61,7 @@ classdef channelCellFill < channelBase
        function make_thickMask(obj)
            % make sum projection of masked image, then thicken and bridge
            sumproj_out = GeneralAnalysis.sumproj_masktimeseries(obj.mask);
-           sumproj_out_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out,'thicken',2);
+           sumproj_out_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out,'thicken',4);
            obj.mask_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out_thick,'bridge');
        end
        function selectSoma(obj)

@@ -1,4 +1,4 @@
-classdef matIJ < handle
+classdef MatIJ < handle
     % wrapper class for some additional useful functions when using ImageJ and MIJ functions in Matlab
     properties
         test = [];
@@ -6,13 +6,13 @@ classdef matIJ < handle
     
     methods (Static)
         function imp = showImage(I,varargin)
-            % display matlab image as ImageJ with window name the same as
+            % display Matlab image as ImageJ with window name the same as
             % variable name
             windowname = matlab.lang.makeValidName(inputname(1)); % this is to get the variable name
             if nargin > 1
                 imp = othercopytoImagePlus(I,windowname,varargin{1});
             else
-                strs = matIJ.guessDimStr(I);
+                strs = MatIJ.guessDimStr(I);
                 if ~isempty(strs)
                     imp = othercopytoImagePlus(I,windowname,strs);
                 else % just let default channel settings take over since too much going on
@@ -36,7 +36,7 @@ classdef matIJ < handle
         function img = imgfromimplus(implus)
             % currently this only works for xyztc - if there are more
             % dimensions, need to fix this.....
-            % returns matlab matrix image in format --xyztc--- from imageJ image plus (composite) ij params
+            % returns Matlab Matrix image in forMat --xyztc--- from imageJ image plus (composite) ij params
             dims = implus.getDimensions'; xy_dims = dims(1:2);
             nch = implus.getNChannels;
             nframes = implus.getNFrames;
@@ -66,14 +66,14 @@ classdef matIJ < handle
         end
         
         function img = pullimage(input)
-            % returns image in format xyztc by asking for properties from image
+            % returns image in forMat xyztc by asking for properties from image
             % in image j.
             if nargin>0
                 if ischar(input)
                     disp('Pulling IJ image into Matlab....');
                     implus = ij.WindowManager.getImage(input);
                     ij.WindowManager.setCurrentWindow(ij.WindowManager.getWindow(input));
-                    img = matIJ.imgfromimplus(implus);
+                    img = MatIJ.imgfromimplus(implus);
                     disp('Done');
                 end
             end
@@ -93,7 +93,7 @@ classdef matIJ < handle
                 if tf
                     for ii = 1:numel(indx)
                         img = pullimage(imnames{indx(ii)});
-                        varname = matIJ.cleanfilename(imnames{indx(ii)});
+                        varname = MatIJ.cleanfilename(imnames{indx(ii)});
                         assignin('base',varname, imag);
                     end
                     img = numel(indx);
@@ -114,15 +114,15 @@ classdef matIJ < handle
             end
         end
         function saveImage(inputimagename,savename,dimstr)
-            % save an image open in the image j window to tiff or save a matlab image
+            % save an image open in the image j window to tiff or save a Matlab image
             % as a tif.
             % user is prompted to identify open image if none is specified
             % user is prompted for save file name is none is specified
-            % if saving a tiff from a matlab variable - first use showImage
+            % if saving a tiff from a Matlab variable - first use showImage
             % function to display in ImageJ and then save it. optional
             % dimension str for call can be provided ie: 'xyct' or 'xyctz'
             if isempty(nargin)
-                imnames = matIJ.getOpenImageWindowNames();
+                imnames = MatIJ.getOpenImageWindowNames();
                 [~,tf] = listdlg('ListString',imnames);
                 if ~tf
                     return;
@@ -140,9 +140,9 @@ classdef matIJ < handle
                 end
             elseif exist(inputimagename,'var') && ndims(inputimagenames)>1
                 if nargin>2 && ischar(dimstr)
-                    imp = matIJ.showImage(inputimagename,dimstr);
+                    imp = MatIJ.showImage(inputimagename,dimstr);
                 else
-                    imp = matIJ.showImage(inputimagename);
+                    imp = MatIJ.showImage(inputimagename);
                 end
                 IJ.saveAsTiff(imp,savename);
             end
