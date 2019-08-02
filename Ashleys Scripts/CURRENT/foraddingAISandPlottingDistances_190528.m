@@ -20,8 +20,9 @@ possiblestrings = {'Total','No AIS','AIS only'};
 M = aa.plotDensityperTime([distances],possiblestrings{3})
 save(filename,'aa');
 %% to look at heatmap
+aa.imagingparams.postrelease.framerate = 2;
 aa.cargo_heatmap = [];
-imgparam.maxtime = 80;
+imgparam.maxtime = 120;
 h = aa.plotCargoHeatMap(1,imgparam);
 %% if you want to save raw intensity data to normalize at a later time
 aa.M_AIS.rawintensity

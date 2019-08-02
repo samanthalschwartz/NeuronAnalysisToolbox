@@ -21,7 +21,7 @@ classdef channelCellFill < channelBase
            %         img_g = GeneralAnalysis.imgGauss(img_m,obj.gsig);
            %         img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_m,obj.lsig,obj.gsig);
            img_g = GeneralAnalysis.imgGauss(obj.image,obj.gsig);
-           gmask = GeneralAnalysis.imgThreshold(img_g);
+           gmask = GeneralAnalysis.imgThreshold_fixedUserInput(img_g);
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,obj.lsig,obj.gsig);
            [lmask,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
            mask_out = gmask|lmask;
@@ -29,7 +29,8 @@ classdef channelCellFill < channelBase
            obj.backgroundvalue = threshval;
        end
        function resetCellFill(obj)
-           obj.resetImage;
+           obj.mask = [];
+           obj.bgsub_image = [];
            obj.AIS_mask = [];
            obj.AIS_vertices = [];
            obj.soma_mask = [];

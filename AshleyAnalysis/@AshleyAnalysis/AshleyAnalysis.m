@@ -171,7 +171,10 @@ classdef AshleyAnalysis < handle
 % -- imgparams: structure with
 %           imgparams.maxtime - maxtime range for the colomap
 %           imgparams.colmap - input colormap
-
+if isempty(obj.imagingparams.postrelease.framerate)
+    obj.imagingparams.postrelease.framerate = input('Select post-release frame rate (min/frame)');
+end
+    
            if isempty(obj.cargo_heatmap)
                obj.calc_cargo_minFrame();
            end
@@ -504,7 +507,7 @@ classdef AshleyAnalysis < handle
             % - for resetting image use 1
             % cellmaskbool is boolean for if you want to limit surface cargo
                         % mask to only within the cellmask region
-           if nargin>1 && ~cellmaskbool
+           if nargin>2 && ~cellmaskbool
                cellmask = 0;
            else
                cellmask = obj.cellFill.mask;

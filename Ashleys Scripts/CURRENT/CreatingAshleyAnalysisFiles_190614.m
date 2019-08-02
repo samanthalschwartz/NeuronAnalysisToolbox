@@ -2,19 +2,22 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %-- set imaging parameters:
-releaseframe = 6; % time in minutes, after release, that first frame of post release starts
+releaseframe = 15; % time in minutes, after release, that first frame of post release starts
 %%
-filename = 'I:\zapERtrap\Raw Data\LOCAL RELEASE\somaticrelease_slip1\cell4.tif';
+filename = 'Y:\Ashley\072919_NL1localdendrites\400ng\6_stitched.tif';
 [FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_');
 savename = fullfile(FILEPATH,temp{1});
 
 uiopen(filename); close all;
 
-cellfill = image(:,:,:,1); TfR = permute(TfR,[2 1 3]);
-TfR = image(:,:,:,2); cellfill = permute(cellfill,[2 1 3]);
-cargo = image(:,:,:,3); cargo = permute(cargo,[2 1 3]);
+cellfill = image(:,:,:,1); 
+TfR = image(:,:,:,2); 
+cargo = image(:,:,:,3);
 
+TfR = permute(TfR,[2 1 3]);
+cellfill = permute(cellfill,[2 1 3]);
+cargo = permute(cargo,[2 1 3]);
 
 
 %%
@@ -71,7 +74,7 @@ aa.cellFill.viewMaskOverlayPerim;
 aa.surfaceCargo.lsig = [1 1 0];
 aa.surfaceCargo.gsig = [1 1 1];
 aa.surfaceCargo.mask_img_lowsens;
-% aa.surfaceCargo.viewMaskOverlayPerim;
+aa.surfaceCargo.viewMaskOverlayPerim;
 
 % --- run this to look at cell fill mask compared to surface cargo mask
 % realmask = aa.surfaceCargo.mask;
@@ -87,15 +90,14 @@ aa.cellFill.selectSoma();
 
 % clean up the image:
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
-aa.cleanSurfaceCargoMask_Manual();
-% aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
+%aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
 
 
 
 % now make the min distance image
 % h = aa.plot_cargo_minFrame();
 close all;
-h = aa.plotCargoHeatMap;
+h = aa.plotCargoHeatMap(1);
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
 save(fullfile([savename '_AshleyFile.mat']), 'aa'); 

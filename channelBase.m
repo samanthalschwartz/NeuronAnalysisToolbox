@@ -67,7 +67,7 @@ classdef channelBase < handle
            end
        end
        function cropimagefromtrimROI(obj)
-          obj.image = obj.rawimage(obj.ROI_trim(1,1):obj.ROI_trim(1,1)+obj.ROI_trim(2,1),obj.ROI_trim(1,2):obj.ROI_trim(1,2)+obj.ROI_trim(2,2),obj.ROI_trim(1,3):obj.ROI_trim(1,3)+obj.ROI_trim(2,3));
+          obj.image = obj.rawimage(obj.ROI_trim(1,1):obj.ROI_trim(1,1)+obj.ROI_trim(2,1),obj.ROI_trim(1,2):obj.ROI_trim(1,2)+obj.ROI_trim(2,2),obj.ROI_trim(1,3):obj.ROI_trim(1,3)+obj.ROI_trim(2,3));   
        end
        function resetImage(obj)
           obj.image = obj.rawimage; 
