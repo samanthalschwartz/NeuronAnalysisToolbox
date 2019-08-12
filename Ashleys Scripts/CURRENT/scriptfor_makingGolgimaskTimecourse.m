@@ -8,7 +8,7 @@ close all; clear all
 %Golgi Accumulation
 clear all;
 close all;
-chGFP = GeneralAnalysis.loadtiff_1ch('Z:\Matt\022018_nl1_zapalog\MOVIES\slip2_negcntrl_withzapalog_releaseatend\cell5_g_stabilized.tif');
+chGFP = GeneralAnalysis.loadtiff_1ch('\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\ACTIVITY DEPENDENCE\071019_activitydependence_NL1_localsoma\Bicuculline\4_stitched_488.tif')
 maxprojGFP = max(chGFP,[],3);
 [maskgolgi,threshval_golgi] = GeneralAnalysis.imgThreshold_fixedUserInput(maxprojGFP); 
 golgimasktimeseries = repmat(maskgolgi,1,1,size(chGFP,3));
@@ -18,8 +18,8 @@ uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, clo
 cargomask = GeneralAnalysis.cleanUpMask_manual_square(chGFP,golgimasktimeseries);
 output = sum(cargomask.*chGFP,[],[1 2]);
 output = single(squeeze(output));
-golgi_norm_baseline = sum(output(:,[1 2 3 4 5 6 7 8]))
-golgi_norm_baseline = golgi_norm_baseline/8
+golgi_norm_baseline = sum(output(:,[1 2 3 4 5 6 7 8 9 10]))
+golgi_norm_baseline = golgi_norm_baseline/10
 golgi_intensity = output./golgi_norm_baseline;
 figure; plot(golgi_intensity);
 figure;uitable('Data',golgi_intensity')

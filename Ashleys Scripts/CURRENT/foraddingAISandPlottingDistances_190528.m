@@ -1,7 +1,7 @@
 %% for adding in an AIS region to Ashley files and re-calculating distances
 clear all;
 close all;
-filename = 'Y:\Lab Projects\zapERtrap\Raw Data\AISexpts\062419_AnkG_GluA1_zapalog\slip2_1_AshleyFile.mat';
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\ACTIVITY DEPENDENCE\071019_activitydependence_NL1_localsoma\Bicuculline\4_AshleyFile.mat';
 load(filename);
 aa.cellFill.selectAIS(aa.cellFill.image(:,:,end)) %--- select AIS
 %--- check if mask looks good AIS
@@ -17,12 +17,12 @@ aa.imagingparams.postrelease.framerate = 2.0;
 possiblestrings = {'Total','No AIS','AIS only'};
 %%
 %M = aa.plotDensityperTime([distances],possiblestrings{1});
-M = aa.plotDensityperTime([distances],possiblestrings{3})
+M = aa.plotDensityperTime([distances],possiblestrings{1})
 save(filename,'aa');
 %% to look at heatmap
-aa.imagingparams.postrelease.framerate = 2;
+aa.imagingparams.postrelease.framerate = 2.0;
 aa.cargo_heatmap = [];
-imgparam.maxtime = 120;
+imgparam.maxtime = 90;
 h = aa.plotCargoHeatMap(1,imgparam);
 %% if you want to save raw intensity data to normalize at a later time
 aa.M_AIS.rawintensity
@@ -31,14 +31,14 @@ aa.M.rawintensity
 %%
 clear M1 M2
 figure;
-plot(M.areanormintensity'./aa.M.areanormintensity(1,41)')
-M1 = M.areanormintensity'./aa.M.areanormintensity(1,41)'
+plot(M.areanormintensity'./aa.M.areanormintensity(1,56)')
+M1 = M.areanormintensity'./aa.M.areanormintensity(1,56)'
 
 % % plot the intensity density per time norm to the max intensity
 % density for each distance
 figure;
-plot(M.areanormintensity'./M.areanormintensity(:,41)')
-M2 = M.areanormintensity'./M.areanormintensity(:,41)'
+plot(M.areanormintensity'./M.areanormintensity(:,56)')
+M2 = M.areanormintensity'./M.areanormintensity(:,56)'
 
 %figure; hold on;
 %plot(M.areanormintensity'./M.areanormintensity(:,30)','r')
