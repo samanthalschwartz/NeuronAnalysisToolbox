@@ -64,6 +64,20 @@ classdef SIM < handle
             obj.Zpxsize = double(obj.metadata.getPixelsPhysicalSizeZ(0).value());           % returns value in default unit
             obj.Zpxsize_units = char(obj.metadata.getPixelsPhysicalSizeZ(0).unit().getSymbol());
         end
+        function resetCh2(obj)
+           obj.ch2 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
+            'thisCh',struct('msr',[],'sizes',[],'densities',[]),'results',[],...
+            'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
+                        'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
+                        'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdensity_raw',[])); 
+        end
+        function resetCh1(obj)
+            obj.ch1 = struct('rawimage',[],'image',[],'distance_mask',[],'mask',[],'mask_highsense',[],'name','',...
+                'thisCh',struct('msr',[],'sizes',[],'densities',[]),'results',[],...
+                'abetaCh',struct('msr',[],'sizes',[],'densities',[],'radialdensity_norm',[],'radialdensity_raw',[],...
+                'radialnumberdensity_norm',[],'radialnumberdensity_raw',[],...
+                'cumulative_radialnumberdensity_norm',[],'cumulative_radialnumberdnnnpppppensity_raw',[]));
+        end
         function loadtiff(obj)
             if nargin>1
                 obj.filepath = filepath;
@@ -607,7 +621,7 @@ classdef SIM < handle
                 if isfolder(inputsavedir)
                     [~,NAME,~] = fileparts(obj.filepath);
                     obj.savepath = fullfile(inputsavedir,[NAME '_SIM.mat']);
-                elseif isfile(inputsavedir)
+                else
                     obj.savepath = inputsavedir;
                 end
             end

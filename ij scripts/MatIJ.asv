@@ -8,7 +8,6 @@ methods (Static)
     function imp = showImage(I,varargin)
         % display matlab image as ImageJ with window name the same as
         % variable name
-        I = single(I);
         windowname = matlab.lang.makeValidName(inputname(1)); % this is to get the variable name
         if nargin > 1
         imp = othercopytoImagePlus(I,windowname,varargin{1});
@@ -26,10 +25,8 @@ methods (Static)
         I = single(I);
         windowname = matlab.lang.makeValidName(inputname(1)); % this is to get the variable name 
         if ~isempty(varargin)
-            imp = othercopytoImagePlus(I,windowname,varargin{1});
+        imp = othercopytoImagePlus(I,windowname,varargin{1});
         else
-            imp = othercopytoImagePlus(I,windowname);
-        end
         imp.show;
     end
     function imnames = getOpenImageWindowNames()
