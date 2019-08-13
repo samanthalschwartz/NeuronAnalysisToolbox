@@ -10,7 +10,7 @@ for ff = 2:numel(files)
     clear aa;
     try
         load(files{ff})
-        M = aa.plotDensityperTime([distances]);
+        aa.calcDensityperTime([distances]);
         
         % show distance 1 area
         % currmask = aa.distmask<=d1;

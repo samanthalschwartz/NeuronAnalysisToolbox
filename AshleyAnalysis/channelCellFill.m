@@ -16,6 +16,7 @@ classdef channelCellFill < channelBase
            obj = obj@channelBase();
        end
        function mask_img(obj)
+           obj.resetCellFill();
            %         img_m = medif(obj.image,3);
            %         img_g = GeneralAnalysis.imgGauss(img_m,obj.gsig);
            %         img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(img_m,obj.lsig,obj.gsig);
@@ -24,8 +25,19 @@ classdef channelCellFill < channelBase
            img_laplcutoff = GeneralAnalysis.imgLaplaceCutoff(obj.image,obj.lsig,obj.gsig);
            [lmask,threshval] = GeneralAnalysis.imgThreshold_fixedUserInput(img_laplcutoff);
            mask_out = gmask|lmask;
-           obj.mask = mask_out;
+           obj.mask = bdilation(mask_out,6);
            obj.backgroundvalue = threshval;
+       end
+       function resetCellFill(obj)
+           obj.mask = [];
+           obj.bgsub_image = [];
+           obj.AIS_mask = [];
+           obj.AIS_vertices = [];
+           obj.soma_mask = [];
+           obj.soma_vertices = [];
+           obj.fullsoma_mask = [];
+           obj.fullsoma_vertices = [];
+           obj.mask_thick = [];
        end
        function mask_img_other(obj)
            img_1 = medif(obj.image,3);
@@ -52,14 +64,18 @@ classdef channelCellFill < channelBase
        function make_thickMask(obj)
            % make sum projection of masked image, then thicken and bridge
            sumproj_out = GeneralAnalysis.sumproj_masktimeseries(obj.mask);
-           sumproj_out_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out,'thicken',2);
+           sumproj_out_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out,'thicken',4);
            obj.mask_thick = GeneralAnalysis.bwmorph_timeseries(sumproj_out_thick,'bridge');
        end
        function selectSoma(obj)
-           uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));
-           h = dipshow(squeeze(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)))),'log');
+           uiwait(msgbox('Click >2 points to define an ROI for the Soma Area','Draw Soma ROI','modal'));
+           h = dipshow(gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]),'log');
            diptruesize(h,150);
-           [roi, v] = diproi(h);      
+           try
+           [roi, v] = diproi(h);    
+           catch
+               return
+           end
            obj.soma_mask = repmat(roi,[1 1 size(obj.image,3)]);
            obj.soma_vertices = v;
            close(h);        
@@ -70,13 +86,17 @@ classdef channelCellFill < channelBase
            else
                 inputim = gaussf(obj.image(:,:,floor(size(obj.image,3)/2)),[1 1 0]);
            end
-           uiwait(msgbox('Click >2 points to select a cell cell AIS','Draw AIS ROI','modal'));
+           uiwait(msgbox('Click >2 points to define an ROI for the Axon Initial Segment (AIS)','Draw AIS ROI','modal'));
            h = dipshow(inputim,'log');
            diptruesize(h,150);
-           [roi, v] = diproi(h);      
+           try
+           [roi, v] = diproi(h);  
+           catch
+               return;
+           end
            obj.AIS_mask = repmat(roi,[1 1 size(obj.image,3)]);
            obj.AIS_vertices = v;
-           close(h);        
+           close(h);
        end
        function selectFullSoma(obj)
            uiwait(msgbox('Click >2 points to select a cell soma ROI','Draw Soma ROI','modal'));

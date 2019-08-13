@@ -2,18 +2,18 @@
 % Update datafilepath variable below and then click the 'Run' button in the tool bar above. 
 close all; clear all;
 %-- set imaging parameters:
-baselineframe_start = 2; % first frame number that baseline acquisition begins
-baselineframe_end = 7; % last frame number of baseline
+baselineframe_start = 1; % first frame number that baseline acquisition begins
+baselineframe_end = 11; % last frame number of baseline
 baselineframerate = 1; % frame rate in minutes/frame 
-releasetime = 6; % time in minutes, after release, that first frame of post release starts
-postrelease(1).frame_start = 8; % first frame number of post release
+releasetime = 2; % time in minutes, after release, that first frame of post release starts
+postrelease(1).frame_start = 12; % first frame number of post release
 postrelease(1).frame_end = 'end'; % last frame number of post release - or 'end' if post release goes until end of series
 postrelease(1).framerate = 2; % frame rate in minutes/frame
-postrelease(2).frame_start = 21;
-postrelease(2).frame_end = 'end';
-postrelease(2).framerate = 1;
+%postrelease(2).frame_start = 21;
+%postrelease(2).frame_end = 'end';
+%postrelease(2).framerate = 1;
 %%
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\GLOBAL RELEASE\NL1\050118\TIFF files\cell1.tif';
+filename = 'Y:\Lab Projects\zapERtrap\Raw Data\AISexpts\071618\NL1\TIFF files\071618_DHFR-GFP-NL1_AnkG-mCherry_antiGFP640_global_8_stitched.tif';
 [FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_');
 savename = fullfile(FILEPATH,temp{1});
@@ -101,13 +101,17 @@ aa.cellFill.selectSoma();
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
 aa.cleanSurfaceCargoMask_Manual();
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
+aa.cleanSurfaceCargoMaskbyFrame_Manual();
 
-
+%To view cleanedcargomask overlayed on top of cellfill
+GeneralAnalysis.viewMaskOverlay(aa.cellFill.image,aa.cleanedcargomask)
 
 % now make the min distance image
 % h = aa.plot_cargo_minFrame();
 close all;
-h = aa.plotCargoHeatMap;
+aa.cargo_heatmap = [];
+imgparam.maxtime = 60;
+h = aa.plotCargoHeatMap(1,imgparam);
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
 save(fullfile([savename '_AshleyFile.mat']), 'aa'); 

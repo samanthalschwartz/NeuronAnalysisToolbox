@@ -1,8 +1,10 @@
 %% for adding in an AIS region to Ashley files and re-calculating distances
 clear all;
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\LOCAL RELEASE\030618_localexpt_NL1\cell1_AshleyFile.mat'
+
+close all;
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\ACTIVITY DEPENDENCE\071019_activitydependence_NL1_localsoma\Bicuculline\4_AshleyFile.mat';
 load(filename);
-aa.cellFill.selectAIS(aa.surfaceCargo.image) %--- select AIS
+aa.cellFill.selectAIS(aa.cellFill.image(:,:,end)) %--- select AIS
 %--- check if mask looks good AIS
 aa.cellFill.AIS_mask.*aa.cleanedcargomask
 %--- set and calculate distance
@@ -11,16 +13,26 @@ d1 = 5/pxsize;
 d2 = 40/pxsize;
 d3 = 200/pxsize;
 distances = [d1 d2 d3];
+aa.imagingparams.postrelease.framerate = 2.0;
 % possible strings
 possiblestrings = {'Total','No AIS','AIS only'};
 %%
-M = aa.plotDensityperTime([distances],possiblestrings{1});
+%M = aa.plotDensityperTime([distances],possiblestrings{1});
+M = aa.plotDensityperTime([distances],possiblestrings{1})
 save(filename,'aa');
 %% to look at heatmap
-aa.plotCargoHeatMap()
+aa.imagingparams.postrelease.framerate = 2.0;
+aa.cargo_heatmap = [];
+imgparam.maxtime = 90;
+h = aa.plotCargoHeatMap(1,imgparam);
+%% if you want to save raw intensity data to normalize at a later time
+aa.M_AIS.rawintensity
+aa.M_noAIS.rawintensity
+aa.M.rawintensity
 %%
 clear M1 M2
 figure;
+
 plot(M.areanormintensity'./aa.M.areanormintensity(1,52)')
 M1 = M.areanormintensity'./aa.M.areanormintensity(1,52)'
 
@@ -30,9 +42,12 @@ figure;
 plot(M.areanormintensity'./M.areanormintensity(:,52)')
 M2 = M.areanormintensity'./M.areanormintensity(:,52)'
 
-figure; hold on;
-plot(M.areanormintensity'./M.areanormintensity(:,70)','r')
-plot(aa.M.areanormintensity'./aa.M.areanormintensity(:,70)','g')
+
+%figure; hold on;
+%plot(M.areanormintensity'./M.areanormintensity(:,30)','r')
+%plot(aa.M.areanormintensity'./aa.M.areanormintensity(:,30)','g')
 %%
-currmask = aa.distmask>d2 & aa.distmask<=d3;
-maskd3 = dipshow(currmask)
+currmask1 = aa.distmask<=d1;
+currmask = aa.distmask>d1 & aa.distmask<=d2;
+currmask.*aa.cellFill.AIS_mask
+maskd3 = dipshow(currmask.*aa.cellFill.AIS_mask)

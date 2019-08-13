@@ -34,7 +34,8 @@ switch ext
 %         name=getObjName('spd');
     case {'.tif','.TIF','.tiff','.TIFF'}
         obj = loadtiff(filename);
-        name = 'image';
+        [FILEPATH,NAME,EXT] = fileparts(filename);
+        name = NAME;
         if ndims(obj) == 4
             cmap = {red,green,blue};
             % then it is a color image
@@ -64,7 +65,10 @@ switch ext
         cd(orig_dir);
         return
 end
-assignin('base',name, obj);
+name = strrep(name,' ','_');
+% assignin('base',name, obj);
+assignin('base','image', obj);
+
 % if ~strcmp(ext,'.tif') &&  ~strcmp(ext,'.TIF') &&  ~strcmp(ext,'.TIFF') && ~strcmp(ext,'.tiff')
 %     evalin('base',sprintf('disp(%s)',name));
 % end
