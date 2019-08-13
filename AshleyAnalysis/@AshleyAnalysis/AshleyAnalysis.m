@@ -95,6 +95,7 @@ classdef AshleyAnalysis < handle
        end
        function h = calc_cargo_minFrame(obj)
            % cellperim is boolean for including cell perimeter in image
+           obj.cargo_heatmap = [];
            if ~isempty(obj.cleanedcargomask)
                maskimg = dip_image(logical(obj.cleanedcargomask));
            else
@@ -144,7 +145,7 @@ classdef AshleyAnalysis < handle
            c.Location = 'WestOutside';
            c.Ticks = colbarplace;
            c.TickLabels = colbarval;
-           c.TickLength = 0.02
+           c.TickLength = 0.02;
            
          
            c.FontSize = 18;
@@ -393,7 +394,7 @@ classdef AshleyAnalysis < handle
            obj.cleanedcargomask = cargomask;
        end
        function cleanSurfaceCargoMaskbyFrame_Manual(obj,reset)
-           overlayim = obj.surfaceCargo.image;
+           overlayim = dip_image(obj.surfaceCargo.image);
            if isprop(obj,'cleanedcargomask') && ~isempty(obj.cleanedcargomask) && nargin<2
                cargomask = GeneralAnalysis.cleanUpMask_byframe_square(overlayim,obj.cleanedcargomask.*obj.cellFill.mask,100);
            else
