@@ -4,7 +4,7 @@ close all; clear all;
 %-- set imaging parameters:
 releaseframe = 6; % time in minutes, after release, that first frame of post release starts
 %%
-filename = 'I:\zapERtrap\Raw Data\LOCAL RELEASE\somaticrelease_slip1\cell4.tif';
+filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\LOCAL RELEASE\031318_localexpt_NL1\tiff\cell5_soma.tif';
 [FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_');
 savename = fullfile(FILEPATH,temp{1});
@@ -89,13 +89,12 @@ aa.cellFill.selectSoma();
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
 aa.cleanSurfaceCargoMask_Manual();
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
-
-
+aa.cleanSurfaceCargoMaskbyFrame_Manual();
 
 % now make the min distance image
 % h = aa.plot_cargo_minFrame();
 close all;
-h = aa.plotCargoHeatMap;
+h = aa.plotCargoHeatMap(1);
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
 save(fullfile([savename '_AshleyFile.mat']), 'aa'); 
