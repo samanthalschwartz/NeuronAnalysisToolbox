@@ -433,13 +433,11 @@ methods (Static)
             for ii = lbs2remove(lbs2remove~=0)'
             lb(lb == ii) = 0; 
             end
-<<<<<<< HEAD
+
             ov = underimg;
-=======
-            ov = underimgin;
             lb = dip_image(lb);
             ov = dip_image(ov);
->>>>>>> de985dd9c73b8550ec3bf230e0aaeb69a272e668
+
             ov(lb~=0) = 0
             diptruesize(gcf,imviewsz);
             try
@@ -500,8 +498,47 @@ methods (Static)
         end
       dipfig -unlink
       newmask = logical(maskin);  
-    end
-    
+     end
+     function newmask = cleanUpMask_selectregion2remove(underimgin,mask_in,imviewsz)
+         % this removes user selected regions from the mask.
+         % undergimgin with mask_in will pop up. can move through frames
+         % with dipimage as normal
+         % --- when ready to select a region in a frame type 't'
+         %       a new frame will pop up. click on points to define roi
+         %       within the image
+         %       When finished, mask within in this region will be removed
+         % You can continue to select regions until orginal window is closed
+         underimgin = dip_image(underimgin);
+         newmask = mask_in;
+         ov = underimgin;
+         ov(newmask~=0) = 0;
+         g = dipfig('ov');
+         dipshow(ov,'log');
+         diptruesize(g,imviewsz);
+         while(ishandle(g))
+             try
+             w = waitforbuttonpress;
+             a = gcf;
+             if strcmp(a.CurrentCharacter,'t')
+                 try
+                     gcfinfo = get(g,'UserData');
+                     currtime = gcfinfo.curslice;
+                     dipshow(squeeze(ov(:,:,currtime)),'log');
+                     [roi, ~] = diproi(gcf); close(gcf);
+                     newmask = newmask.*~roi;
+                     ov = underimgin;
+                     ov(newmask~=0) = 0
+                     diptruesize(gcf,imviewsz);
+                 catch
+                     break;
+                 end
+             end
+             catch
+             end
+         end
+         dipfig -unlink
+         newmask = logical(newmask);
+     end
     
     function newmask = cleanUpMask_byframe_square(underimgin,mask_in,imviewsz)
          if nargin<3

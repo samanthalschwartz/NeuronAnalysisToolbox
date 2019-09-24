@@ -4,12 +4,15 @@ close all; clear all;
 %-- set imaging parameters:
 releaseframe = 11; % first frame of post release starts
 %%
-filename = '\\data\dept\SOM\PHARM\All\Research\KennedyLab\Lab Projects\zapERtrap\Raw Data\ACTIVITY DEPENDENCE\071019_activitydependence_NL1_localsoma\TTX\4_stitched.tif';
+filename = 'C:\Users\bourkea\Dropbox\Data from Cloud\091319_GluA1_activitydependence\BIC\2_stitched.tif';
 [FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_');
 savename = fullfile(FILEPATH,temp{1});
 
 uiopen(filename); close all;
+
+ %aa.convertfromload() %run this line of code if there are errors with
+% SelectSoma, etc.
 
 cellfill = image(:,:,:,1); 
 TfR = image(:,:,:,2); 
@@ -67,9 +70,14 @@ aa.surfaceCargo.trim_rawimage;
 % dipmapping(h,'lin')
 
 % mask cell -- change these to modify image smoothing
+% IF CELL FILL MASK DOES NOT LOOK GOOD, DO NOT PROCEED!!!
 aa.cellFill.lsig = [1 1 1];
 aa.cellFill.gsig = [1 1 1];
-aa.cellFill.mask_img;
+aa.cellFill.mask_img; % two step masking:
+% first image is to mask based on intensity (select dim axons in
+% background, etc.)
+% second image is to mask based on edge detection (select part of image
+% edge, etc.)
 aa.cellFill.viewMaskOverlayPerim;
 % mask surface Cargo -- change these to modify image smoothing
 lsig = [1 1 0];
@@ -92,12 +100,10 @@ aa.cellFill.selectSoma();
 
 % clean up the image:
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
-aa.cleanSurfaceCargoMask_Manual();
+aa.cleanSurfaceCargoMask_Manual(1);
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
 aa.cleanSurfaceCargoMaskbyFrame_Manual();
-
-aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
-aa.cleanSurfaceCargoMaskbyFrame_Manual();
+aa.cleanSurfaceCargoMask_RemoveRegion % call this line and press T to remove regions in a spatially-restricted manner
 
 tempmask = aa.cleanedcargomask; % safety net in case the cleaned surface cargo mask is mistakenly reset
 save(fullfile([savename '_TempCleanedSurfaceCargoMask']), 'tempmask');
@@ -108,7 +114,7 @@ close all;
 h = aa.plotCargoHeatMap(1);
 % now save the object
 % save(fullfile(datafilepath,[savename '_AshleyFile.mat']), 'aa'); 
-save(fullfile([savename '_AshleyFile.mat']), 'aa'); 
+save(fullfile([savename '_AshleyFile.mat']), 'aa', '-v7.3'); 
 
 saveas(h,fullfile([savename '_timeHeatMap']),'fig');
 saveas(h,fullfile([savename '_timeHeatMap']),'png');
