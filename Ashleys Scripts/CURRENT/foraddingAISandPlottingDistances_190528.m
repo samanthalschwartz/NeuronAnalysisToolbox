@@ -1,7 +1,7 @@
 %% for adding in an AIS region to Ashley files and re-calculating distances
 clear all;
 close all;
-filename = 'C:\Users\bourkea\Dropbox\Data from Cloud\091319_GluA1_activitydependence\TTX\5_AshleyFile.mat';
+filename = 'C:\Users\bourkea\Dropbox\Data from Cloud\091319_GluA1_activitydependence\TTX\3_AshleyFile.mat';
 load(filename);
 aa.cellFill.selectAIS(aa.cellFill.image(:,:,end)) %--- select AIS
 %--- check if mask looks good AIS

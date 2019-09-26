@@ -296,6 +296,26 @@ end
                end
            end
        end
+       function removeShorterCargos(obj,minNumFrames,frames2include)
+           if isempty(obj.cleanedcargomask)
+               f = errordlg('Need to clean your surface cargo mask first');
+               return;
+           end
+           if nargin<3
+               frames2include = [1:size(obj.cleanedcargomask,3)];
+               if nargin<2
+                   minNumFrames = 3;
+               end
+           end
+           lb = label(obj.cleanedcargomask(:,:,frames2include));
+           msr = measure(lb,obj.surfaceCargo.image(:,:,frames2include),{'CartesianBox'});
+           badmsrids = msr.ID(msr.CartesianBox(3,:)<minNumFrames);
+           disp('Removing labels....');
+           lblout = GeneralAnalysis.removeLabels(lb,badmsrids);
+           obj.cleanedcargomask(:,:,frames2include) = single(lblout>0);
+       end
+       
+       
        function currM = plotDensityperTime(obj,distances,distmapstring)
            %input:  distances in microns as an 1 x n vector of max values, values between are used
            %    example: distances = [100,200,300, inf]; interval is

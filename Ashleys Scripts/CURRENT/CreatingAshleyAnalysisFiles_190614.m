@@ -4,7 +4,7 @@ close all; clear all;
 %-- set imaging parameters:
 releaseframe = 11; % first frame of post release starts
 %%
-filename = 'C:\Users\bourkea\Dropbox\Data from Cloud\091319_GluA1_activitydependence\BIC\2_stitched.tif';
+filename = 'C:\Users\bourkea\Dropbox\Data from Cloud\091319_GluA1_activitydependence\TTX\3_merge_concat+washout.tif';
 [FILEPATH,NAME,EXT] = fileparts(filename);
 temp = strsplit(NAME,'_');
 savename = fullfile(FILEPATH,temp{1});
@@ -100,13 +100,20 @@ aa.cellFill.selectSoma();
 
 % clean up the image:
 uiwait(msgbox('Select regions in the mask to remove. Once you are satisfied, close the window.','Clean UP','modal'));
-aa.cleanSurfaceCargoMask_Manual(1);
+aa.cleanSurfaceCargoMask_Manual();
 % aa.cleanSurfaceCargoMask_Manual(1); % call this line instead if you want to start again
 aa.cleanSurfaceCargoMaskbyFrame_Manual();
 aa.cleanSurfaceCargoMask_RemoveRegion % call this line and press T to remove regions in a spatially-restricted manner
 
 tempmask = aa.cleanedcargomask; % safety net in case the cleaned surface cargo mask is mistakenly reset
 save(fullfile([savename '_TempCleanedSurfaceCargoMask']), 'tempmask');
+
+%Remove the surface accumulations that last for only 1-2 frames (most
+%likely junk)
+minNumframes = 3; %keeps only the accumulations that last for 3+ frames
+aa.removeShorterCargos(minNumframes,1:size(aa.cleanedcargomask,3)-minNumframes);
+%run this so you can keep all the accumulations that occur in the last few
+%frames (otherwise these would be falsely removed)
 
 % now make the min distance image
 % h = aa.plot_cargo_minFrame();
