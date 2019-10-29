@@ -1,8 +1,8 @@
 %% setup the SIM files
-ids = [3 1 2];
-channelorderingstr = {'chABeta','Bungaro','VGlut'}; % channel abeta, channel 1, channel2
-dirname = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\071_062819';
-savedir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\071_062819';
+ids = [2 1 3];
+channelorderingstr = {'chABeta','PrP'}; % channel abeta, channel 1, channel2
+dirname = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\081';
+savedir = 'C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\081';
 filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec',dirname);
 wb = waitbar(0);
 for ff= 1:numel(filepath)
@@ -61,7 +61,7 @@ close(wb)
 
 %% run all the masking, simulation etc
 close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\061019');
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\081');
 wb = waitbar(0);
 for ff= 1:numel(filepath)
     tic
@@ -76,7 +76,7 @@ obj.make_distancemasks;
 obj.measurements = [{'size'},   {'sum'}, {'Gravity'}];
 obj.measure_AB;
 obj.simulationAbeta(20);
-% obj.calculateNumberDensityCOM;
+obj.calculateNumberDensityCOM(0);
 obj.calculateNumberDensityCOM(0,1);
 obj.save(filepath{ff});
 waitbar(ff/numel(filepath),wb);
@@ -84,79 +84,51 @@ clear obj;
 toc
 end
 close(wb);
-%% select pre/post ROIs
+
+%% ch1 and ch2
 close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
-for ff= 1:numel(filepath)
+filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\081');
+savestr = inputdlg('File Save Name');
+[FILEPATH,NAME,EXT] = fileparts(filepath{1});
+savenameCh1 = fullfile(FILEPATH,[NAME,savestr{1},'_ch1']);
+savenameCh2 = fullfile(FILEPATH,[NAME,savestr{1},'_ch2']);
+
+ch2matdata = []; ch1matdata=[];
+wb = waitbar(0)
+for ff= 3:numel(filepath)
 load(filepath{ff});
-obj.selectPrePostROI;
-% obj.selectPrePostROI(1); %for saving new set of ROIs as moreselectiveROIs
-obj.save;
-end
-%% calculate results
-close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
-% wb = waitbar(0,'Looping Through Files');
-prepostdis_list_all = cell(1,numel(filepath));
-numabeta_aroundsynapse_all = cell(1,numel(filepath));
-plotvals_all = cell(1,numel(filepath));
-for ff= 1:numel(filepath)
-    clear obj;
-    load(filepath{ff});
-    obj.abetaDensityAlongPrePost('moreselectiveROIs');
-    obj.save(filepath{ff});
-
-    prepostdis_list_all{ff} =  obj.results.prepostdis_list;
-    numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
-    plotvals_all{ff} = obj.results.plotvals;
-end
-%% Make some plots
-close all; clear all;
-filepath = uipickfiles('Prompt','Pick Files to Plot','FilterSpec','C:\Users\KennedyLab\Dropbox\Shared with Hannah\SIM data\SIM_Files\AB_Controls_040819');
-prepostdis_list_all = cell(1,numel(filepath));
-numabeta_aroundsynapse_all = cell(1,numel(filepath));
-plotvals_all = cell(1,numel(filepath));
-numabeta = [];
-all_dists = [];
-plotsvals = [];
-figure;hold on;
-
-
-for ff= 1:numel(filepath)
-    clear obj;
-    load(filepath{ff});
-    prepostdis_list_all{ff} =  obj.results_moreselective.prepostdis_list;
-    numabeta_aroundsynapse_all{ff} = obj.results_moreselective.numabeta_aroundsynapse;
-    plotvals_all{ff} = obj.results_moreselective.plotvals;
-%     prepostdis_list_all{ff} =  obj.results.prepostdis_list;
-%     numabeta_aroundsynapse_all{ff} = obj.results.numabeta_aroundsynapse;
-%     plotvals_all{ff} = obj.results.plotvals;
+%ch1 stuff
+ch1dat = movmean(obj.ch1.results.numabeta./obj.ch1.results.volume,3);
+ch1sim =  movmean(obj.ch1.abetaSIM.results.numabeta./obj.ch1.abetaSIM.results.volume,10);
+ch1norm = ch1dat./ch1sim;
+ch1bins = obj.ch1.abetaSIM.results.bins;
+ch1out_bins = [[obj.filepath ' Bins']; num2cell(ch1bins)'];
+ch1out_data = [[obj.filepath ' ch1']; num2cell(ch1norm)];
+if ff == 1
+    ch1matdata = [ch1out_bins,ch1out_data];
+else
+    ch1matdata = [ch1matdata,ch1out_data];
 end
 
-cols = lines(numel(plotvals_all));
-for ii = 1:numel(plotvals_all)
-   all_dists = [all_dists; prepostdis_list_all{ii}'];
-   numabeta = [numabeta; numabeta_aroundsynapse_all{ii}'];
-   plotsvals = cat(1,plotsvals,plotvals_all{ii}');
-   scatter(plotvals_all{ii}(1,:),plotvals_all{ii}(2,:),'MarkerFaceColor',cols(ii,:),'MarkerEdgeColor',cols(ii,:))
+if numel(obj.channelorderingstr)>2
+    %ch2 stuff
+    ch2dat = movmean(obj.ch2.results.numabeta./obj.ch2.results.volume,3);
+    ch2sim =  movmean(obj.ch2.abetaSIM.results.numabeta./obj.ch2.abetaSIM.results.volume,10);
+    ch2norm = ch2dat./ch2sim;
+    ch2bins = obj.ch2.abetaSIM.results.bins;
+    ch2out_bins = [[obj.filepath ' Bins']; num2cell(ch2bins)'];
+    ch2out_data = [[obj.filepath ' ch2']; num2cell(ch2norm)];
+    if ff == 1
+        ch2matdata = [ch2out_bins,ch2out_data];
+    else
+        ch2matdata = [ch2matdata,ch2out_data];
+    end
 end
-figure; scatter(plotsvals(:,1).*obj.XYpxsize,plotsvals(:,2).*obj.XYpxsize,'*'); pbaspect([1 1 1])
-ylabel('Distance from Center of POST-PRE')
-xlabel('Distance Perpendicular to Synapse')
-xlim([0 1]); ylim([-1 1]); pbaspect([1 1 1])
+waitbar(ff/numel(filepath),wb);
+end
+close(wb)
+xlswrite(savenameCh1,ch1matdata);
+if ~isempty(ch2matdata)
+    xlswrite(savenameCh2,ch2matdata);
+end
 
-hold on; plot([0:40],repmat(0,1,41),'w')
-
-plotsvals(plotsvals(:,1)==0,:) = [];
-[gca,N] = scatter2heatmap(plotsvals(:,1).*obj.XYpxsize,plotsvals(:,2).*obj.XYpxsize,45);
-% colormap('hot')
-
-xlim([0 1]); ylim([-1 1]); pbaspect([1 1 1])
-hold on; plot([0:40],repmat(0,1,41),'w','LineWidth',2)
-ylabel('Distance from Center of POST-PRE')
-xlabel('Distance Perpendicular to Synapse')
-colorbar
-
-figure; histogram(all_dists.*obj.XYpxsize,20); title('Distance from Pre to Post');
-xlabel('Distance in microns')
-figure; histogram(numabeta,20); title('Number of Abeta COM within region Analyzed');
