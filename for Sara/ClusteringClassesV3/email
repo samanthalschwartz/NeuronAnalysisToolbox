@@ -1,0 +1,81 @@
+From wester@math.unm.edu Fri Apr  7 22:23:09 2017 -0600
+Date: Fri, 7 Apr 2017 22:23:05 -0600 (MDT)
+From: Michael Wester <wester@math.unm.edu>
+To: Matt Graus <m1graus@gmail.com>
+cc: Michael Wester <wester@math.unm.edu>
+Subject: Re: All the way from AU
+Status: R
+X-UID: 1
+
+Hi there!  Good to hear from you.
+
+If you look at the Clustering.m class I created, at the top are these comments:
+
+% DBSCAN_Daszykowski is the recommended DBSCAN algorithm as it is both fast and
+% stable under coordinate reordering.
+%
+% DBSCAN_Daszykowski_noE computes its own value for E.
+%
+% DBSCAN_Kovesi is both slow and NOT stable under coordinate reordering.
+%
+% DBSCAN_Pehlke is somewhat slow and NOT stable under coordinate reordering.
+%
+% DBSCAN_Tran is supposed to be stable under coordinate reordering, but in
+% practice, this does not seem to be the case!
+
+Basically, I hunted down all the MATLAB implementations of DBSCAN I could
+find, then ran them on some sample data.  I checked for speed (hence the
+comments above) and whether I would get different answers if I randomly
+rearranged the order of the input coordinates (see above), meaning sending
+in (x, y) like [1 2; 3 4; 5 6] and [3 4; 5 6; 1 2], which are the some
+points but in a different order.
+
+If you look in the Clustering.m file, you will see each of these routines
+with references (except for Pehlke) were they were first described.  As you
+can see, except for Daszykowski, all versions would give different answers
+(not hugely different, but somewhat different) when I reordered the input
+coordinates.  The Tran paper realized this was a problem, but the actual
+code they provided suffered from the same problem despite their claim thqt
+their code had fixed this!  Also, unlike the other three, the Tran results
+were quite different qualitatively.  The other three produced fairly similar
+results (but not identical).
+
+DBSCAN_Daszykowski_noE tries to compute its own value of epsilon, which,
+of course will be different for each dataset.  Tina Termini is now trying
+this and the various other clustering algorithms (hierarchical, Getis,
+Voronoi).
+
+Hierarchical, Getis and Voronoi are all stable under coordinate reordering
+as well, by the way.
+
+So, not all DBSCANs are alike!  Moreover, minPts means something different
+in each of them.  To get minPts = 3, I have to send 2 to Daszykowski's
+version, 6 to Kovesi's version, and 3 to Pehlke's and Tran's.  This is part
+of the reason I wrote the Clustering class in the first place: so I wouldn't 
+have to think so hard!  Let the code handle it.
+
+I hope this is helpful.
+
+    Michael
+
+P.S. How do you like things so far?
+
+On Thu, 6 Apr 2017, Matt Graus wrote:
+
+>Hi Michael,
+>Hope is everything is going well. I finally have access to a daily computer
+>and am starting to familiarize myself with my project. Part of my project is
+>very similar to my old work. I will be using super resolution techniques
+>(dSTORM and PALM) to detect clusters. 
+>
+>Interestingly a lot of the cluster detection done in my new lab is by
+>DBSCAN. I know that there are a bunch of different versions of DBSCAN in the
+>analysis package you developed. I also remember that at one point you did a
+>study to compare them together. I don't remember a lot about that study.
+>Could you refresh my memory on what you did and what you found from it?
+>Thanks.
+>
+>See you at the wedding,
+>
+>Matt
+

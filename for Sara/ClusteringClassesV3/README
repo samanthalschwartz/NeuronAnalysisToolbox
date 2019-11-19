@@ -1,0 +1,126 @@
+Written by Michael Wester <wester@math.unm.edu>
+The New Mexico Center for the Spatiotemporal Modeling of Cell Signaling
+of New Mexico Health Sciences Center
+Albuquerque, New Mexico, USA   87131
+Copyright (c) 2015-2018 by Michael J. Wester and Keith A. Lidke
+
+All files in this distribution are so copyrighted unless explicitly noted
+otherwise in the source for a particular file.  The copyright dates above
+supercede any more restrictive date range in any individual file.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+The Software is provided "as is", without warranty of any kind.
+
+If you use any of this code in a publication, we would be grateful if you would
+acknowledge this with a statement similar to the following (and also cite the
+paper below):
+
+We acknowledge the University of New Mexico's Spatiotemporal Modeling Center
+for providing _the specified tools and/or data_ via their website
+(http://stmc.health.unm.edu/).
+
+-------------------------------------------------------------------------------
+
+Clustering, PairCorr, ROITools, SimulateDomains, SRcluster are a set of MATLAB
+classes that
+o collect together various spatial clustering statistics and algorithms
+  (hierarchal, DBSCAN [4 versions], Getis based, Voronoi based);
+o pair auto- and cross-correlation curves and statistics
+o allow the user to interactively select ROIs for arbitrary numbers of colors
+o simulations of spatial domains (clusters) of fluorophore localizations that
+  exhibit distributions of observations representing blinks; and 
+o a top-down clustering algorithm to collapse clusters of observations of
+  blinking fluorophores into a single estimate of the true location of the
+  fluorophore using a log-likelihood hypothesis test (H-SET: Hierarchical
+  Single Emitter Hypothesis Test).
+Many of these algorithms operate in 3D as well as 2D.
+
+The methodologies are described in more detail in the internal documentation
+and in:
+
+Jia Lin, Michael J. Wester, Matthew S. Graus, Keith A. Lidke and Aaron K.
+Neumann, ``Nanoscopic cell wall architecture of an immunogenic ligand in
+_Candida albicans_ during antifungal drug treatment'', _Molecular Biology of
+the Cell_, Volume 27, Number 6, March 15, 2016, 1002--1014
+(DOI: 10.1091/mbc.E15-06-0355, PMID: 26792838).
+
+Mannan molecular sub-structures control nanoscale glucan exposure in _Candida_,
+Matthew S. Graus, Michael J. Wester, Douglas W. Lowman, David L. Williams,
+Michael D. Kruppa, Jesse M. Young, Harry C. Pappas, Keith A. Lidke and Aaron K.
+Neumann, 2016.
+
+Thanks to:
+   Avanika Mahajan
+   Jia Lin
+   Matthew Graus
+   Samantha Schwartz
+
+Clustering.m         various clustering algorithms with a single interface
+PairCorr.m           pair auto- and cross-correlation curves and statistics
+ROITools.m           interactively select ROIs for 1- or 2-color data
+SimulateDomains.m    simulate clusters, localizations and observations
+SRcluster.m          collapse multiple observations into single localizations
+
+data/
+   various sample data used by some of the drivers
+
+doc/
+   presentation and notes
+
+drivers/
+   clust.m          driver to run several clustering algorithms
+   clust3.m         driver to run several clustering algorithms on 3D data
+   color2.m         plot two-color cluster simulations
+   compilerROI.m    [Matt] process SRclustered data as found in ROIs
+   Fig_V5_Revs_20150903.m
+                    driver to produce figures for Lin et al.
+   getROI_unitTest.m
+                    test getROI using different data formats
+   grabROI.m        [Matt] script to call getROI
+   inpoly.m         convex and concave hull functions and insideness tests
+   main.m           example driver for SRcluster
+   mainClust.m      test various clustering algorithms for whole image or ROI
+   mainJia.m        [Jia] Jia's version of main.m
+   mainROI.m        [Matt] Matt's version of main.m for ROIs
+   mainROIClust.m   cluster a series of ROIs for single labeled data
+   paircorr2.m      2D pair auto- and cross-correlations
+   paircorr3.m      2D pair auto- and cross-correlations operating on 3D data
+   regis.m          RegistrationAnalysis prep for run_RA_PC_SR.m
+   run_PC_SR.m      pair auto-/cross-correlations for SRdemo data w/ SRcluster
+   run_EM_PC_SR.m   pair auto-/cross-correlation driver
+   run_RA_PC_SR.m   registration and pair auto-/cross-correlations w/ SRcluster
+   prepInput.m      [Sam] Sam's driver for SRcluster
+   r_cluster.m      [Avanika] run clustering for a range of epsilons
+   statcluster1.m   [Matt] as below, but for one dataset
+   statcluster2.m   driver to run a bunch of statistical clustering algorithms
+                    for two datasets
+   statcluster3.m   as above, but runs 3D examples
+   testSLJia.m      [Jia] Jia's version of testSingleLabel.m
+
+   [Matt]
+   ROIscan_prep.m   apply H-SET to a series of ROIs in multiple files, then
+                    save the results in ROI_collapsed.mat for subsequent
+                    processing by the routines below
+   Nalpha_ROIscan.m vary N (minPts) and alpha for Voronoi clustering over ROIs
+   Nalpha_sim.m     vary N and alpha for Voronoi clustering over simulated data
+   Nalpha_sim1.m    perform Voronoi clustering over one simulation for N, alpha
+   Nalpha_delta.m   find differences between experimental and simulated data
+                    produced by Voronoi clustering over varying N and alpha
+   Neps_ROIscan.m   vary N (minPts) and epsilon for clustering over ROIs
+   Neps_sim.m       vary N and epsilon for clustering over simulated data
+   Neps_sim1.m      perform clustering over one simulation for given N, epsilon
+   Neps_delta.m     find differences between experimental and simulated data
+                    produced by clustering over varying N and epsilon
+   Neps_compiler_sim produce boxplots of experimental data with simulated data
+
+   testSingleLabel.m    compare statistics of simulated vs. collapsed emitters
+   testSingleLabel1.m   parameter studies of one emitter
+   testSingleLabel2.m   parameter studies of two emitters for varying
+                        separations
+   testSingleLabel3.m   3D version of testSingleLabel.m
