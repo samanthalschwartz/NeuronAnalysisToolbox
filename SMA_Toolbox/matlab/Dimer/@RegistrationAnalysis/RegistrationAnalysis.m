@@ -565,7 +565,7 @@ classdef RegistrationAnalysis < Pickle & GUIBuilder
             M.NTrainPts = size(M.trainRefPts{1},1);
             M.mapFunctionPixels = [];
             M.mapFunctionMicrons = [];
-            M.RMSE = [];
+            M.RMSE = []; 
             M.maxError = []; 
             M.valid = false;
             if M.NTrainPts>=obj.MinTrainPoints

@@ -1,12 +1,17 @@
 clear all; close all;
 %% load datafile and drift correct
-datafolder = 'G:\FromMicroscopeComputer\190410 pHujiGaba\GephIB\gephIB_pHujiGabaFRAP_cell2_20190410_120921 PM';
-fileinfo = fullfile(datafolder,'gephIB_pHujiGabaFRAP_cell2_w0001_z.tiff');
-metafile = fullfile(datafolder,'gephIB_pHujiGabaFRAP_cell2.txt');
-pre_shift = GeneralAnalysis.loadtiff_1ch(fileinfo);
-[dataim,sv_arr] = GeneralAnalysis.timedriftCorrect(pre_shift);
+datafolder = 'D:\WDKennedyLabHDDBackup\Projects\Project Cry2Olig-Gephyrin\FRAP\190923 Cry2Olig GephIB\GephIB cell1';
+fileinfo = fullfile(datafolder,'GephIB cell1_zproject.tif');
+metafile = fullfile(datafolder,'GephIB cell1.txt');
+pre_shift2 = GeneralAnalysis.loadtiff_2ch(fileinfo);
+pre_shift_cellfill = pre_shift2(:,:,:,1);
+pre_shift_GIB = pre_shift2(:,:,:,2);
+[cell_fill,sv_arr] = GeneralAnalysis.timedriftCorrect(pre_shift_cellfill);
+dataim = GeneralAnalysis.applydriftCorrect(pre_shift_GIB,sv_arr);
 GeneralAnalysis.LibTiff(dataim,[fileinfo(1:end-5) 'Shift' fileinfo(end-4:end)]);
-bleachfr = 5;
+GeneralAnalysis.LibTiff(cell_fill,[fileinfo(1:end-5) 'Shift_cellfill' fileinfo(end-4:end)]);
+
+bleachfr = 3;
 boxsize = 6;
 %% use Ashley's script to identify regions
 fid = fopen(metafile);
@@ -147,6 +152,14 @@ if ~exist(roidir)
 end
 roifilename = fullfile(roidir,'Background.csv');
 csvwrite(roifilename,[x',y']);
+%% open in Image J and adjust then re-save
+
+temp = errordlg('Load and adjust in Image J');
+ roidir = fullfile(datafolder,'BleachingROIs');
+[sROI] = ReadImageJROI(fullfile(roidir,'-ROIset.zip'));
+sROI
+
+
 %% subtract background from ROI values and unbleached regions
 regions = {};
 regionsums = [];
@@ -184,14 +197,14 @@ startvals_1only = mean(test_1only(1:(bleachfr-1),:));
 normvals_1only = (test_1only./startvals_1only);
 figure; plot(normvals_1only);
 xlswrite(fullfile(datafolder,'Results'),normvals_1only,'1onlyNormalized')
-
+saveas(gcf,fullfile(datafolder,'Results_1NormOnly'));
+close all;
 % for data trace subtract off bleached value to set to 0.
 test = blcorrected_regionsum - blcorrected_regionsum(bleachfr,:);
 startvals = mean(test(1:(bleachfr-1),:));
 normvals = (test./startvals);
 figure; plot(normvals);
-saveas(gcf,fullfile(datafolder,'Results_1NormOnly'));
-close all;
+
 % ----
 xlswrite(fullfile(datafolder,'Results'),normvals,'01Normalized');
 saveas(gcf,fullfile(datafolder,'Results_01Norm'));

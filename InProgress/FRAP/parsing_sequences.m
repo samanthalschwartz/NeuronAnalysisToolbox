@@ -6,7 +6,7 @@ repeatlen_561_488 = 1;
 repeatlength_tot = repeatlen_561only+repeatlen_561_488;
 totlen = (num_base+num_repeats)*repeatlength_tot;
 real_totlen = num_base+repeatlength_tot*num_repeats;
-datadir = 'G:\FromMicroscopeComputer\190410 pHujiGaba\GephIB\gephIB_pHujiGabaFRAP_cell2_20190410_120921 PM';
+datadir = 'D:\WDKennedyLabHDDBackup\Projects\Project Cry2Olig-Gephyrin\190705 HT Gaba\FRAP647 Series 420190705_21243 PM_20190705_23534 PM';
 savedir = datadir;
 % cd([datadir '/..']);
 % savedir = pwd;

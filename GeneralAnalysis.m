@@ -200,7 +200,7 @@ methods (Static)
     end
     function im_array = loadtiff_2ch(filepath)
         % requires loadtiff function from % Copyright (c) 2012, YoonOh Tak
-        oimg = loadtiff(filepath);
+        oimg = squeeze(loadtiff(filepath));
         frames2 = size(oimg,3);
         ch1 = oimg(:,:,1:2:frames2);
         ch2 = oimg(:,:,2:2:frames2);
@@ -382,7 +382,47 @@ methods (Static)
       dipfig -unlink
       newmask = logical(lb);  
     end
+    function newmask = cleanUpMask_selectregion2remove(underimgin,mask_in,imviewsz)
+        % this removes user selected regions from the mask.
+        % undergimgin with mask_in will pop up. can move through frames
+        % with dipimage as normal
+        % --- when ready to select a region in a frame type 't' 
+        %       a new frame will pop up. click on points to define roi
+        %       within the image
+        %       When finished, mask within in this region will be removed 
+        % You can continue to select regions until orginal window is closed
+        underimgin = dip_image(underimgin);
+        newmask = mask_in;
+        ov = underimgin;
+        ov(newmask~=0) = 0;
+        g = dipfig('ov');
+        dipshow(ov,'log');
+        diptruesize(g,imviewsz);
+        while(ishandle(g))
+            w = waitforbuttonpress;
+            a = gcf;
+            if strcmp(a.CurrentCharacter,'t')
+                try
+                    gcfinfo = get(g,'UserData');
+                    currtime = gcfinfo.curslice;
+                    dipshow(squeeze(ov(:,:,currtime)),'log');
+                    [roi, ~] = diproi(gcf); close(gcf);
+                    newmask = newmask.*~roi;
+                    ov = underimgin;
+                    ov(newmask~=0) = 0
+                    diptruesize(gcf,imviewsz);
+                catch
+                    break;
+                end
+            end
+        end
+      dipfig -unlink
+      newmask = logical(newmask);  
+    end
+    
+
     function newmask = cleanUpMask_manual_square(underimg_in,mask_in,imviewsz)
+
         %        lb = label(mask_in);
 %         ov = overlay(underimgin,mask_in);
 %         h = dipshow(ov,'log');
@@ -433,15 +473,12 @@ methods (Static)
             for ii = lbs2remove(lbs2remove~=0)'
             lb(lb == ii) = 0; 
             end
-
             ov = underimg;
-            lb = dip_image(lb);
             ov = dip_image(ov);
-
             ov(lb~=0) = 0
             diptruesize(gcf,imviewsz);
             try
-            dipmapping('log')
+                dipmapping('log')
             catch
                 dipmapping('percentile')
             end
@@ -499,47 +536,7 @@ methods (Static)
       dipfig -unlink
       newmask = logical(maskin);  
      end
-     function newmask = cleanUpMask_selectregion2remove(underimgin,mask_in,imviewsz)
-         % this removes user selected regions from the mask.
-         % undergimgin with mask_in will pop up. can move through frames
-         % with dipimage as normal
-         % --- when ready to select a region in a frame type 't'
-         %       a new frame will pop up. click on points to define roi
-         %       within the image
-         %       When finished, mask within in this region will be removed
-         % You can continue to select regions until orginal window is closed
-         underimgin = dip_image(underimgin);
-         newmask = mask_in;
-         ov = underimgin;
-         ov(newmask~=0) = 0;
-         g = dipfig('ov');
-         dipshow(ov,'log');
-         diptruesize(g,imviewsz);
-         while(ishandle(g))
-             try
-             w = waitforbuttonpress;
-             a = gcf;
-             if strcmp(a.CurrentCharacter,'t')
-                 try
-                     gcfinfo = get(g,'UserData');
-                     currtime = gcfinfo.curslice;
-                     dipshow(squeeze(ov(:,:,currtime)),'log');
-                     [roi, ~] = diproi(gcf); close(gcf);
-                     newmask = newmask.*~roi;
-                     ov = underimgin;
-                     ov(newmask~=0) = 0
-                     diptruesize(gcf,imviewsz);
-                 catch
-                     break;
-                 end
-             end
-             catch
-             end
-         end
-         dipfig -unlink
-         newmask = logical(newmask);
-     end
-    
+        
     function newmask = cleanUpMask_byframe_square(underimgin,mask_in,imviewsz)
          if nargin<3
              imviewsz = 150;
@@ -1091,7 +1088,7 @@ methods (Static)
             try
                 img_in = dip_image(img_in);
             catch
-                warning('input must be an image matrix');
+                warning('input must be an image matrix and you must have dip_image installed');
                     return;
             end
         end
@@ -1123,6 +1120,9 @@ methods (Static)
         close(wb);
      end
      function img_out = applydriftCorrect(img_in,sv_arr)
+         if ~isa(img_in,'dip_image')
+             img_in = dip_image(img_in);
+         end
          img_out = 0*img_in;
          img_out(:,:,0) = img_in(:,:,0);
         wb = waitbar(0,'Applying Drift Correction...');

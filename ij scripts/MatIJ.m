@@ -1,5 +1,4 @@
 classdef MatIJ < handle
-<<<<<<< HEAD
 % wrapper class for some additional useful functions when using ImageJ and MIJ functions in Matlab
 properties
     test = [];
@@ -12,38 +11,15 @@ methods (Static)
         I = single(I);
         windowname = matlab.lang.makeValidName(inputname(1)); % this is to get the variable name
         if nargin > 1
-        imp = othercopytoImagePlus(I,windowname,varargin{1});
+            imp = othercopytoImagePlus(I,windowname,varargin{1});
         else
             strs = MatIJ.guessDimStr(I);
             if ~isempty(strs)
-            imp = othercopytoImagePlus(I,windowname,strs);
+                imp = othercopytoImagePlus(I,windowname,strs);
             else % just let default channel settings take over since too much going on
-                 imp = othercopytoImagePlus(I,windowname);
-=======
-    % wrapper class for some additional useful functions when using ImageJ and MIJ functions in Matlab
-    properties
-        test = [];
-    end
-    
-    methods (Static)
-        function imp = showImage(I,varargin)
-            % display Matlab image as ImageJ with window name the same as
-            % variable name
-            windowname = matlab.lang.makeValidName(inputname(1)); % this is to get the variable name
-            if nargin > 1
-                imp = othercopytoImagePlus(I,windowname,varargin{1});
-            else
-                strs = MatIJ.guessDimStr(I);
-                if ~isempty(strs)
-                    imp = othercopytoImagePlus(I,windowname,strs);
-                else % just let default channel settings take over since too much going on
-                    imp = othercopytoImagePlus(I,windowname);
-                end
->>>>>>> de985dd9c73b8550ec3bf230e0aaeb69a272e668
+                imp = othercopytoImagePlus(I,windowname);
             end
-            imp.show;
         end
-<<<<<<< HEAD
         imp.show;
     end
     function imp = showMask(I,varargin)
@@ -62,23 +38,6 @@ methods (Static)
     function closeAllIJWindows()
         ij.WindowManager.closeAllWindows();
     end
-    function img = getImage(input)
-        if nargin>0
-            if ischar(input)
-                img = MIJ.getImage(input);
-=======
-        function imp = showMask(I,varargin)
-            I = single(I);
-            windowname = matlab.lang.makeValidName(inputname(1)); % this is to get the variable name
-            imp = othercopytoImagePlus(I,windowname,varargin{1});
-            imp.show;
-        end
-        function imnames = getOpenImageWindowNames()
-            imnames = cell(ij.WindowManager.getImageTitles());
-        end
-        function closeAllIJWindows()
-            ij.WindowManager.closeAllWindows();
-        end
         function img = imgfromimplus(implus)
             % currently this only works for xyztc - if there are more
             % dimensions, need to fix this.....
@@ -108,7 +67,6 @@ methods (Static)
                         
                     end
                 end
->>>>>>> de985dd9c73b8550ec3bf230e0aaeb69a272e668
             end
         end
         
@@ -127,11 +85,11 @@ methods (Static)
         end
         
         function img = getImage()
-            imnames = ij.getImageTitles();
+            imnames = MatIJ.getOpenImageWindowNames();
             if nargout == 1
                 [indx,tf] = listdlg('ListString',imnames,'SelectionMode','single');
                 if tf
-                    img = pullimage(imnames{indx});
+                    img = MatIJ.pullimage(imnames{indx});
                 else
                     img = [];
                 end
@@ -139,9 +97,9 @@ methods (Static)
                 [indx,tf] = listdlg('ListString',imnames);
                 if tf
                     for ii = 1:numel(indx)
-                        img = pullimage(imnames{indx(ii)});
+                        img = MatIJ.pullimage(imnames{indx(ii)});
                         varname = MatIJ.cleanfilename(imnames{indx(ii)});
-                        assignin('base',varname, imag);
+                        assignin('base',varname, img);
                     end
                     img = numel(indx);
                 else
@@ -149,16 +107,16 @@ methods (Static)
                 end
             end
         end
-        
-        
+             
         function outname = cleanfilename(inname)
-            oo = strsplit(inname,{'.','-'});
-            prename = oo{1};
-            if ~isempty(str2num(prename(1)))
-                outname = ['im_' prename];
-            else
-                outname = prename;
-            end
+%             oo = strsplit(inname,{'.','-'});
+%             prename = oo{1};
+%             if ~isempty(str2num(prename(1)))
+%                 outname = ['im_' prename];
+%             else
+%                 outname = prename;
+%             end
+             outname = matlab.lang.makeValidName(inname);
         end
         function saveImage(inputimagename,savename,dimstr)
             % save an image open in the image j window to tiff or save a Matlab image
